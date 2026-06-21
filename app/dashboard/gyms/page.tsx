@@ -4,6 +4,9 @@ import * as React from 'react';
 import Image from 'next/image';
 import { Search, MapPin, Star, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+
+const GymMap = dynamic(() => import('@/components/GymMap'), { ssr: false });
 
 export default function GymsPage() {
     return (
@@ -19,6 +22,9 @@ export default function GymsPage() {
                     </button>
                 </div>
             </header>
+
+            {/* Map Section */}
+            <GymMap />
 
             {/* Filters */}
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-4 mb-2">

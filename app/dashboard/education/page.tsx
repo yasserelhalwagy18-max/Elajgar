@@ -4,6 +4,8 @@ import * as React from 'react';
 import Image from 'next/image';
 import { Lock, Play, Verified } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CorrectionalCalendar } from '@/components/CorrectionalCalendar';
+import { ExerciseGallery } from '@/components/ExerciseGallery';
 
 export default function EducationPage() {
     return (
@@ -20,37 +22,8 @@ export default function EducationPage() {
                 </div>
             </header>
 
-            {/* Free Video */}
-            <section className="mb-8">
-                <div className="flex justify-between items-end mb-3 px-1">
-                    <h2 className="text-xl font-bold">تمرین روزانه شما</h2>
-                    <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">رایگان</span>
-                </div>
-                
-                <div className="relative w-full aspect-video rounded-3xl overflow-hidden glass-panel group cursor-pointer shadow-[0_10px_30px_rgba(37,99,235,0.15)] border-2 border-white">
-                    <Image 
-                        src="https://picsum.photos/seed/physio/800/400" 
-                        alt="Physiotherapy exercise"
-                        fill
-                        className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                    
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-16 h-16 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center border-2 border-white/80 shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-transform group-active:scale-95">
-                            <Play className="w-8 h-8 text-white ml-1 fill-white" />
-                        </div>
-                    </div>
-                    
-                    <div className="absolute bottom-4 left-4 right-4">
-                         <div className="flex justify-between items-center mb-2">
-                            <span className="bg-secondary-container text-on-secondary-container text-xs px-2 py-1 rounded font-bold">سطح مبتدی</span>
-                            <span className="text-white text-sm font-medium drop-shadow-md">۱۲ دقیقه</span>
-                         </div>
-                         <h3 className="text-white text-lg font-bold">تسکین فوری درد پایین کمر</h3>
-                    </div>
-                </div>
-            </section>
+            <CorrectionalCalendar />
+            <ExerciseGallery />
 
             {/* Premium Locked Content */}
             <section className="relative mt-8">

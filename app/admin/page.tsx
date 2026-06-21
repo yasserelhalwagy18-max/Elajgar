@@ -1,8 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { Users, Filter, UploadCloud, Dumbbell, PlaySquare, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Users, Filter, UploadCloud, Dumbbell, PlaySquare, Settings, LogOut, ChevronDown, ActivitySquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+
+const PainHeatmap = dynamic(() => import('@/components/PainHeatmap'), { ssr: false });
 
 export default function AdminPage() {
     return (
@@ -41,6 +44,18 @@ export default function AdminPage() {
 
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     
+                    {/* Pain Heatmap */}
+                    <section className="xl:col-span-1 glass-panel p-8 rounded-[2rem] border-white/80 shadow-xl flex flex-col">
+                        <h3 className="text-xl font-bold flex items-center gap-3 mb-4">
+                            <ActivitySquare className="w-6 h-6 text-primary" />
+                            Reported Pain Zones
+                        </h3>
+                        <p className="text-sm text-on-surface-variant mb-6">Real-time heat map distribution across the active user base.</p>
+                        <div className="flex-1 bg-white/40 rounded-2xl border border-white/50 overflow-hidden relative">
+                            <PainHeatmap />
+                        </div>
+                    </section>
+
                     {/* Data Table */}
                     <section className="xl:col-span-2 glass-panel p-8 rounded-[2rem] border-white/80 shadow-xl flex flex-col">
                         <div className="flex justify-between items-center mb-8">
@@ -91,7 +106,7 @@ export default function AdminPage() {
                         <button className="btn-primary-glass w-full py-4 rounded-2xl font-bold mt-8 shadow-lg">Apply Weights</button>
                     </section>
 
-                    <section className="xl:col-span-1 glass-panel p-8 rounded-[2rem] border-white/80 shadow-xl flex flex-col min-h-[400px]">
+                    <section className="xl:col-span-2 glass-panel p-8 rounded-[2rem] border-white/80 shadow-xl flex flex-col min-h-[400px]">
                         <h3 className="text-xl font-bold flex items-center gap-3 mb-8">
                            <UploadCloud className="w-6 h-6 text-primary" />
                            Content Ingestion
