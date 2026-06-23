@@ -313,7 +313,7 @@ export default function WizardPage() {
   );
 }
 
-function Step4Terms({ termsAccepted, setTermsAccepted }: any) {
+function Step4Terms({ termsAccepted, setTermsAccepted }: { termsAccepted: boolean, setTermsAccepted: (val: boolean) => void }) {
     return (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col h-full items-center justify-center">
             <div className="glass-card p-8 rounded-[2rem] w-full border border-error/20 shadow-2xl relative overflow-hidden">
@@ -340,7 +340,7 @@ function Step4Terms({ termsAccepted, setTermsAccepted }: any) {
     );
 }
 
-function Step5BodyMap({ painZones, setPainZones }: any) {
+function Step5BodyMap({ painZones, setPainZones }: { painZones: { zone: string; intensity: number; type: string }[], setPainZones: (zones: { zone: string; intensity: number; type: string }[]) => void }) {
     const [view, setView] = useState<'front' | 'back'>('back');
     const [activeZone, setActiveZone] = useState<string | null>(null);
     const [selectedIntensity, setSelectedIntensity] = useState<number>(6);
@@ -462,7 +462,20 @@ function Hotspot({ top, left, onClick, pulse = false }: { top: string, left: str
     )
 }
 
-function Step6Questionnaire({ answers, setAnswers }: any) {
+function Step6Questionnaire({ answers, setAnswers }: {
+    answers: {
+        duration: string;
+        aggravatedByActivity: string;
+        relievedByRest: string;
+        injuryHistory: string;
+        surgeryHistory: string;
+        sleepQuality: string;
+        stressLevel: string;
+        sittingHoursPerDay: string;
+        exerciseDaysPerWeek: string;
+    },
+    setAnswers: (val: any) => void
+}) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setAnswers({ ...answers, [name]: value });
