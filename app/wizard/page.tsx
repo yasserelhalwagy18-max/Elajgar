@@ -192,7 +192,7 @@ export default function WizardPage() {
               <label className="block text-sm font-medium mb-1">سطح فعالیت / Activity Level</label>
               <select
                 value={activityLevel}
-                onChange={(e) => setActivityLevel(e.target.value as any)}
+                onChange={(e) => setActivityLevel(e.target.value as 'sedentary' | 'light' | 'moderate' | 'active')}
                 className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="sedentary">بدون فعالیت / Sedentary</option>
@@ -440,7 +440,7 @@ function Step5BodyMap({ painZones, setPainZones }: { painZones: { zone: string; 
                         </div>
 
                         <button onClick={() => {
-                            setPainZones([...painZones, { zone: activeZone as any, intensity: selectedIntensity, type: selectedType }]);
+                            setPainZones([...painZones, { zone: activeZone as string, intensity: selectedIntensity, type: selectedType }]);
                             setActiveZone(null);
                         }} className="w-full py-3 bg-surface-container hover:bg-surface-variant rounded-xl font-bold transition-colors">تایید و ثبت</button>
                     </motion.div>
@@ -474,7 +474,17 @@ function Step6Questionnaire({ answers, setAnswers }: {
         sittingHoursPerDay: string;
         exerciseDaysPerWeek: string;
     },
-    setAnswers: (val: any) => void
+    setAnswers: React.Dispatch<React.SetStateAction<{
+        duration: string;
+        aggravatedByActivity: string;
+        relievedByRest: string;
+        injuryHistory: string;
+        surgeryHistory: string;
+        sleepQuality: string;
+        stressLevel: string;
+        sittingHoursPerDay: string;
+        exerciseDaysPerWeek: string;
+    }>>
 }) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
