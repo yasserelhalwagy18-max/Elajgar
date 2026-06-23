@@ -16,6 +16,17 @@ export interface UserProfile {
   medications?: string[];
   termsAccepted?: boolean;
   painZones?: { zone: string; intensity: number; type: string }[];
+  questionnaireAnswers?: {
+    duration: string;
+    aggravatedByActivity: string; // Persian boolean equivalents, e.g. "بله", "خیر"
+    relievedByRest: string;
+    injuryHistory: string;
+    surgeryHistory: string;
+    sleepQuality: string; // e.g. "بد", "متوسط", "خوب"
+    stressLevel: string; // e.g. "کم", "متوسط", "زیاد"
+    sittingHoursPerDay: number;
+    exerciseDaysPerWeek: number;
+  };
   currentWizardStep?: number; // For step-by-step Auto-save persistence
 }
 
