@@ -3,33 +3,26 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'motion/react';
-import { Plus, X, Droplet } from 'lucide-react';
+import { Plus, X, Droplet, Activity, Scale, Activity as Pulse } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { mockData7Days } from '@/lib/healthScore';
 
-const HealthChart = dynamic(() => import('@/components/HealthChart'), { ssr: false });
+const ProgressReport = dynamic(() => import('@/components/ProgressReport'), { ssr: false });
 const HydrationChart = dynamic(() => import('@/components/HydrationChart'), { ssr: false });
 
-// Mock data for health score trend
-const trendData = [
-  { name: 'شنبه', score: 65 },
-  { name: 'یکشنبه', score: 70 },
-  { name: 'دوشنبه', score: 68 },
-  { name: 'سه‌شنبه', score: 75 },
-  { name: 'چهارشنبه', score: 80 },
-  { name: 'پنجشنبه', score: 82 },
-  { name: 'جمعه', score: 85 },
-];
-
 export default function DashboardIndex() {
+  // Use today's data from mockData7Days
+  const todayData = mockData7Days[mockData7Days.length - 1];
+
   // States
-  const [calories, setCalories] = useState(1250);
+  const [calories, setCalories] = useState(todayData.calories);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [waterAmount, setWaterAmount] = useState(1.5); // Liters
+  const [waterAmount, setWaterAmount] = useState(todayData.water); // Liters
   const [showWaterConf, setShowWaterConf] = useState(false);
 
   // Animated health score counter
-  const targetScore = 85;
+  const targetScore = todayData.healthScore || 0;
   const count = useMotionValue(0);
   const roundedCount = useTransform(count, (latest) => Math.round(latest));
 
@@ -51,7 +44,7 @@ export default function DashboardIndex() {
   }, []);
 
   const handleQuickLog = (amount: number) => {
-    setCalories(prev => Math.min(prev + amount, 2000));
+    setCalories(prev => Math.min(prev + amount, 3000));
     setIsLogModalOpen(false);
   };
 
@@ -80,6 +73,14 @@ export default function DashboardIndex() {
     }
   };
 
+  // Determine status text based on health score
+  const getStatusText = (score: number) => {
+    if (score >= 85) return "وضعیت عالی است";
+    if (score >= 70) return "وضعیت خوب است";
+    if (score >= 50) return "نیاز به توجه";
+    return "وضعیت نامطلوب";
+  };
+
   return (
     <div className="p-6 pb-32">
         <header className="flex justify-between items-center mb-8 sticky top-0 pt-4 z-40 bg-surface/80 backdrop-blur-md">
@@ -97,7 +98,7 @@ export default function DashboardIndex() {
         <section className="glass-panel p-8 rounded-[2rem] flex flex-col items-center mb-6 relative overflow-hidden border-2 border-white/60 shadow-[0_10px_40px_rgba(37,99,235,0.1)]">
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl mix-blend-multiply"></div>
             <h2 className="text-xl text-on-surface font-bold z-10">شاخص سلامت شما</h2>
-            <p className="text-primary font-medium text-sm mb-6 z-10">وضعیت عالی است</p>
+            <p className="text-primary font-medium text-sm mb-6 z-10">{getStatusText(targetScore)}</p>
             
             <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }} 
@@ -120,11 +121,22 @@ export default function DashboardIndex() {
             </motion.div>
         </section>
 
-        {/* Health Score Trend Chart */}
-        <section className="glass-panel p-6 rounded-[2rem] mb-6 relative overflow-hidden border-white/60 shadow-md">
-            <h3 className="font-bold text-lg mb-4 text-on-surface">روند سلامت هفتگی</h3>
-            <div className="h-48 w-full dir-ltr" dir="ltr">
-                <HealthChart data={trendData} />
+        {/* Quick Metrics Grid */}
+        <section className="grid grid-cols-3 gap-4 mb-6">
+            <div className="glass-card p-4 rounded-3xl flex flex-col items-center justify-center text-center border-white/60">
+              <Scale className="w-6 h-6 text-primary mb-2" />
+              <p className="text-xs text-on-surface-variant mb-1">وزن</p>
+              <p className="text-lg font-bold text-on-surface">{todayData.weight} <span className="text-xs font-normal">kg</span></p>
+            </div>
+            <div className="glass-card p-4 rounded-3xl flex flex-col items-center justify-center text-center border-white/60">
+              <Activity className="w-6 h-6 text-secondary mb-2" />
+              <p className="text-xs text-on-surface-variant mb-1">شاخص توده بدنی</p>
+              <p className="text-lg font-bold text-on-surface">{todayData.bmi}</p>
+            </div>
+            <div className="glass-card p-4 rounded-3xl flex flex-col items-center justify-center text-center border-white/60">
+              <Pulse className="w-6 h-6 text-error mb-2" />
+              <p className="text-xs text-on-surface-variant mb-1">وضعیت درد</p>
+              <p className="text-lg font-bold text-error">{todayData.pain} <span className="text-xs font-normal">/ 10</span></p>
             </div>
         </section>
 
@@ -150,7 +162,7 @@ export default function DashboardIndex() {
                  <div className="flex items-center gap-6 z-10">
                     {/* Simulated 3D rings */}
                     <div className="relative w-24 h-24 flex items-center justify-center">
-                         <div className="absolute inset-0 rounded-full border-8 border-primary shadow-lg border-r-transparent transition-all duration-500" style={{ transform: `rotate(${calories / 2000 * 360}deg)` }}></div>
+                         <div className="absolute inset-0 rounded-full border-8 border-primary shadow-lg border-r-transparent transition-all duration-500" style={{ transform: `rotate(${Math.min(calories / 2000 * 360, 360)}deg)` }}></div>
                          <div className="absolute inset-2 rounded-full border-8 border-secondary-container shadow-lg border-l-transparent"></div>
                          <div className="absolute inset-4 rounded-full border-8 border-outline-variant border-b-transparent"></div>
                     </div>
@@ -201,12 +213,15 @@ export default function DashboardIndex() {
             {/* Workouts */}
             <div className="col-span-2 glass-card p-5 rounded-3xl flex flex-col border-white/60 min-h-[160px]">
                 <h3 className="font-bold text-on-surface mb-1">تمرینات</h3>
-                <p className="text-2xl font-black text-primary mb-2">۴۵ دقیقه</p>
+                <p className="text-2xl font-black text-primary mb-2">{todayData.activity} دقیقه</p>
                 <div className="mt-auto px-4 py-2 bg-surface-variant/50 rounded-xl text-sm font-bold flex items-center justify-center">
                     هوازی
                 </div>
             </div>
         </section>
+
+        {/* Progress Report Section */}
+        <ProgressReport />
 
         {/* Quick Log Modal Overlay */}
         <AnimatePresence>
@@ -269,4 +284,3 @@ function MealLogButton({ label, calories, onClick, icon }: any) {
         </button>
     );
 }
-
