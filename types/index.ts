@@ -3,18 +3,20 @@ export type PainType = 'stabbing' | 'burning' | 'vague' | 'cramp' | 'inflammatio
 export type BodySection = 'neck' | 'shoulder' | 'elbow' | 'wrist' | 'back' | 'pelvis' | 'knee' | 'calf' | 'ankle' | 'chest' | 'abdomen';
 
 export interface UserProfile {
-  id: string;
-  phoneNumber: string;
-  fullName: string;
-  age: number;
-  gender: 'male' | 'female';
-  height: number; // in cm
-  weight: number; // in kg
-  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active';
-  jobTitle: string;
-  underlyingDiseases: string[];
-  medications: string[];
-  currentWizardStep: number; // For step-by-step Auto-save persistence
+  id?: string;
+  phoneNumber?: string;
+  fullName?: string;
+  age?: number;
+  gender?: 'male' | 'female';
+  height?: number; // in cm
+  weight?: number; // in kg
+  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active';
+  jobTitle?: string;
+  underlyingDiseases?: string[];
+  medications?: string[];
+  termsAccepted?: boolean;
+  painZones?: { zone: string; intensity: number; type: string }[];
+  currentWizardStep?: number; // For step-by-step Auto-save persistence
 }
 
 export interface PainAssessment {
