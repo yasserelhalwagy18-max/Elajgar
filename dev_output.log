@@ -1,0 +1,16 @@
+
+> ai-studio-applet@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 2s
+ ○ Compiling /nutrition ...
+ ✓ Compiled /nutrition in 9.3s (1515 modules)
+ GET /nutrition 200 in 10350ms
+ ✓ Compiled in 945ms (1506 modules)
+ ✓ Compiled in 599ms (1506 modules)
+ ✓ Compiled in 529ms (1506 modules)
