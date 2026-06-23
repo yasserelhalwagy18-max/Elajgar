@@ -30,6 +30,17 @@ export default function WizardPage() {
 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [painZones, setPainZones] = useState<{ zone: string; intensity: number; type: string }[]>([]);
+  const [questionnaireAnswers, setQuestionnaireAnswers] = useState({
+    duration: '',
+    aggravatedByActivity: '',
+    relievedByRest: '',
+    injuryHistory: '',
+    surgeryHistory: '',
+    sleepQuality: '',
+    stressLevel: '',
+    sittingHoursPerDay: '',
+    exerciseDaysPerWeek: ''
+  });
 
   const step = userProfile?.currentWizardStep || 1;
 
@@ -42,7 +53,7 @@ export default function WizardPage() {
   if (!isAuthenticated) return null;
 
   const nextStep = () => {
-    if (step < 5) {
+    if (step < 6) {
       saveCurrentStepData();
       setWizardStep(step + 1);
     } else {
@@ -80,6 +91,14 @@ export default function WizardPage() {
       updateUserProfile({
         painZones,
       });
+    } else if (step === 6) {
+      updateUserProfile({
+        questionnaireAnswers: {
+            ...questionnaireAnswers,
+            sittingHoursPerDay: parseInt(questionnaireAnswers.sittingHoursPerDay) || 0,
+            exerciseDaysPerWeek: parseInt(questionnaireAnswers.exerciseDaysPerWeek) || 0,
+        }
+      });
     }
   };
 
@@ -109,7 +128,7 @@ export default function WizardPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-primary">تکمیل پروفایل / Profile</h1>
           <span className="text-sm font-medium bg-primary-container text-on-primary-container px-3 py-1 rounded-full">
-            مرحله / Step {step} از 5
+            مرحله / Step {step} از 6
           </span>
         </div>
 
@@ -264,6 +283,10 @@ export default function WizardPage() {
             <Step5BodyMap painZones={painZones} setPainZones={setPainZones} />
         )}
 
+        {step === 6 && (
+            <Step6Questionnaire answers={questionnaireAnswers} setAnswers={setQuestionnaireAnswers} />
+        )}
+
         <div className="flex justify-between mt-8 gap-4">
           {step > 1 ? (
             <button
@@ -282,7 +305,7 @@ export default function WizardPage() {
                 (step === 4 && !termsAccepted) ? "bg-surface-variant text-outline cursor-not-allowed" : "bg-primary text-on-primary hover:bg-primary/90"
             )}
           >
-            {step === 5 ? 'تکمیل / Finish' : 'بعدی / Next'} {step < 5 && <ArrowLeft className="w-4 h-4" />}
+            {step === 6 ? 'تکمیل / Finish' : 'بعدی / Next'} {step < 6 && <ArrowLeft className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -320,9 +343,13 @@ function Step4Terms({ termsAccepted, setTermsAccepted }: any) {
 function Step5BodyMap({ painZones, setPainZones }: any) {
     const [view, setView] = useState<'front' | 'back'>('back');
     const [activeZone, setActiveZone] = useState<string | null>(null);
+    const [selectedIntensity, setSelectedIntensity] = useState<number>(6);
+    const [selectedType, setSelectedType] = useState<string>('تیر کشنده');
 
     const handleSelectZone = (zone: string) => {
         setActiveZone(zone);
+        setSelectedIntensity(6);
+        setSelectedType('تیر کشنده');
     };
 
     return (
@@ -381,9 +408,16 @@ function Step5BodyMap({ painZones, setPainZones }: any) {
                         <div className="mb-6 p-4 rounded-2xl bg-white/50 border border-white/60">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-sm font-medium">شدت درد</span>
-                                <span className="text-2xl font-bold text-primary">6</span>
+                                <span className="text-2xl font-bold text-primary">{selectedIntensity}</span>
                             </div>
-                            <input type="range" min="1" max="10" defaultValue="6" className="w-full accent-primary" />
+                            <input
+                                type="range"
+                                min="1"
+                                max="10"
+                                value={selectedIntensity}
+                                onChange={(e) => setSelectedIntensity(parseInt(e.target.value))}
+                                className="w-full accent-primary"
+                            />
                             <div className="flex justify-between text-xs text-outline mt-2">
                                 <span>خفیف</span>
                                 <span>غیرقابل تحمل</span>
@@ -393,8 +427,12 @@ function Step5BodyMap({ painZones, setPainZones }: any) {
                         <div className="mb-6">
                             <span className="text-sm font-medium block mb-3">نوع درد</span>
                             <div className="flex flex-wrap gap-2">
-                                {['تیر کشنده', 'سوزشی', 'مبهم', 'گرفتگی'].map(t => (
-                                    <button key={t} className={cn("px-4 py-2 rounded-full text-sm transition-colors border field", t === 'تیر کشنده' ? "bg-primary text-white border-primary" : "bg-white/50 border-outline-variant hover:border-primary/50 text-on-surface-variant")}>
+                                {['تیر کشنده', 'سوزشی', 'مبهم', 'گرفتگی', 'التهاب'].map(t => (
+                                    <button
+                                        key={t}
+                                        onClick={() => setSelectedType(t)}
+                                        className={cn("px-4 py-2 rounded-full text-sm transition-colors border field", t === selectedType ? "bg-primary text-white border-primary" : "bg-white/50 border-outline-variant hover:border-primary/50 text-on-surface-variant")}
+                                    >
                                         {t}
                                     </button>
                                 ))}
@@ -402,7 +440,7 @@ function Step5BodyMap({ painZones, setPainZones }: any) {
                         </div>
 
                         <button onClick={() => {
-                            setPainZones([...painZones, { zone: activeZone as any, intensity: 6, type: 'تیر کشنده' }]);
+                            setPainZones([...painZones, { zone: activeZone as any, intensity: selectedIntensity, type: selectedType }]);
                             setActiveZone(null);
                         }} className="w-full py-3 bg-surface-container hover:bg-surface-variant rounded-xl font-bold transition-colors">تایید و ثبت</button>
                     </motion.div>
@@ -422,4 +460,116 @@ function Hotspot({ top, left, onClick, pulse = false }: { top: string, left: str
             <div className="w-2 h-2 bg-primary rounded-full"></div>
         </button>
     )
+}
+
+function Step6Questionnaire({ answers, setAnswers }: any) {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setAnswers({ ...answers, [name]: value });
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col h-full">
+            <h2 className="text-2xl font-bold mb-6 text-on-surface">پرسشنامه هوشمند درد</h2>
+            <div className="space-y-4 overflow-y-auto pb-4 pr-2 custom-scrollbar flex-1">
+                <label className="block">
+                    <span className="text-sm font-medium mb-1 block">مدت زمان درد</span>
+                    <input
+                        type="text"
+                        name="duration"
+                        value={answers.duration}
+                        onChange={handleChange}
+                        className="field w-full"
+                        placeholder="مثال: ۲ ماه"
+                    />
+                </label>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                        <span className="text-sm font-medium mb-1 block">تشدید با فعالیت</span>
+                        <select name="aggravatedByActivity" value={answers.aggravatedByActivity} onChange={handleChange} className="field w-full">
+                            <option value="">انتخاب کنید</option>
+                            <option value="بله">بله</option>
+                            <option value="خیر">خیر</option>
+                        </select>
+                    </label>
+                    <label className="block">
+                        <span className="text-sm font-medium mb-1 block">تسکین با استراحت</span>
+                        <select name="relievedByRest" value={answers.relievedByRest} onChange={handleChange} className="field w-full">
+                            <option value="">انتخاب کنید</option>
+                            <option value="بله">بله</option>
+                            <option value="خیر">خیر</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                        <span className="text-sm font-medium mb-1 block">سابقه آسیب</span>
+                        <select name="injuryHistory" value={answers.injuryHistory} onChange={handleChange} className="field w-full">
+                            <option value="">انتخاب کنید</option>
+                            <option value="بله">بله</option>
+                            <option value="خیر">خیر</option>
+                        </select>
+                    </label>
+                    <label className="block">
+                        <span className="text-sm font-medium mb-1 block">سابقه جراحی</span>
+                        <select name="surgeryHistory" value={answers.surgeryHistory} onChange={handleChange} className="field w-full">
+                            <option value="">انتخاب کنید</option>
+                            <option value="بله">بله</option>
+                            <option value="خیر">خیر</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                        <span className="text-sm font-medium mb-1 block">کیفیت خواب</span>
+                        <select name="sleepQuality" value={answers.sleepQuality} onChange={handleChange} className="field w-full">
+                            <option value="">انتخاب کنید</option>
+                            <option value="بد">بد</option>
+                            <option value="متوسط">متوسط</option>
+                            <option value="خوب">خوب</option>
+                        </select>
+                    </label>
+                    <label className="block">
+                        <span className="text-sm font-medium mb-1 block">سطح استرس</span>
+                        <select name="stressLevel" value={answers.stressLevel} onChange={handleChange} className="field w-full">
+                            <option value="">انتخاب کنید</option>
+                            <option value="کم">کم</option>
+                            <option value="متوسط">متوسط</option>
+                            <option value="زیاد">زیاد</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                        <span className="text-sm font-medium mb-1 block">ساعات نشستن در روز</span>
+                        <input
+                            type="number"
+                            name="sittingHoursPerDay"
+                            value={answers.sittingHoursPerDay}
+                            onChange={handleChange}
+                            className="field w-full"
+                            min="0"
+                            max="24"
+                        />
+                    </label>
+                    <label className="block">
+                        <span className="text-sm font-medium mb-1 block">روزهای ورزش در هفته</span>
+                        <input
+                            type="number"
+                            name="exerciseDaysPerWeek"
+                            value={answers.exerciseDaysPerWeek}
+                            onChange={handleChange}
+                            className="field w-full"
+                            min="0"
+                            max="7"
+                        />
+                    </label>
+                </div>
+            </div>
+        </motion.div>
+    );
 }
