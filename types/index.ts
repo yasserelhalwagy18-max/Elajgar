@@ -28,6 +28,12 @@ export interface UserProfile {
     exerciseDaysPerWeek: number;
   };
   currentWizardStep?: number; // For step-by-step Auto-save persistence
+  nutritionGoal?: 'کاهش وزن' | 'افزایش وزن' | 'حفظ وزن';
+  dailyLogs?: {
+    date: string; // YYYY-MM-DD
+    foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[];
+    waterIntake: number; // in ml
+  }[];
 }
 
 export interface PainAssessment {

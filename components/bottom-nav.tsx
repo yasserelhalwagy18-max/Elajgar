@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Activity, Dumbbell, GraduationCap, User } from 'lucide-react';
+import { LayoutGrid, Activity, Dumbbell, GraduationCap, User, Utensils } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 
@@ -12,9 +12,9 @@ export function BottomNav() {
 
   const navItems = [
     { href: '/dashboard', icon: LayoutGrid, label: 'خانه' },
+    { href: '/nutrition', icon: Utensils, label: 'تغذیه' },
     { href: '/dashboard/tracker', icon: Activity, label: 'فعالیت' },
     { href: '/dashboard/gyms', icon: Dumbbell, label: 'باشگاه' },
-    { href: '/dashboard/education', icon: GraduationCap, label: 'آموزش' },
     { href: '/dashboard/profile', icon: User, label: 'پروفایل' },
   ];
 
