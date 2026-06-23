@@ -1,240 +1,323 @@
 'use client';
 
-import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useStore } from '../../lib/store';
+import { UserProfile } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { BodySection } from '@/types';
-
-type WizardData = {
-    step: number;
-    phone: string;
-    code: string;
-    fullName: string;
-    age: string;
-    gender: string;
-    jobTitle: string;
-    termsAccepted: boolean;
-    painZones: { zone: BodySection, intensity: number, type: string }[];
-};
-
-const DEFAULT_DATA: WizardData = {
-    step: 1, phone: '', code: '', fullName: '', age: '', gender: 'مرد', jobTitle: '', termsAccepted: false, painZones: []
-};
 
 export default function WizardPage() {
-    const router = useRouter();
-    const [data, setData] = useState<WizardData>(DEFAULT_DATA);
-    const [isMounted, setIsMounted] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated, userProfile, updateUserProfile, setWizardStep } = useStore();
 
-    useEffect(() => {
-        setIsMounted(true);
-        const saved = localStorage.getItem('elajgar_wizard');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                if (parsed.step) setData(parsed);
-            } catch(e) {}
-        }
-    }, []);
+  const [fullName, setFullName] = useState(userProfile?.fullName || '');
+  const [age, setAge] = useState(userProfile?.age?.toString() || '');
+  const [gender, setGender] = useState<'male' | 'female'>(userProfile?.gender || 'male');
 
-    useEffect(() => {
-        if (isMounted) {
-            localStorage.setItem('elajgar_wizard', JSON.stringify(data));
-        }
-    }, [data, isMounted]);
+  const [height, setHeight] = useState(userProfile?.height?.toString() || '');
+  const [weight, setWeight] = useState(userProfile?.weight?.toString() || '');
+  const [activityLevel, setActivityLevel] = useState<'sedentary' | 'light' | 'moderate' | 'active'>(
+    userProfile?.activityLevel || 'sedentary'
+  );
+  const [jobTitle, setJobTitle] = useState(userProfile?.jobTitle || '');
 
-    const updateData = (updates: Partial<WizardData>) => {
-        setData(prev => ({ ...prev, ...updates }));
-    };
+  const [diseaseInput, setDiseaseInput] = useState('');
+  const [diseases, setDiseases] = useState<string[]>(userProfile?.underlyingDiseases || []);
+  const [medInput, setMedInput] = useState('');
+  const [meds, setMeds] = useState<string[]>(userProfile?.medications || []);
 
-    const nextStep = () => {
-        if (data.step === 4) {
-             // Finalize
-             setIsLoading(true);
-             setTimeout(() => {
-                 router.push('/dashboard');
-             }, 2500);
-        } else {
-            updateData({ step: data.step + 1 });
-        }
-    };
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [painZones, setPainZones] = useState<{ zone: string; intensity: number; type: string }[]>([]);
 
-    const prevStep = () => {
-        if (data.step > 1) updateData({ step: data.step - 1 });
-    };
+  const step = userProfile?.currentWizardStep || 1;
 
-    if (!isMounted) return null;
-
-    if (isLoading) {
-        return (
-            <div className="h-screen w-full flex flex-col items-center justify-center p-6">
-                <div className="w-24 h-24 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-8"></div>
-                <h2 className="text-2xl font-bold mb-4">در حال پردازش داده‌ها...</h2>
-                <div className="w-full max-w-xs space-y-4">
-                    <div className="h-3 bg-surface-variant rounded animate-pulse w-full"></div>
-                    <div className="h-3 bg-surface-variant rounded animate-pulse w-5/6 mx-auto"></div>
-                    <div className="h-3 bg-surface-variant rounded animate-pulse w-4/6 mx-auto"></div>
-                </div>
-            </div>
-        );
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
     }
+  }, [isAuthenticated, router]);
 
-    return (
-        <div className="h-screen w-full flex flex-col overflow-hidden bg-surface">
-            {/* Header */}
-            <header className="px-6 py-4 flex items-center justify-between z-10 glass-panel sticky top-0 rounded-b-3xl">
-                {data.step > 1 ? (
-                    <button onClick={prevStep} className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white transition-colors shadow-sm">
-                        <ChevronRight className="w-6 h-6 text-on-surface-variant" />
-                    </button>
-                ) : <div className="w-10"></div>}
-                
-                <div className="font-bold text-primary text-xl">Elajgar</div>
-                
-                <div className="text-sm text-on-surface-variant bg-white border border-white/50 px-3 py-1 rounded-full shadow-sm">
-                    مرحله {data.step} از ۴
-                </div>
-            </header>
+  if (!isAuthenticated) return null;
 
-            <main className="flex-1 overflow-y-auto px-6 py-8 flex flex-col">
-                <AnimatePresence mode="wait">
-                    {data.step === 1 && <Step1Phone key="1" data={data} updateData={updateData} nextStep={nextStep} />}
-                    {data.step === 2 && <Step2Profile key="2" data={data} updateData={updateData} nextStep={nextStep} />}
-                    {data.step === 3 && <Step3Terms key="3" data={data} updateData={updateData} nextStep={nextStep} />}
-                    {data.step === 4 && <Step4BodyMap key="4" data={data} updateData={updateData} nextStep={nextStep} />}
-                </AnimatePresence>
-            </main>
+  const nextStep = () => {
+    if (step < 5) {
+      saveCurrentStepData();
+      setWizardStep(step + 1);
+    } else {
+      saveCurrentStepData();
+      router.push('/dashboard');
+    }
+  };
+
+  const prevStep = () => {
+    if (step > 1) {
+      setWizardStep(step - 1);
+    }
+  };
+
+  const saveCurrentStepData = () => {
+    if (step === 1) {
+      updateUserProfile({ fullName, age: parseInt(age) || 0, gender });
+    } else if (step === 2) {
+      updateUserProfile({
+        height: parseInt(height) || 0,
+        weight: parseInt(weight) || 0,
+        activityLevel,
+        jobTitle,
+      });
+    } else if (step === 3) {
+      updateUserProfile({
+        underlyingDiseases: diseases,
+        medications: meds,
+      });
+    } else if (step === 4) {
+      updateUserProfile({
+        termsAccepted,
+      });
+    } else if (step === 5) {
+      updateUserProfile({
+        painZones,
+      });
+    }
+  };
+
+  const addTag = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    input: string,
+    setInput: (v: string) => void,
+    tags: string[],
+    setTags: (v: string[]) => void
+  ) => {
+    if (e.key === 'Enter' && input.trim()) {
+      e.preventDefault();
+      if (!tags.includes(input.trim())) {
+        setTags([...tags, input.trim()]);
+      }
+      setInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string, tags: string[], setTags: (v: string[]) => void) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove));
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="w-full max-w-lg p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant relative overflow-hidden">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-primary">تکمیل پروفایل / Profile</h1>
+          <span className="text-sm font-medium bg-primary-container text-on-primary-container px-3 py-1 rounded-full">
+            مرحله / Step {step} از 5
+          </span>
         </div>
-    );
-}
 
-// --- Steps ---
-
-function Step1Phone({ data, updateData, nextStep }: any) {
-    return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex flex-col h-full">
-            <div className="text-center mb-10 mt-10">
-                <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-primary/20 shadow-inner">
-                    <span className="text-4xl text-primary font-bold">OTP</span>
-                </div>
-                <h2 className="text-2xl font-bold mb-2">تایید شماره</h2>
-                <p className="text-on-surface-variant">کد پیامک شده را وارد کنید</p>
+        {step === 1 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">نام و نام خانوادگی / Full Name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
-            
-            <div className="flex justify-center gap-3 mb-auto" dir="ltr">
-                {[1,2,3,4,5,6].map(i => (
-                    <input key={i} type="text" maxLength={1} className="w-12 h-14 text-center text-xl font-bold rounded-xl glass-input shadow-sm" defaultValue={i===1?'4':i===2?'9':''} />
+            <div>
+              <label className="block text-sm font-medium mb-1">سن / Age</label>
+              <input
+                type="number"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">جنسیت / Gender</label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value as 'male' | 'female')}
+                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="male">مرد / Male</option>
+                <option value="female">زن / Female</option>
+              </select>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">قد (cm) / Height</label>
+                <input
+                  type="number"
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">وزن (kg) / Weight</label>
+                <input
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">سطح فعالیت / Activity Level</label>
+              <select
+                value={activityLevel}
+                onChange={(e) => setActivityLevel(e.target.value as any)}
+                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="sedentary">بدون فعالیت / Sedentary</option>
+                <option value="light">سبک / Light</option>
+                <option value="moderate">متوسط / Moderate</option>
+                <option value="active">فعال / Active</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">شغل / Job</label>
+              <input
+                type="text"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">بیماری‌های زمینه‌ای / Underlying Diseases</label>
+              <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود / Press Enter to add</p>
+              <input
+                type="text"
+                value={diseaseInput}
+                onChange={(e) => setDiseaseInput(e.target.value)}
+                onKeyDown={(e) => addTag(e, diseaseInput, setDiseaseInput, diseases, setDiseases)}
+                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary mb-2"
+                placeholder="مثلا: دیابت / e.g. Diabetes"
+              />
+              <div className="flex flex-wrap gap-2">
+                {diseases.map((d) => (
+                  <span
+                    key={d}
+                    className="flex items-center gap-1 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-sm"
+                  >
+                    {d}
+                    <button
+                      onClick={() => removeTag(d, diseases, setDiseases)}
+                      className="text-on-secondary-container hover:text-error ml-1"
+                    >
+                      &times;
+                    </button>
+                  </span>
                 ))}
+              </div>
             </div>
 
-            <button onClick={nextStep} className="btn-primary-glass w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 mt-8">
-                تایید و ادامه <ArrowLeft className="w-5 h-5" />
-            </button>
-        </motion.div>
-    );
-}
-
-function Step2Profile({ data, updateData, nextStep }: any) {
-    return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex flex-col h-full pb-8">
-            <h2 className="text-2xl font-bold mb-8">اطلاعات پایه</h2>
-            
-            <div className="space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-on-surface-variant mb-2 ml-2">نام و نام خانوادگی</label>
-                    <input 
-                        className="w-full h-14 px-4 rounded-xl glass-input shadow-sm focus:bg-white" 
-                        placeholder="مثلا: علی رضایی" 
-                        value={data.fullName}
-                        onChange={e => updateData({fullName: e.target.value})}
-                    />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-on-surface-variant mb-2 ml-2">سن</label>
-                        <input 
-                            type="number"
-                            className="w-full h-14 px-4 rounded-xl glass-input shadow-sm focus:bg-white" 
-                            placeholder="سال"
-                            value={data.age}
-                            onChange={e => updateData({age: e.target.value})}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-on-surface-variant mb-2 ml-2">جنسیت</label>
-                        <select 
-                            className="w-full h-14 px-4 rounded-xl glass-input shadow-sm bg-transparent focus:bg-white"
-                            value={data.gender}
-                            onChange={e => updateData({gender: e.target.value})}
-                        >
-                            <option>مرد</option>
-                            <option>زن</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-on-surface-variant mb-2 ml-2">شغل فعلی</label>
-                    <input 
-                        className="w-full h-14 px-4 rounded-xl glass-input shadow-sm focus:bg-white" 
-                        placeholder="مثلا: برنامه نویس"
-                        value={data.jobTitle}
-                        onChange={e => updateData({jobTitle: e.target.value})}
-                    />
-                </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">داروهای فعلی / Current Medications</label>
+              <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود / Press Enter to add</p>
+              <input
+                type="text"
+                value={medInput}
+                onChange={(e) => setMedInput(e.target.value)}
+                onKeyDown={(e) => addTag(e, medInput, setMedInput, meds, setMeds)}
+                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary mb-2"
+                placeholder="مثلا: متفورمین / e.g. Metformin"
+              />
+              <div className="flex flex-wrap gap-2">
+                {meds.map((m) => (
+                  <span
+                    key={m}
+                    className="flex items-center gap-1 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-sm"
+                  >
+                    {m}
+                    <button
+                      onClick={() => removeTag(m, meds, setMeds)}
+                      className="text-on-secondary-container hover:text-error ml-1"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
+          </motion.div>
+        )}
 
-            <button onClick={nextStep} className="btn-primary-glass w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 mt-auto">
-                ادامه <ArrowLeft className="w-5 h-5" />
+        {step === 4 && (
+            <Step4Terms termsAccepted={termsAccepted} setTermsAccepted={setTermsAccepted} />
+        )}
+
+        {step === 5 && (
+            <Step5BodyMap painZones={painZones} setPainZones={setPainZones} />
+        )}
+
+        <div className="flex justify-between mt-8 gap-4">
+          {step > 1 ? (
+            <button
+              onClick={prevStep}
+              className="py-2 px-6 border border-outline text-on-surface rounded-full hover:bg-surface-variant transition-colors"
+            >
+              قبلی / Back
             </button>
-        </motion.div>
-    );
+          ) : (
+            <div />
+          )}
+          <button
+            onClick={nextStep}
+            disabled={step === 4 && !termsAccepted}
+            className={cn("py-2 px-6 rounded-full transition-colors flex items-center gap-2",
+                (step === 4 && !termsAccepted) ? "bg-surface-variant text-outline cursor-not-allowed" : "bg-primary text-on-primary hover:bg-primary/90"
+            )}
+          >
+            {step === 5 ? 'تکمیل / Finish' : 'بعدی / Next'} {step < 5 && <ArrowLeft className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function Step3Terms({ data, updateData, nextStep }: any) {
+function Step4Terms({ termsAccepted, setTermsAccepted }: any) {
     return (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col h-full items-center justify-center">
             <div className="glass-card p-8 rounded-[2rem] w-full border border-error/20 shadow-2xl relative overflow-hidden">
                  <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 blur-3xl rounded-full"></div>
-                 <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mb-6">
+                 <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mb-6 mx-auto">
                     <ShieldAlert className="w-8 h-8 text-error" />
                  </div>
-                 <h2 className="text-2xl font-bold text-on-surface mb-4">هشدار پزشکی</h2>
-                 <p className="text-on-surface-variant leading-relaxed text-lg mb-8">
-                    "این سامانه جایگزین پزشک نیست. در صورت درد شدید یا علایم خاص به پزشک مراجعه کنید. برنامه‌ها صرفا جنبه‌ی کمکی و آموزشی برای کاهش و بهبود دردهای عضلانی‌مفصلی دارد."
+                 <h2 className="text-2xl font-bold text-on-surface mb-4 text-center">هشدار پزشکی</h2>
+                 <p className="text-on-surface-variant leading-relaxed text-lg mb-8 text-center">
+                    &quot;این سامانه جایگزین پزشک نیست. در صورت درد شدید یا علایم خاص به پزشک مراجعه کنید. برنامه‌ها صرفا جنبه‌ی کمکی و آموزشی برای کاهش و بهبود دردهای عضلانی‌مفصلی دارد.&quot;
                  </p>
                  
-                 <label className="flex items-start gap-4 p-4 glass-panel rounded-xl cursor-pointer">
+                 <label className="flex items-start gap-4 p-4 glass-panel rounded-xl cursor-pointer bg-surface-variant">
                     <input 
                         type="checkbox" 
-                        checked={data.termsAccepted}
-                        onChange={e => updateData({termsAccepted: e.target.checked})}
+                        checked={termsAccepted}
+                        onChange={e => setTermsAccepted(e.target.checked)}
                         className="mt-1 w-6 h-6 rounded text-primary focus:ring-primary border-outline-variant bg-white"
                     />
-                    <span className="font-medium">قوانین و هشدار پزشکی را می‌پذیرم.</span>
+                    <span className="font-medium text-sm">قوانین و هشدار پزشکی را می‌پذیرم.</span>
                  </label>
             </div>
-
-            <button 
-                onClick={nextStep} 
-                disabled={!data.termsAccepted}
-                className={cn(
-                    "w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 mt-8 transition-all",
-                    data.termsAccepted ? "btn-primary-glass" : "bg-surface-variant text-outline cursor-not-allowed"
-                )}
-            >
-                پذیرش و شروع ارزیابی <ArrowLeft className="w-5 h-5" />
-            </button>
         </motion.div>
     );
 }
 
-function Step4BodyMap({ data, updateData, nextStep }: any) {
+function Step5BodyMap({ painZones, setPainZones }: any) {
     const [view, setView] = useState<'front' | 'back'>('back');
     const [activeZone, setActiveZone] = useState<string | null>(null);
 
@@ -248,13 +331,13 @@ function Step4BodyMap({ data, updateData, nextStep }: any) {
                 <h2 className="text-2xl font-bold mb-2">نقشه درد</h2>
                 <p className="text-sm text-on-surface-variant mb-6">محل درد خود را روی تصویر لمس کنید</p>
 
-                <div className="glass-panel p-1 rounded-full inline-flex w-56 shadow-sm border-white/80">
+                <div className="glass-panel p-1 rounded-full inline-flex w-56 shadow-sm border-white/80 bg-surface-variant">
                     <button onClick={() => setView('front')} className={cn("flex-1 py-1.5 rounded-full text-sm font-bold transition-colors", view === 'front' ? "bg-white text-primary shadow" : "text-on-surface-variant hover:bg-white/50")}>جلو</button>
                     <button onClick={() => setView('back')} className={cn("flex-1 py-1.5 rounded-full text-sm font-bold transition-colors", view === 'back' ? "bg-white text-primary shadow" : "text-on-surface-variant hover:bg-white/50")}>پشت</button>
                 </div>
             </div>
 
-            <div className="flex-1 relative glass-card rounded-3xl border border-white/60 shadow-inner flex items-center justify-center overflow-hidden mx-4">
+            <div className="flex-1 relative glass-card rounded-3xl border border-white/60 shadow-inner flex items-center justify-center overflow-hidden mx-4 bg-surface-variant min-h-[300px]">
                {/* Extremely Simplified Vector representation since we can't load complex SVG externally easily without URLs */}
                <div className="relative w-48 h-full min-h-[300px] flex justify-center py-8">
                     {/* Abstract silhouette */}
@@ -268,7 +351,7 @@ function Step4BodyMap({ data, updateData, nextStep }: any) {
                             <Hotspot top="12%" left="50%" onClick={() => handleSelectZone('گردن')} />
                             <Hotspot top="25%" left="35%" onClick={() => handleSelectZone('شانه چپ')} />
                             <Hotspot top="25%" left="65%" onClick={() => handleSelectZone('شانه راست')} />
-                            <Hotspot top="45%" left="50%" onClick={() => handleSelectZone('کمر')} pulse={!data.painZones.length} />
+                            <Hotspot top="45%" left="50%" onClick={() => handleSelectZone('کمر')} pulse={!painZones.length} />
                         </>
                     )}
                     {view === 'front' && (
@@ -281,10 +364,6 @@ function Step4BodyMap({ data, updateData, nextStep }: any) {
                </div>
             </div>
 
-            <button onClick={nextStep} className="btn-primary-glass w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 mt-6">
-                تحلیل نهایی <ArrowLeft className="w-5 h-5" />
-            </button>
-
             {/* Popover */}
             <AnimatePresence>
                 {activeZone && (
@@ -292,7 +371,7 @@ function Step4BodyMap({ data, updateData, nextStep }: any) {
                         initial={{ opacity: 0, y: 100 }} 
                         animate={{ opacity: 1, y: 0 }} 
                         exit={{ opacity: 0, y: 100 }}
-                        className="fixed bottom-24 left-4 right-4 glass-panel bg-white/80 rounded-[2rem] p-6 shadow-2xl border-white"
+                        className="fixed bottom-24 left-4 right-4 glass-panel bg-white/95 rounded-[2rem] p-6 shadow-2xl border-white z-50"
                     >
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold">{activeZone}</h3>
@@ -323,7 +402,7 @@ function Step4BodyMap({ data, updateData, nextStep }: any) {
                         </div>
 
                         <button onClick={() => {
-                            updateData({ painZones: [...data.painZones, { zone: activeZone as any, intensity: 6, type: 'تیر کشنده' }]});
+                            setPainZones([...painZones, { zone: activeZone as any, intensity: 6, type: 'تیر کشنده' }]);
                             setActiveZone(null);
                         }} className="w-full py-3 bg-surface-container hover:bg-surface-variant rounded-xl font-bold transition-colors">تایید و ثبت</button>
                     </motion.div>
