@@ -10,6 +10,7 @@ interface AuthState {
   setWizardStep: (step: number) => void;
   logout: () => void;
   logFood: (date: string, food: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }) => void;
+  clearAndSetFoods: (date: string, foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[]) => void;
   addWater: (date: string, amount: number) => void;
   logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number }) => void;
 }
@@ -50,6 +51,33 @@ export const useStore = create<AuthState>()(
             newLogs.push({
               date,
               foods: [food],
+              waterIntake: 0,
+            });
+          }
+
+          return {
+            userProfile: {
+              ...profile,
+              dailyLogs: newLogs,
+            },
+          };
+        }),
+      clearAndSetFoods: (date, foods) =>
+        set((state) => {
+          const profile = state.userProfile || {};
+          const logs = profile.dailyLogs || [];
+          const existingLogIndex = logs.findIndex((l) => l.date === date);
+
+          let newLogs = [...logs];
+          if (existingLogIndex >= 0) {
+            newLogs[existingLogIndex] = {
+              ...newLogs[existingLogIndex],
+              foods: [...foods],
+            };
+          } else {
+            newLogs.push({
+              date,
+              foods: [...foods],
               waterIntake: 0,
             });
           }
