@@ -11,6 +11,7 @@ interface AuthState {
   logout: () => void;
   logFood: (date: string, food: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }) => void;
   addWater: (date: string, amount: number) => void;
+  logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number }) => void;
 }
 
 export const useStore = create<AuthState>()(
@@ -77,6 +78,34 @@ export const useStore = create<AuthState>()(
               date,
               foods: [],
               waterIntake: amount,
+            });
+          }
+
+          return {
+            userProfile: {
+              ...profile,
+              dailyLogs: newLogs,
+            },
+          };
+        }),
+      logDailyMetrics: (date, metrics) =>
+        set((state) => {
+          const profile = state.userProfile || {};
+          const logs = profile.dailyLogs || [];
+          const existingLogIndex = logs.findIndex((l) => l.date === date);
+
+          let newLogs = [...logs];
+          if (existingLogIndex >= 0) {
+            newLogs[existingLogIndex] = {
+              ...newLogs[existingLogIndex],
+              ...metrics,
+            };
+          } else {
+            newLogs.push({
+              date,
+              foods: [],
+              waterIntake: 0,
+              ...metrics,
             });
           }
 

@@ -3,26 +3,83 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'motion/react';
-import { Plus, X, Droplet, Activity, Scale, Activity as Pulse } from 'lucide-react';
+import { Plus, X, Droplet, Activity, Scale, Activity as Pulse, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
-import { mockData7Days } from '@/lib/healthScore';
+import { calculateHealthScore, DailyHealthData } from '@/lib/healthScore';
+import { useStore } from '@/lib/store';
 
 const ProgressReport = dynamic(() => import('@/components/ProgressReport'), { ssr: false });
 const HydrationChart = dynamic(() => import('@/components/HydrationChart'), { ssr: false });
 
 export default function DashboardIndex() {
-  // Use today's data from mockData7Days
-  const todayData = mockData7Days[mockData7Days.length - 1];
+const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
 
   // States
-  const [calories, setCalories] = useState(todayData.calories);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [waterAmount, setWaterAmount] = useState(todayData.water); // Liters
   const [showWaterConf, setShowWaterConf] = useState(false);
 
-  // Animated health score counter
-  const targetScore = todayData.healthScore || 0;
+  // Sleep & Activity Modal state
+  const [isSleepModalOpen, setIsSleepModalOpen] = useState(false);
+  const [sleepHours, setSleepHours] = useState<number>(7);
+  const [sleepQuality, setSleepQuality] = useState<'poor' | 'fair' | 'good'>('fair');
+  const [activityMinutes, setActivityMinutes] = useState<number>(0);
+
+  // Date and logs
+  const todayDate = new Date().toISOString().split('T')[0];
+  const todayLog = userProfile?.dailyLogs?.find(l => l.date === todayDate) || { foods: [], waterIntake: 0, activityMinutes: 0, sleepHours: 0, sleepQuality: 'fair' as const };
+
+  // Calculations
+  const waterTarget = userProfile?.weight ? Math.round(userProfile.weight * 30) : 2000;
+  const waterAmountMl = todayLog.waterIntake || 0;
+  const waterAmountLiters = (waterAmountMl / 1000).toFixed(1);
+
+  const consumedCalories = todayLog.foods?.reduce((acc: number, food: any) => acc + food.calories, 0) || 0;
+  const consumedProtein = todayLog.foods?.reduce((acc: number, food: any) => acc + food.protein, 0) || 0;
+  const consumedCarbs = todayLog.foods?.reduce((acc: number, food: any) => acc + food.carbs, 0) || 0;
+  const consumedFat = todayLog.foods?.reduce((acc: number, food: any) => acc + food.fat, 0) || 0;
+
+  // Target calories
+  let targetCalories = 2000;
+  if (userProfile?.weight && userProfile?.height && userProfile?.age && userProfile?.gender) {
+    let bmr = userProfile.gender === 'male'
+      ? 10 * userProfile.weight + 6.25 * userProfile.height - 5 * userProfile.age + 5
+      : 10 * userProfile.weight + 6.25 * userProfile.height - 5 * userProfile.age - 161;
+
+    let multiplier = 1.2;
+    if (userProfile?.activityLevel === 'light') multiplier = 1.375;
+    else if (userProfile?.activityLevel === 'moderate') multiplier = 1.55;
+    else if (userProfile?.activityLevel === 'active') multiplier = 1.725;
+
+    let tdee = bmr * multiplier;
+    if (userProfile?.nutritionGoal === 'کاهش وزن') tdee -= 500;
+    else if (userProfile?.nutritionGoal === 'افزایش وزن') tdee += 500;
+
+    targetCalories = Math.round(tdee);
+  }
+
+  const weight = userProfile?.weight || 0;
+  const bmi = (userProfile?.weight && userProfile?.height) ? parseFloat((userProfile.weight / Math.pow(userProfile.height / 100, 2)).toFixed(1)) : 0;
+
+  let averagePain = 0;
+  let hasPainData = false;
+  if (userProfile?.painZones && userProfile.painZones.length > 0) {
+    hasPainData = true;
+    averagePain = userProfile.painZones.reduce((sum, z) => sum + z.intensity, 0) / userProfile.painZones.length;
+  }
+
+  // Real Health Score
+  const healthData = {
+    weight,
+    bmi,
+    pain: averagePain,
+    activity: todayLog.activityMinutes || 0,
+    calories: consumedCalories,
+    water: waterAmountMl / 1000,
+    sleepHours: todayLog.sleepHours || 0,
+    sleepQuality: todayLog.sleepQuality || 'fair' as const,
+  };
+  const targetScore = calculateHealthScore(healthData);
   const count = useMotionValue(0);
   const roundedCount = useTransform(count, (latest) => Math.round(latest));
 
@@ -44,12 +101,19 @@ export default function DashboardIndex() {
   }, []);
 
   const handleQuickLog = (amount: number) => {
-    setCalories(prev => Math.min(prev + amount, 3000));
+    logFood(todayDate, {
+        id: Date.now().toString(),
+        name: 'وعده سریع',
+        calories: amount,
+        protein: Math.round(amount * 0.03),
+        carbs: Math.round(amount * 0.1),
+        fat: Math.round(amount * 0.02),
+    });
     setIsLogModalOpen(false);
   };
 
   const handleDrinkWater = () => {
-    setWaterAmount(prev => +(prev + 0.25).toFixed(2));
+    addWater(todayDate, 250);
     
     // Show confirmation animation
     setShowWaterConf(true);
@@ -71,6 +135,11 @@ export default function DashboardIndex() {
         }
       }, 5000); // Demo: 5 seconds instead of 2 hours
     }
+  };
+
+  const handleSaveSleepActivity = () => {
+    logDailyMetrics(todayDate, { sleepHours, sleepQuality, activityMinutes });
+    setIsSleepModalOpen(false);
   };
 
   // Determine status text based on health score
@@ -126,29 +195,29 @@ export default function DashboardIndex() {
             <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col items-center justify-center text-center ">
               <Scale className="w-6 h-6 text-primary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وزن</p>
-              <p className="text-lg font-bold text-on-surface">{todayData.weight} <span className="text-xs font-normal">kg</span></p>
+              <p className="text-lg font-bold text-on-surface">{weight || '-'} <span className="text-xs font-normal">kg</span></p>
             </div>
             <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col items-center justify-center text-center ">
               <Activity className="w-6 h-6 text-secondary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">شاخص توده بدنی</p>
-              <p className="text-lg font-bold text-on-surface">{todayData.bmi}</p>
+              <p className="text-lg font-bold text-on-surface">{bmi || '-'}</p>
             </div>
             <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col items-center justify-center text-center ">
               <Pulse className="w-6 h-6 text-error mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وضعیت درد</p>
-              <p className="text-lg font-bold text-error">{todayData.pain} <span className="text-xs font-normal">/ 10</span></p>
+              <p className="text-lg font-bold text-error">{hasPainData ? `${averagePain.toFixed(1)} / 10` : <span className="text-xs font-normal text-on-surface-variant">ثبت نشده</span>}</p>
             </div>
         </section>
 
         {/* Today's Activity Grid */}
-        <section className="grid grid-cols-2 gap-6">
+        <section className="grid grid-cols-2 gap-6 mb-8">
             {/* Calorie */}
             <div className="col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden ">
                  <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
                  <div className="flex justify-between items-start z-10 w-full">
                     <div>
                         <h3 className="font-bold text-lg">کالری امروز</h3>
-                        <p className="text-sm text-on-surface-variant font-mono">{calories} / 2000 kcal</p>
+                        <p className="text-sm text-on-surface-variant font-mono">{consumedCalories} / {targetCalories} kcal</p>
                     </div>
                     {/* Quick Log Action */}
                     <button 
@@ -162,15 +231,15 @@ export default function DashboardIndex() {
                  <div className="flex items-center gap-6 z-10">
                     {/* Simulated 3D rings */}
                     <div className="relative w-24 h-24 flex items-center justify-center">
-                         <div className="absolute inset-0 rounded-full border-8 border-primary shadow-lg border-r-transparent transition-all duration-500" style={{ transform: `rotate(${Math.min(calories / 2000 * 360, 360)}deg)` }}></div>
+                         <div className="absolute inset-0 rounded-full border-8 border-primary shadow-lg border-r-transparent transition-all duration-500" style={{ transform: `rotate(${Math.min(consumedCalories / targetCalories * 360, 360)}deg)` }}></div>
                          <div className="absolute inset-2 rounded-full border-8 border-secondary-container shadow-lg border-l-transparent"></div>
                          <div className="absolute inset-4 rounded-full border-8 border-outline-variant border-b-transparent"></div>
                     </div>
                     
                     <div className="flex flex-col gap-2 text-sm font-medium">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-primary shadow-sm" /> پروتئین: {Math.round(calories * 0.03)}g</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-secondary-container shadow-sm" /> کربوهیدرات: {Math.round(calories * 0.1)}g</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-outline-variant shadow-sm" /> چربی: {Math.round(calories * 0.02)}g</div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-primary shadow-sm" /> پروتئین: {Math.round(consumedProtein)}g</div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-secondary-container shadow-sm" /> کربوهیدرات: {Math.round(consumedCarbs)}g</div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-outline-variant shadow-sm" /> چربی: {Math.round(consumedFat)}g</div>
                     </div>
                  </div>
             </div>
@@ -181,7 +250,8 @@ export default function DashboardIndex() {
                 <div className="flex justify-between items-start z-10 w-full mb-2">
                     <div>
                         <h3 className="font-bold text-on-surface mb-1">آب مصرفی</h3>
-                        <p className="text-2xl font-black text-primary">{waterAmount} لیتر</p>
+                        <p className="text-2xl font-black text-primary">{waterAmountLiters} لیتر</p>
+                        <p className="text-xs text-on-surface-variant font-mono">{waterAmountMl} / {waterTarget} ml</p>
                     </div>
                     <button 
                         onClick={handleDrinkWater}
@@ -211,12 +281,47 @@ export default function DashboardIndex() {
             </div>
 
             {/* Workouts */}
-            <div className="col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col  min-h-[160px]">
+            <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col min-h-[160px]">
                 <h3 className="font-bold text-on-surface mb-1">تمرینات</h3>
-                <p className="text-2xl font-black text-primary mb-2">{todayData.activity} دقیقه</p>
+                <p className="text-2xl font-black text-primary mb-2">{todayLog.activityMinutes || 0} دقیقه</p>
                 <div className="mt-auto px-4 py-2 bg-surface-variant/50 rounded-xl text-sm font-bold flex items-center justify-center">
-                    هوازی
+                    {todayLog.activityMinutes ? 'ثبت شده' : 'بدون فعالیت'}
                 </div>
+            </div>
+
+            {/* Sleep Card */}
+            <div className="col-span-2 glass-panel p-4 rounded-2xl flex flex-col gap-4">
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-on-surface">خواب و فعالیت</h3>
+                    <div className="text-sm text-on-surface-variant font-mono">ثبت روزانه</div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-bold mb-1 text-on-surface-variant">ساعت خواب</label>
+                        <input type="number" step="0.5" min="0" max="24" value={sleepHours} onChange={e => setSleepHours(parseFloat(e.target.value) || 0)} className="w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold mb-1 text-on-surface-variant">فعالیت (دقیقه)</label>
+                        <input type="number" min="0" value={activityMinutes} onChange={e => setActivityMinutes(parseInt(e.target.value) || 0)} className="w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm" />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-xs font-bold mb-1 text-on-surface-variant text-center">کیفیت خواب</label>
+                    <div className="flex justify-center gap-2">
+                        <button onClick={() => setSleepQuality('good')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sleepQuality === 'good' ? 'bg-primary text-white shadow-md' : 'bg-surface-variant/50 hover:bg-surface-variant text-on-surface'}`}>خوب</button>
+                        <button onClick={() => setSleepQuality('fair')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sleepQuality === 'fair' ? 'bg-primary text-white shadow-md' : 'bg-surface-variant/50 hover:bg-surface-variant text-on-surface'}`}>متوسط</button>
+                        <button onClick={() => setSleepQuality('poor')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sleepQuality === 'poor' ? 'bg-primary text-white shadow-md' : 'bg-surface-variant/50 hover:bg-surface-variant text-on-surface'}`}>بد</button>
+                    </div>
+                </div>
+
+                <button
+                    onClick={handleSaveSleepActivity}
+                    className="btn-primary-glass text-white w-full py-3 rounded-2xl font-bold shadow-sm mt-2 flex justify-center items-center gap-2"
+                >
+                    ثبت <Plus className="w-4 h-4" />
+                </button>
             </div>
         </section>
 
@@ -261,7 +366,9 @@ export default function DashboardIndex() {
                 </div>
             )}
         </AnimatePresence>
+
     </div>
+
   );
 }
 
