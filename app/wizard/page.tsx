@@ -379,6 +379,18 @@ function Step5BodyMap({ painZones, setPainZones }: { painZones: { zone: string; 
                             <Hotspot top="25%" left="35%" onClick={() => handleSelectZone('شانه چپ')} />
                             <Hotspot top="25%" left="65%" onClick={() => handleSelectZone('شانه راست')} />
                             <Hotspot top="45%" left="50%" onClick={() => handleSelectZone('کمر')} pulse={!painZones.length} />
+
+                            {/* New Hotspots */}
+                            <Hotspot top="40%" left="33%" onClick={() => handleSelectZone('آرنج چپ')} />
+                            <Hotspot top="40%" left="67%" onClick={() => handleSelectZone('آرنج راست')} />
+                            <Hotspot top="55%" left="31%" onClick={() => handleSelectZone('مچ دست چپ')} />
+                            <Hotspot top="55%" left="69%" onClick={() => handleSelectZone('مچ دست راست')} />
+                            <Hotspot top="55%" left="42%" onClick={() => handleSelectZone('لگن چپ')} />
+                            <Hotspot top="55%" left="58%" onClick={() => handleSelectZone('لگن راست')} />
+                            <Hotspot top="82%" left="44%" onClick={() => handleSelectZone('ساق پا چپ')} />
+                            <Hotspot top="82%" left="56%" onClick={() => handleSelectZone('ساق پا راست')} />
+                            <Hotspot top="94%" left="45%" onClick={() => handleSelectZone('مچ پا چپ')} />
+                            <Hotspot top="94%" left="55%" onClick={() => handleSelectZone('مچ پا راست')} />
                         </>
                     )}
                     {view === 'front' && (
@@ -386,6 +398,18 @@ function Step5BodyMap({ painZones, setPainZones }: { painZones: { zone: string; 
                             <Hotspot top="30%" left="50%" onClick={() => handleSelectZone('قفسه سینه')} />
                             <Hotspot top="70%" left="42%" onClick={() => handleSelectZone('زانو چپ')} />
                             <Hotspot top="70%" left="58%" onClick={() => handleSelectZone('زانو راست')} />
+
+                            {/* New Hotspots */}
+                            <Hotspot top="40%" left="33%" onClick={() => handleSelectZone('آرنج چپ')} />
+                            <Hotspot top="40%" left="67%" onClick={() => handleSelectZone('آرنج راست')} />
+                            <Hotspot top="55%" left="31%" onClick={() => handleSelectZone('مچ دست چپ')} />
+                            <Hotspot top="55%" left="69%" onClick={() => handleSelectZone('مچ دست راست')} />
+                            <Hotspot top="55%" left="42%" onClick={() => handleSelectZone('لگن چپ')} />
+                            <Hotspot top="55%" left="58%" onClick={() => handleSelectZone('لگن راست')} />
+                            <Hotspot top="82%" left="44%" onClick={() => handleSelectZone('ساق پا چپ')} />
+                            <Hotspot top="82%" left="56%" onClick={() => handleSelectZone('ساق پا راست')} />
+                            <Hotspot top="94%" left="45%" onClick={() => handleSelectZone('مچ پا چپ')} />
+                            <Hotspot top="94%" left="55%" onClick={() => handleSelectZone('مچ پا راست')} />
                         </>
                     )}
                </div>
