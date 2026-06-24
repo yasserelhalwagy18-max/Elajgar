@@ -33,6 +33,9 @@ export interface UserProfile {
     date: string; // YYYY-MM-DD
     foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[];
     waterIntake: number; // in ml
+    sleepHours?: number;
+    sleepQuality?: 'poor' | 'fair' | 'good';
+    activityMinutes?: number;
   }[];
 }
 
