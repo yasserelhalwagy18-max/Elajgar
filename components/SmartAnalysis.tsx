@@ -48,6 +48,25 @@ export function SmartAnalysis() {
 
   const vulnerableZones = userProfile?.painZones?.map(z => z.zone).join('، ') || 'نامشخص';
 
+  // Generate probable causes
+  const probableCauses: string[] = [];
+
+  const hasBackPain = userProfile?.painZones?.some(z => z.zone === 'back' || z.zone === 'کمر');
+  if (hasBackPain && userProfile?.questionnaireAnswers?.sittingHoursPerDay && userProfile.questionnaireAnswers.sittingHoursPerDay > 8) {
+    probableCauses.push("احتمال ضعف عضلات مرکزی و فشار ناشی از نشستن طولانی وجود دارد.");
+  }
+
+  const sleepQuality = userProfile?.questionnaireAnswers?.sleepQuality;
+  const stressLevel = userProfile?.questionnaireAnswers?.stressLevel;
+  if (sleepQuality === 'بد' || sleepQuality === 'poor' || stressLevel === 'زیاد' || stressLevel === 'high') {
+    probableCauses.push("کیفیت پایین خواب یا استرس بالا می‌تواند باعث افزایش تنش عضلانی و کند شدن روند بهبودی شود.");
+  }
+
+  const exerciseDays = userProfile?.questionnaireAnswers?.exerciseDaysPerWeek;
+  if (exerciseDays !== undefined && exerciseDays < 2) {
+    probableCauses.push("عدم فعالیت فیزیکی کافی ممکن است منجر به ضعف عضلانی و تشدید درد شود.");
+  }
+
   return (
     <div className="mb-8 glass-panel p-6 rounded-[2rem] border-2 border-error/20 bg-error/5 shadow-lg relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 rounded-full blur-2xl"></div>
@@ -67,6 +86,20 @@ export function SmartAnalysis() {
           </div>
           <p className="text-on-surface font-medium">{vulnerableZones}</p>
         </div>
+
+        {probableCauses.length > 0 && (
+          <div className="bg-warning/10 p-4 rounded-2xl border border-warning/30">
+            <div className="flex items-center gap-2 mb-2 text-warning font-bold text-sm">
+              <AlertCircle className="w-4 h-4" />
+              <span>دلایل احتمالی:</span>
+            </div>
+            <ul className="list-disc list-inside space-y-2 text-sm text-on-surface">
+              {probableCauses.map((cause, index) => (
+                <li key={index} className="leading-relaxed">{cause}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="space-y-2">
           <h4 className="font-bold text-sm text-on-surface-variant flex items-center gap-2">
