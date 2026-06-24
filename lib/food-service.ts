@@ -28,7 +28,15 @@ const MOCK_FOOD_DATABASE: FoodItem[] = [
   { id: '18', name: 'سالاد شیرازی (یک کاسه)', calories: 50, protein: 1, carbs: 5, fat: 3 },
   { id: '19', name: 'ماست کم چرب (یک لیوان)', calories: 110, protein: 9, carbs: 13, fat: 2 },
   { id: '20', name: 'بستنی وانیلی (نصف لیوان)', calories: 137, protein: 2.3, carbs: 15.6, fat: 7.3 },
+  { id: '21', name: 'اوتمیل با میوه', calories: 350, protein: 12, carbs: 60, fat: 6 },
+  { id: '22', name: 'سینه مرغ گریل شده با سالاد', calories: 450, protein: 45, carbs: 15, fat: 20 },
+  { id: '23', name: 'ماهی قزل آلا با سبزیجات', calories: 600, protein: 40, carbs: 20, fat: 35 },
+  { id: '24', name: 'ماست یونانی و گردو', calories: 400, protein: 25, carbs: 15, fat: 25 },
 ];
+
+export const getFoodById = (id: string): FoodItem | undefined => {
+  return MOCK_FOOD_DATABASE.find(food => food.id === id);
+};
 
 export const searchFoods = async (query: string): Promise<FoodItem[]> => {
   // Simulate network delay

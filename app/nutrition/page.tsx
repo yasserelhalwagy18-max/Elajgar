@@ -3,12 +3,12 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStore } from '@/lib/store';
-import { searchFoods, FoodItem } from '@/lib/food-service';
-import { Search, Plus, Droplet, Target, Utensils, X, Check } from 'lucide-react';
+import { searchFoods, FoodItem, getFoodById } from '@/lib/food-service';
+import { Search, Plus, Droplet, Target, Utensils, X, Check, Sparkles } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
 
 export default function NutritionPage() {
-  const { userProfile, updateUserProfile, logFood, addWater } = useStore();
+  const { userProfile, updateUserProfile, logFood, addWater, clearAndSetFoods } = useStore();
   const [goalModalOpen, setGoalModalOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchResults, setSearchResults] = React.useState<FoodItem[]>([]);
@@ -89,6 +89,20 @@ export default function NutritionPage() {
     setSearchResults([]);
   };
 
+  const handleGenerateMealPlan = () => {
+    // Ids of the 4 mock meals added to MOCK_FOOD_DATABASE
+    const planIds = ['21', '22', '23', '24'];
+    const mockPlanFoods: FoodItem[] = planIds
+      .map(id => getFoodById(id))
+      .filter((f): f is FoodItem => f !== undefined);
+
+    if (mockPlanFoods.length > 0) {
+      if (clearAndSetFoods) {
+          clearAndSetFoods(todayDate, mockPlanFoods);
+      }
+    }
+  };
+
   // Run initial search
   React.useEffect(() => {
     let active = true;
@@ -114,19 +128,29 @@ export default function NutritionPage() {
       </header>
 
       {/* Goal Selector */}
-      <section className="glass-panel p-5 rounded-[2rem] mb-6 flex justify-between items-center">
-        <div>
-            <h3 className="text-sm font-bold text-on-surface-variant">هدف فعلی شما</h3>
-            <p className="text-lg font-black text-primary flex items-center gap-2">
-                <Target className="w-5 h-5" />
-                {userProfile?.nutritionGoal || 'انتخاب نشده'}
-            </p>
+      <section className="glass-panel p-5 rounded-[2rem] mb-6 flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+            <div>
+                <h3 className="text-sm font-bold text-on-surface-variant">هدف فعلی شما</h3>
+                <p className="text-lg font-black text-primary flex items-center gap-2">
+                    <Target className="w-5 h-5" />
+                    {userProfile?.nutritionGoal || 'انتخاب نشده'}
+                </p>
+            </div>
+            <button
+                onClick={() => setGoalModalOpen(true)}
+                className="btn-secondary px-4 py-2 rounded-xl text-sm font-bold"
+            >
+                تغییر هدف
+            </button>
         </div>
+
         <button
-            onClick={() => setGoalModalOpen(true)}
-            className="btn-secondary px-4 py-2 rounded-xl text-sm font-bold"
+            onClick={handleGenerateMealPlan}
+            className="w-full flex items-center justify-center gap-2 btn-primary-glass py-3 rounded-xl font-bold shadow-sm"
         >
-            تغییر هدف
+            <Sparkles className="w-5 h-5" />
+            پیشنهاد رژیم امروز
         </button>
       </section>
 
