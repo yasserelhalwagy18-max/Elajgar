@@ -90,3 +90,37 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Missing Utility Classes */
+.btn-secondary {
+  background: var(--color-surface-variant);
+  color: var(--color-on-surface-variant);
+  border: 1px solid var(--color-outline-variant);
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-outline-variant);
+}
+
+.glass-popover {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  color: var(--color-on-surface);
+  outline: none;
+}
+
+.field:focus {
+  box-shadow: 0 0 0 2px var(--color-primary);
+  outline: none;
+}
