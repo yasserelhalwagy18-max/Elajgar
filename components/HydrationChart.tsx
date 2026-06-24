@@ -1,10 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import * as d3 from 'd3';
+import { useStore } from '@/lib/store';
 
-const data = [
+const mockData = [
     { day: 'شنبه', amount: 1.2 },
     { day: 'یکشنبه', amount: 1.5 },
     { day: 'دوشنبه', amount: 1.0 },
@@ -17,6 +18,47 @@ const data = [
 export default function HydrationChart() {
     const svgRef = useRef<SVGSVGElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const userProfile = useStore(state => state.userProfile);
+
+    const chartData = useMemo(() => {
+        if (!userProfile) return mockData;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const generatedData = [];
+        let validEntriesCount = 0;
+
+        const formatter = new Intl.DateTimeFormat('fa-IR', { weekday: 'long' });
+
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+
+            const dayLabel = formatter.format(d);
+
+            const log = userProfile.dailyLogs?.find(l => l.date === dateStr);
+
+            if (log) {
+                validEntriesCount++;
+            }
+
+            const amount = log?.waterIntake ? Number((log.waterIntake / 1000).toFixed(1)) : 0;
+
+            generatedData.push({ day: dayLabel, amount });
+        }
+
+        if (validEntriesCount < 3) {
+            return mockData;
+        }
+
+        return generatedData;
+    }, [userProfile]);
 
     useEffect(() => {
         if (!svgRef.current || !wrapperRef.current) return;
@@ -33,21 +75,24 @@ export default function HydrationChart() {
         const graphHeight = height - margin.top - margin.bottom;
 
         const x = d3.scalePoint()
-            .domain(data.map(d => d.day))
+            .domain(chartData.map(d => d.day))
             .range([0, graphWidth])
             .padding(0.1);
 
+        const maxAmount = d3.max(chartData, d => d.amount) || 0;
+        const yMax = Math.max(3, Math.ceil(maxAmount)); // Dynamic upper limit, minimum 3
+
         const y = d3.scaleLinear()
-            .domain([0, 3]) // 0 to 3 liters
+            .domain([0, yMax])
             .range([graphHeight, 0]);
 
-        const area = d3.area<typeof data[0]>()
+        const area = d3.area<typeof chartData[0]>()
             .x(d => x(d.day) as number)
             .y0(graphHeight)
             .y1(d => y(d.amount))
             .curve(d3.curveMonotoneX);
 
-        const line = d3.line<typeof data[0]>()
+        const line = d3.line<typeof chartData[0]>()
             .x(d => x(d.day) as number)
             .y(d => y(d.amount))
             .curve(d3.curveMonotoneX);
@@ -71,13 +116,13 @@ export default function HydrationChart() {
 
         // Draw area
         g.append('path')
-            .datum(data)
+            .datum(chartData)
             .attr('fill', 'url(#hydration-gradient)')
             .attr('d', area);
 
         // Draw line
         g.append('path')
-            .datum(data)
+            .datum(chartData)
             .attr('fill', 'none')
             .attr('stroke', '#2563EB')
             .attr('stroke-width', 3)
@@ -85,7 +130,7 @@ export default function HydrationChart() {
 
         // Draw data points
         g.selectAll('.dot')
-            .data(data)
+            .data(chartData)
             .enter().append('circle')
             .attr('class', 'dot')
             .attr('cx', d => x(d.day) as number)
@@ -109,8 +154,8 @@ export default function HydrationChart() {
             .attr('font-weight', '600')
             .attr('font-family', 'inherit');
 
-        // Add subtle horizontal grid lines for Y values (0, 1.5, 3)
-        const yTicks = [1, 2, 3];
+        // Add subtle horizontal grid lines for Y values based on yMax
+        const yTicks = d3.range(1, yMax + 1);
         g.selectAll('.grid-line')
             .data(yTicks)
             .enter().append('line')
@@ -123,7 +168,7 @@ export default function HydrationChart() {
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '4,4');
 
-    }, []);
+    }, [chartData]);
 
     return (
         <div ref={wrapperRef} className="w-full h-[150px] mt-4 flex items-center justify-center relative">
