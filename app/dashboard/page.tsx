@@ -88,17 +88,17 @@ export default function DashboardIndex() {
                 <h1 className="text-2xl font-bold text-primary tracking-tight">Elajgar</h1>
                 <p className="text-sm text-on-surface-variant">سلام، کاربر عزیز</p>
             </div>
-            <div className="w-12 h-12 rounded-full glass-card flex items-center justify-center shadow-lg relative border-white">
+            <div className="w-12 h-12 rounded-full bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-lg relative border-white">
                 <span className="w-3 h-3 bg-error rounded-full absolute top-0 right-0 border-2 border-white"></span>
                 <span className="text-xl font-bold text-primary">A</span>
             </div>
         </header>
 
         {/* 3D Health Score Dial Component */}
-        <section className="glass-panel p-8 rounded-[2rem] flex flex-col items-center mb-6 relative overflow-hidden border-2 border-white/60 shadow-[0_10px_40px_rgba(37,99,235,0.1)]">
+        <section className="bg-white border border-outline-variant/20 shadow-sm p-8 rounded-[2rem] flex flex-col items-center mb-8 relative overflow-hidden border-2  shadow-[0_10px_40px_rgba(37,99,235,0.1)]">
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl mix-blend-multiply"></div>
             <h2 className="text-xl text-on-surface font-bold z-10">شاخص سلامت شما</h2>
-            <p className="text-primary font-medium text-sm mb-6 z-10">{getStatusText(targetScore)}</p>
+            <p className="text-primary font-medium text-sm mb-8 z-10">{getStatusText(targetScore)}</p>
             
             <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }} 
@@ -122,18 +122,18 @@ export default function DashboardIndex() {
         </section>
 
         {/* Quick Metrics Grid */}
-        <section className="grid grid-cols-3 gap-4 mb-6">
-            <div className="glass-card p-4 rounded-3xl flex flex-col items-center justify-center text-center border-white/60">
+        <section className="grid grid-cols-3 gap-6 mb-8">
+            <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col items-center justify-center text-center ">
               <Scale className="w-6 h-6 text-primary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وزن</p>
               <p className="text-lg font-bold text-on-surface">{todayData.weight} <span className="text-xs font-normal">kg</span></p>
             </div>
-            <div className="glass-card p-4 rounded-3xl flex flex-col items-center justify-center text-center border-white/60">
+            <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col items-center justify-center text-center ">
               <Activity className="w-6 h-6 text-secondary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">شاخص توده بدنی</p>
               <p className="text-lg font-bold text-on-surface">{todayData.bmi}</p>
             </div>
-            <div className="glass-card p-4 rounded-3xl flex flex-col items-center justify-center text-center border-white/60">
+            <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col items-center justify-center text-center ">
               <Pulse className="w-6 h-6 text-error mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وضعیت درد</p>
               <p className="text-lg font-bold text-error">{todayData.pain} <span className="text-xs font-normal">/ 10</span></p>
@@ -141,9 +141,9 @@ export default function DashboardIndex() {
         </section>
 
         {/* Today's Activity Grid */}
-        <section className="grid grid-cols-2 gap-4">
+        <section className="grid grid-cols-2 gap-6">
             {/* Calorie */}
-            <div className="col-span-2 glass-card p-5 rounded-3xl flex flex-col gap-4 relative overflow-hidden border-white/60">
+            <div className="col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden ">
                  <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
                  <div className="flex justify-between items-start z-10 w-full">
                     <div>
@@ -176,7 +176,7 @@ export default function DashboardIndex() {
             </div>
 
             {/* Hydration */}
-            <div className="col-span-2 glass-card p-5 rounded-3xl flex flex-col relative overflow-hidden border-white/60 min-h-[160px]">
+            <div className="col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col relative overflow-hidden  min-h-[160px]">
                 <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-primary/10 to-transparent blur-sm"></div>
                 <div className="flex justify-between items-start z-10 w-full mb-2">
                     <div>
@@ -211,7 +211,7 @@ export default function DashboardIndex() {
             </div>
 
             {/* Workouts */}
-            <div className="col-span-2 glass-card p-5 rounded-3xl flex flex-col border-white/60 min-h-[160px]">
+            <div className="col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col  min-h-[160px]">
                 <h3 className="font-bold text-on-surface mb-1">تمرینات</h3>
                 <p className="text-2xl font-black text-primary mb-2">{todayData.activity} دقیقه</p>
                 <div className="mt-auto px-4 py-2 bg-surface-variant/50 rounded-xl text-sm font-bold flex items-center justify-center">
@@ -231,7 +231,7 @@ export default function DashboardIndex() {
                         initial={{ opacity: 0 }} 
                         animate={{ opacity: 1 }} 
                         exit={{ opacity: 0 }} 
-                        className="absolute inset-0 bg-on-surface/20 backdrop-blur-sm"
+                        className="absolute inset-0 bg-on-surface/20 backdrop-blur-md"
                         onClick={() => setIsLogModalOpen(false)}
                     ></motion.div>
                     
@@ -239,9 +239,9 @@ export default function DashboardIndex() {
                         initial={{ opacity: 0, y: 100 }} 
                         animate={{ opacity: 1, y: 0 }} 
                         exit={{ opacity: 0, y: 100 }}
-                        className="relative z-10 w-full max-w-sm glass-popover bg-white/80 rounded-[2rem] p-6 shadow-2xl border border-white/90"
+                        className="relative z-10 w-full max-w-sm glass-popover bg-white/80 rounded-[2rem] p-6 shadow-2xl border "
                     >
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex justify-between items-center mb-8">
                             <h3 className="text-xl font-bold text-on-surface">ثبت سریع وعده</h3>
                             <button 
                                 onClick={() => setIsLogModalOpen(false)}
@@ -269,7 +269,7 @@ function MealLogButton({ label, calories, onClick, icon }: any) {
     return (
         <button 
             onClick={onClick}
-            className="flex items-center justify-between w-full p-4 glass-card hover:bg-white/60 transition-colors rounded-xl border border-white/50 group"
+            className="flex items-center justify-between w-full p-6 bg-white border border-outline-variant/20 shadow-sm hover:bg-white/60 transition-colors rounded-xl border  group"
         >
             <div className="flex items-center gap-3">
                 <span className="text-2xl">{icon}</span>

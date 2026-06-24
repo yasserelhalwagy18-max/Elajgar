@@ -11,7 +11,7 @@ export default function LandingPage() {
   return (
     <div className="max-w-[1280px] mx-auto px-6 py-8 md:px-16 pb-24 md:pb-8">
       {/* Top Nav */}
-      <nav className="hidden md:flex flex-row-reverse justify-between items-center w-full py-4 glass-panel rounded-full px-8 mb-16 sticky top-4 z-50">
+      <nav className="hidden md:flex flex-row-reverse justify-between items-center w-full py-4 bg-white border border-outline-variant/20 shadow-sm rounded-full px-8 mb-16 sticky top-4 z-50">
         <div className="text-2xl font-black text-primary tracking-tight">Elajgar</div>
         <div className="flex flex-row-reverse gap-8 text-sm font-medium">
           <Link href="#" className="text-primary font-bold border-b-2 border-primary pb-1">اکوسیستم</Link>
@@ -53,7 +53,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="absolute inset-0 bg-gradient-to-tr from-surface-variant to-surface rounded-[2.5rem] overflow-hidden glass-panel flex items-center justify-center shadow-2xl shadow-primary/10 p-8"
+            className="absolute inset-0 bg-gradient-to-tr from-surface-variant to-surface rounded-[2.5rem] overflow-hidden bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-2xl shadow-primary/10 p-8"
           >
              <div className="relative w-full h-full">
                 <Image 
@@ -96,7 +96,7 @@ export default function LandingPage() {
       </section>
 
       {/* Discount Banner */}
-      <section className="mb-24 relative overflow-hidden rounded-[2.5rem] glass-card bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row-reverse items-center justify-between gap-8 shadow-2xl">
+      <section className="mb-24 relative overflow-hidden rounded-[2.5rem] bg-white border border-outline-variant/20 shadow-sm bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row-reverse items-center justify-between gap-8 shadow-2xl">
          <div className="relative z-10 text-right flex-1">
             <h3 className="text-3xl font-bold mb-4">بسته جامع سلامت مفاصل</h3>
             <p className="text-lg text-primary-fixed opacity-90">با تهیه اشتراک ویژه، به تمامی امکانات اکوسیستم با تخفیف ویژه دسترسی پیدا کنید.</p>
@@ -115,8 +115,8 @@ export default function LandingPage() {
 function HubCard({ active = false, title, desc, icon: Icon }: { active?: boolean, title: string, desc: string, icon: any }) {
     return (
         <div className={cn(
-            "glass-panel p-8 rounded-[2rem] relative overflow-hidden group transition-all duration-300",
-            active ? "border-2 border-primary/50 shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer bg-white/60" : "opacity-75 grayscale-[30%] cursor-not-allowed"
+            "bg-white border border-outline-variant/20 shadow-sm p-8 rounded-[2rem] relative overflow-hidden group transition-all duration-300",
+            active ? "border-2  shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer bg-white/60" : "opacity-75 grayscale-[30%] cursor-not-allowed"
         )}>
             {!active && (
                 <div className="absolute inset-0 bg-surface/30 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center">

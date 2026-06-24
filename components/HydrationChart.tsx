@@ -16,13 +16,15 @@ const data = [
 
 export default function HydrationChart() {
     const svgRef = useRef<SVGSVGElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!svgRef.current) return;
+        if (!svgRef.current || !wrapperRef.current) return;
         
-        const width = 300;
+        // Make it responsive by using wrapper's width
+        const width = wrapperRef.current.clientWidth || 300;
         const height = 150;
-        const margin = { top: 10, right: 10, bottom: 20, left: 30 };
+        const margin = { top: 10, right: 10, bottom: 20, left: 10 };
 
         const svg = d3.select(svgRef.current);
         svg.selectAll('*').remove();
@@ -62,10 +64,10 @@ export default function HydrationChart() {
             
         gradient.append('stop')
             .attr('offset', '0%')
-            .attr('stop-color', 'rgba(59, 130, 246, 0.4)'); // blue-500
+            .attr('stop-color', '#dbe1ff'); // Primary container color
         gradient.append('stop')
             .attr('offset', '100%')
-            .attr('stop-color', 'rgba(59, 130, 246, 0)');
+            .attr('stop-color', 'rgba(219, 225, 255, 0)');
 
         // Draw area
         g.append('path')
@@ -77,7 +79,7 @@ export default function HydrationChart() {
         g.append('path')
             .datum(data)
             .attr('fill', 'none')
-            .attr('stroke', '#3B82F6')
+            .attr('stroke', '#2563EB')
             .attr('stroke-width', 3)
             .attr('d', line);
 
@@ -88,43 +90,44 @@ export default function HydrationChart() {
             .attr('class', 'dot')
             .attr('cx', d => x(d.day) as number)
             .attr('cy', d => y(d.amount))
-            .attr('r', 4)
+            .attr('r', 5)
             .attr('fill', '#fff')
-            .attr('stroke', '#3B82F6')
+            .attr('stroke', '#2563EB')
             .attr('stroke-width', 2);
 
-        // Add axes
+        // Add X axis only (simpler)
         const xAxis = d3.axisBottom(x).tickSize(0).tickPadding(10);
         g.append('g')
             .attr('transform', `translate(0,${graphHeight})`)
             .call(xAxis)
             .select('.domain').remove(); // remove axis line
 
-        // Customize axis text
+        // Customize X axis text
         g.selectAll('.tick text')
-            .attr('font-size', '10px')
-            .attr('fill', '#64748B')
-            .attr('font-weight', 'bold')
+            .attr('font-size', '11px')
+            .attr('fill', '#737686')
+            .attr('font-weight', '600')
             .attr('font-family', 'inherit');
 
-        const yAxis = d3.axisLeft(y).ticks(3).tickSize(-graphWidth);
-        const yAxisGroup = g.append('g')
-            .call(yAxis);
-        
-        yAxisGroup.select('.domain').remove();
-        yAxisGroup.selectAll('.tick line')
-            .attr('stroke', '#E2E8F0')
-            .attr('stroke-dasharray', '3,3');
-            
-        yAxisGroup.selectAll('.tick text')
-            .attr('font-size', '10px')
-            .attr('fill', '#64748B');
+        // Add subtle horizontal grid lines for Y values (0, 1.5, 3)
+        const yTicks = [1, 2, 3];
+        g.selectAll('.grid-line')
+            .data(yTicks)
+            .enter().append('line')
+            .attr('class', 'grid-line')
+            .attr('x1', 0)
+            .attr('x2', graphWidth)
+            .attr('y1', d => y(d))
+            .attr('y2', d => y(d))
+            .attr('stroke', '#f1f5f9')
+            .attr('stroke-width', 1)
+            .attr('stroke-dasharray', '4,4');
 
     }, []);
 
     return (
-        <div className="w-full h-[150px] mt-4 flex items-center justify-center">
-            <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet"></svg>
+        <div ref={wrapperRef} className="w-full h-[150px] mt-4 flex items-center justify-center relative">
+            <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="none"></svg>
         </div>
     );
 }
