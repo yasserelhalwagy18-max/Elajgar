@@ -14,9 +14,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="fa" dir="rtl" className={vazirmatn.variable}>
       <body className="font-sans antialiased bg-surface text-on-surface" suppressHydrationWarning>
-        <div className="ambient-blob bg-primary-fixed w-96 h-96 top-[-10%] left-[-10%]"></div>
-        <div className="ambient-blob bg-secondary-container w-80 h-80 top-[40%] right-[-20%]"></div>
-        <div className="ambient-blob bg-primary opacity-20 w-[500px] h-[500px] bottom-[-10%] left-[20%]"></div>
         {children}
       </body>
     </html>
