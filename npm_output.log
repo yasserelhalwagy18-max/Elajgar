@@ -1,0 +1,22 @@
+
+> ai-studio-applet@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.3s
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 14.7s (3271 modules)
+ GET /dashboard 200 in 17811ms
+ GET /dashboard 200 in 147ms
+ ○ Compiling /dashboard/education ...
+ ✓ Compiled /dashboard/education in 4s (3358 modules)
+ GET /dashboard/education 200 in 4316ms
+ GET /dashboard/education 200 in 87ms
+ GET /dashboard/education 200 in 556ms
+ GET /dashboard/education 200 in 291ms
+ ✓ Compiled in 1602ms (3358 modules)
+ GET /dashboard/education 200 in 626ms

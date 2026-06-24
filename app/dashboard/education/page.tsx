@@ -6,12 +6,14 @@ import { Lock, Play, Verified } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CorrectionalCalendar } from '@/components/CorrectionalCalendar';
 import { ExerciseGallery } from '@/components/ExerciseGallery';
+import { SmartAnalysis } from '@/components/SmartAnalysis';
+import { EducationalContent } from '@/components/EducationalContent';
 
 export default function EducationPage() {
     return (
         <div className="p-6 pb-32">
             <header className="mb-6 sticky top-0 pt-4 z-40 bg-surface/80 backdrop-blur-md">
-                <h1 className="text-2xl font-bold text-on-surface mb-4">محتوای هوشمند</h1>
+                <h1 className="text-2xl font-bold text-on-surface mb-4">آموزش و تحلیل هوشمند</h1>
                 
                 {/* Horizontal scroll tags */}
                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
@@ -22,8 +24,10 @@ export default function EducationPage() {
                 </div>
             </header>
 
+            <SmartAnalysis />
             <CorrectionalCalendar />
             <ExerciseGallery />
+            <EducationalContent />
 
             {/* Premium Locked Content */}
             <section className="relative mt-8">

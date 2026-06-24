@@ -13,7 +13,7 @@ export function BottomNav() {
   const navItems = [
     { href: '/dashboard', icon: LayoutGrid, label: 'خانه' },
     { href: '/nutrition', icon: Utensils, label: 'تغذیه' },
-    { href: '/dashboard/tracker', icon: Activity, label: 'فعالیت' },
+    { href: '/dashboard/education', icon: GraduationCap, label: 'آموزش' },
     { href: '/dashboard/gyms', icon: Dumbbell, label: 'باشگاه' },
     { href: '/dashboard/profile', icon: User, label: 'پروفایل' },
   ];
