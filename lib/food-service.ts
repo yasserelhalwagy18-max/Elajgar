@@ -38,6 +38,10 @@ export const getFoodById = (id: string): FoodItem | undefined => {
   return MOCK_FOOD_DATABASE.find(food => food.id === id);
 };
 
+export const getAllFoods = (): FoodItem[] => {
+  return MOCK_FOOD_DATABASE;
+};
+
 export const searchFoods = async (query: string): Promise<FoodItem[]> => {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 500));
