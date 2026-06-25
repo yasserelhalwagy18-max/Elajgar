@@ -8,11 +8,9 @@
 
  ✓ Starting...
  ✓ Ready in 2.1s
- ○ Compiling / ...
- ✓ Compiled / in 9.9s (1536 modules)
- GET / 200 in 11606ms
- ✓ Compiled in 707ms (678 modules)
- ✓ Compiled in 413ms (678 modules)
- ✓ Compiled in 349ms (678 modules)
- ✓ Compiled in 335ms (678 modules)
- ✓ Compiled in 519ms (678 modules)
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 10.6s (2590 modules)
+ GET /admin 200 in 12221ms
+ ✓ Compiled in 1321ms (2581 modules)
+ GET /admin 200 in 557ms
+ ✓ Compiled in 1277ms (2581 modules)

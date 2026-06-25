@@ -1,13 +1,49 @@
 'use client';
 
-import * as React from 'react';
-import { Users, Filter, UploadCloud, Dumbbell, PlaySquare, Settings, LogOut, ChevronDown, ActivitySquare } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Users, Filter, UploadCloud, Dumbbell, PlaySquare, Settings, LogOut, ChevronDown, ActivitySquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import { useStore } from '@/lib/store';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const PainHeatmap = dynamic(() => import('@/components/PainHeatmap'), { ssr: false });
 
 export default function AdminPage() {
+    const router = useRouter();
+    const logoutStore = useStore((state) => state.logout);
+
+    const [activeItem, setActiveItem] = useState('Overview');
+
+    // Weights State
+    const [bmiMultiplier, setBmiMultiplier] = useState(1.2);
+    const [activityIndex, setActivityIndex] = useState(0.85);
+    const [showSuccessMsg, setShowSuccessMsg] = useState(false);
+
+    // Modal State
+    const [modalData, setModalData] = useState<any>(null);
+
+    // File Input Ref
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleLogout = () => {
+        logoutStore();
+        router.push('/login');
+    };
+
+    const handleApplyWeights = () => {
+        const weights = { bmiMultiplier, activityIndex };
+        localStorage.setItem('elajgar-health-weights', JSON.stringify(weights));
+        setShowSuccessMsg(true);
+        setTimeout(() => setShowSuccessMsg(false), 3000);
+    };
+
+    const handleFileClick = (e: React.MouseEvent) => {
+        if (e.target !== fileInputRef.current && fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
     return (
         <div className="flex min-h-screen bg-surface">
             {/* Sidebar */}
@@ -18,14 +54,14 @@ export default function AdminPage() {
                 </div>
                 
                 <nav className="flex-1 flex flex-col gap-2">
-                    <NavItem icon={Filter} label="Overview" active />
-                    <NavItem icon={Users} label="User Directory" />
-                    <NavItem icon={Settings} label="Formula Editor" />
-                    <NavItem icon={UploadCloud} label="Content Pipeline" />
+                    <NavItem icon={Filter} label="Overview" active={activeItem === 'Overview'} onClick={() => setActiveItem('Overview')} />
+                    <NavItem icon={Users} label="User Directory" active={activeItem === 'User Directory'} onClick={() => setActiveItem('User Directory')} />
+                    <NavItem icon={Settings} label="Formula Editor" active={activeItem === 'Formula Editor'} onClick={() => setActiveItem('Formula Editor')} />
+                    <NavItem icon={UploadCloud} label="Content Pipeline" active={activeItem === 'Content Pipeline'} onClick={() => setActiveItem('Content Pipeline')} />
                 </nav>
 
                 <div className="px-8 mt-auto">
-                    <button className="flex items-center gap-4 px-6 py-4 rounded-2xl text-on-surface-variant hover:bg-surface-variant/50 w-full transition-colors font-bold">
+                    <button onClick={handleLogout} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-on-surface-variant hover:bg-surface-variant/50 w-full transition-colors font-bold">
                         <LogOut className="w-5 h-5" /> Logout
                     </button>
                 </div>
@@ -77,9 +113,9 @@ export default function AdminPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-outline-variant/20">
-                                    <TableRow id="#1042" name="Ali Rezaei" status="Active" risk="Low" />
-                                    <TableRow id="#1043" name="Sara Ahmadi" status="Flagged" risk="High" isHighRisk />
-                                    <TableRow id="#1044" name="Mohammad K." status="Pending" risk="Medium" />
+                                    <TableRow id="#1042" name="Ali Rezaei" status="Active" risk="Low" onView={(data: any) => setModalData(data)} />
+                                    <TableRow id="#1043" name="Sara Ahmadi" status="Flagged" risk="High" isHighRisk onView={(data: any) => setModalData(data)} />
+                                    <TableRow id="#1044" name="Mohammad K." status="Pending" risk="Medium" onView={(data: any) => setModalData(data)} />
                                 </tbody>
                             </table>
                         </div>
@@ -95,15 +131,30 @@ export default function AdminPage() {
                         <div className="space-y-6 flex-1">
                             <div>
                                 <label className="block text-sm font-bold text-on-surface-variant mb-2">BMI Multiplier</label>
-                                <input type="number" defaultValue={1.2} step={0.1} className="w-full h-12 px-4 rounded-xl glass-input bg-surface font-mono" />
+                                <input
+                                    type="number"
+                                    value={bmiMultiplier}
+                                    onChange={(e) => setBmiMultiplier(parseFloat(e.target.value))}
+                                    step={0.1}
+                                    className="w-full h-12 px-4 rounded-xl glass-input bg-surface font-mono"
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-on-surface-variant mb-2">Activity Index</label>
-                                <input type="number" defaultValue={0.85} step={0.05} className="w-full h-12 px-4 rounded-xl glass-input bg-surface font-mono" />
+                                <input
+                                    type="number"
+                                    value={activityIndex}
+                                    onChange={(e) => setActivityIndex(parseFloat(e.target.value))}
+                                    step={0.05}
+                                    className="w-full h-12 px-4 rounded-xl glass-input bg-surface font-mono"
+                                />
                             </div>
                         </div>
 
-                        <button className="btn-primary-glass w-full py-4 rounded-2xl font-bold mt-8 shadow-lg">Apply Weights</button>
+                        <button onClick={handleApplyWeights} className="btn-primary-glass w-full py-4 rounded-2xl font-bold mt-8 shadow-lg">Apply Weights</button>
+                        {showSuccessMsg && (
+                            <p className="text-sm text-green-600 mt-2 text-center">تنظیمات ذخیره شد ✓</p>
+                        )}
                     </section>
 
                     <section className="xl:col-span-2 glass-panel p-8 rounded-[2rem] border-white/80 shadow-xl flex flex-col min-h-[400px]">
@@ -112,7 +163,8 @@ export default function AdminPage() {
                            Content Ingestion
                         </h3>
                         
-                        <div className="flex-1 border-2 border-dashed border-primary/30 rounded-2xl bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors">
+                        <div onClick={handleFileClick} className="flex-1 border-2 border-dashed border-primary/30 rounded-2xl bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors">
+                            <input type="file" ref={fileInputRef} className="hidden" onClick={(e) => e.stopPropagation()} />
                             <UploadCloud className="w-12 h-12 text-primary mb-4" />
                             <p className="font-bold text-on-surface mb-2">Drag and drop files</p>
                             <span className="text-sm text-on-surface-variant">Video or JSON mapping</span>
@@ -120,13 +172,47 @@ export default function AdminPage() {
                     </section>
                 </div>
             </main>
+
+            {/* Modal Overlay */}
+            <AnimatePresence>
+                {modalData && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setModalData(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            className="bg-white/90 backdrop-blur-xl rounded-[2rem] p-8 w-full max-w-2xl shadow-2xl overflow-hidden border border-white"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-2xl font-bold text-on-surface">Row Data</h3>
+                                <button
+                                    onClick={() => setModalData(null)}
+                                    className="p-2 hover:bg-surface-variant rounded-full transition-colors"
+                                >
+                                    <X className="w-6 h-6 text-on-surface-variant" />
+                                </button>
+                            </div>
+                            <pre dir="ltr" className="bg-surface p-6 rounded-2xl text-sm font-mono overflow-auto max-h-[60vh] text-on-surface-variant text-left">
+                                {JSON.stringify(modalData, null, 2)}
+                            </pre>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
 
-function NavItem({ icon: Icon, label, active = false }: any) {
+function NavItem({ icon: Icon, label, active = false, onClick }: any) {
     return (
-        <div className={cn(
+        <div onClick={onClick} className={cn(
             "flex items-center gap-4 px-8 py-4 mr-4 rounded-l-full cursor-pointer transition-all duration-300",
             active ? "bg-secondary-container text-on-secondary-container font-black shadow-inner" : "text-on-surface-variant hover:bg-surface-variant hover:-translate-x-2 font-bold"
         )}>
@@ -136,7 +222,7 @@ function NavItem({ icon: Icon, label, active = false }: any) {
     );
 }
 
-function TableRow({ id, name, status, risk, isHighRisk = false }: any) {
+function TableRow({ id, name, status, risk, isHighRisk = false, onView }: any) {
     return (
         <tr className="hover:bg-white/60 transition-colors">
             <td className="p-4 font-mono text-sm text-outline">{id}</td>
@@ -150,7 +236,12 @@ function TableRow({ id, name, status, risk, isHighRisk = false }: any) {
             </td>
             <td className={cn("p-4 font-bold", isHighRisk ? "text-error" : "text-on-surface")}>{risk}</td>
             <td className="p-4 text-center">
-                <button className="text-primary font-bold text-sm hover:underline">View</button>
+                <button
+                    onClick={() => onView({ id, name, status, risk, isHighRisk })}
+                    className="text-primary font-bold text-sm hover:underline"
+                >
+                    View
+                </button>
             </td>
         </tr>
     );
