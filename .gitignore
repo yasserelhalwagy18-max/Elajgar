@@ -2,3 +2,4 @@ node_modules
 .next
 server.log
 tsconfig.tsbuildinfo
+npm_dev.log
