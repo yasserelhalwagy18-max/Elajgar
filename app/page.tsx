@@ -3,25 +3,67 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'motion/react';
-import { ArrowLeft, HeartPulse, Lock, Waves, Percent } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, HeartPulse, Lock, Waves, Percent, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function LandingPage() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
   return (
-    <div className="max-w-[1280px] mx-auto px-6 py-8 md:px-16 pb-24 md:pb-8">
+    <div className="max-w-[1280px] mx-auto px-6 py-8 md:px-16 pb-24 md:pb-8 relative">
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex flex-col items-center justify-center"
+          >
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="absolute top-6 right-6 p-2 text-on-surface hover:text-primary transition-colors"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            <div className="flex flex-col gap-8 text-2xl font-bold text-center">
+              <Link href="#services" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">اکوسیستم</Link>
+              <Link href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">خدمات</Link>
+              <Link href="#gyms" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">شبکه</Link>
+              <Link href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">تماس</Link>
+              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="mt-4">
+                <button className="btn-primary-glass px-10 py-4 rounded-full text-xl font-bold w-full">ورود / ثبت‌نام</button>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top Nav */}
-      <nav className="hidden md:flex flex-row-reverse justify-between items-center w-full py-4 bg-white border border-outline-variant/20 shadow-sm rounded-full px-8 mb-16 sticky top-4 z-50">
+      <nav className="flex flex-row-reverse justify-between items-center w-full py-4 bg-white border border-outline-variant/20 shadow-sm rounded-full px-6 md:px-8 mb-16 sticky top-4 z-50">
         <div className="text-2xl font-black text-primary tracking-tight">Elajgar</div>
-        <div className="flex flex-row-reverse gap-8 text-sm font-medium">
-          <Link href="#" className="text-primary font-bold border-b-2 border-primary pb-1">اکوسیستم</Link>
-          <Link href="#" className="text-on-surface-variant hover:text-primary transition-colors">خدمات</Link>
-          <Link href="#" className="text-on-surface-variant hover:text-primary transition-colors">شبکه</Link>
-          <Link href="#" className="text-on-surface-variant hover:text-primary transition-colors">تماس</Link>
+
+        {/* Desktop Nav Links */}
+        <div className="hidden md:flex flex-row-reverse gap-8 text-sm font-medium">
+          <Link href="#services" className="text-on-surface-variant hover:text-primary transition-colors">اکوسیستم</Link>
+          <Link href="#how-it-works" className="text-on-surface-variant hover:text-primary transition-colors">خدمات</Link>
+          <Link href="#gyms" className="text-on-surface-variant hover:text-primary transition-colors">شبکه</Link>
+          <Link href="#contact" className="text-on-surface-variant hover:text-primary transition-colors">تماس</Link>
         </div>
-        <Link href="/wizard">
+
+        {/* Desktop Nav CTA */}
+        <Link href="/login" className="hidden md:block">
           <button className="btn-primary-glass px-8 py-2.5 rounded-full text-sm font-bold">ورود / ثبت‌نام</button>
         </Link>
+
+        {/* Mobile Hamburger */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="md:hidden p-2 text-on-surface hover:text-primary transition-colors"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
       </nav>
 
       {/* Hero */}
@@ -39,12 +81,28 @@ export default function LandingPage() {
             با ترکیب دانش پزشکی و فناوری پیشرفته، مسیر بهبودی خود را هوشمندانه و دقیق طی کنید.
           </p>
           <div className="flex mt-8 gap-4">
-             <Link href="/wizard">
+             <Link href="/login">
                 <button className="btn-primary-glass px-8 py-4 rounded-full text-lg font-bold flex items-center justify-center gap-2 group">
                 <span>شروع ارزیابی هوشمند و سنجش درد</span>
                 <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                 </button>
              </Link>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex flex-wrap gap-4 mt-6">
+            <div className="flex items-center gap-2 text-on-surface-variant text-sm font-medium bg-surface-variant px-3 py-1.5 rounded-full border border-outline-variant/30">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              <span>حریم خصوصی محفوظ</span>
+            </div>
+            <div className="flex items-center gap-2 text-on-surface-variant text-sm font-medium bg-surface-variant px-3 py-1.5 rounded-full border border-outline-variant/30">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span>هوش مصنوعی</span>
+            </div>
+            <div className="flex items-center gap-2 text-on-surface-variant text-sm font-medium bg-surface-variant px-3 py-1.5 rounded-full border border-outline-variant/30">
+              <AlertCircle className="w-4 h-4 text-primary" />
+              <span>توصیه پزشکی نیست</span>
+            </div>
           </div>
         </div>
         
@@ -69,8 +127,52 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* How it Works Section */}
+      <section id="how-it-works" className="mb-24 px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-on-surface">چگونه کار می‌کند؟</h2>
+          <p className="text-on-surface-variant mt-2">مسیر ساده شما به سوی سلامتی</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+          {/* Connecting line for desktop */}
+          <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-outline-variant/30 -translate-y-1/2 z-0"></div>
+
+          <div className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-sm">
+            <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
+              <UserPlus className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-on-surface mb-2">۱. ثبت‌نام</h3>
+            <p className="text-sm text-on-surface-variant">اطلاعات اولیه و پروفایل خود را تکمیل کنید.</p>
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-sm">
+            <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
+              <Scan className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-on-surface mb-2">۲. ارزیابی درد</h3>
+            <p className="text-sm text-on-surface-variant">آزمون‌های هوشمند برای شناسایی دقیق مشکلات.</p>
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-sm">
+            <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
+              <ClipboardList className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-on-surface mb-2">۳. برنامه اختصاصی</h3>
+            <p className="text-sm text-on-surface-variant">دریافت تمرینات اصلاحی متناسب با شرایط شما.</p>
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-sm">
+            <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
+              <TrendingUp className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-on-surface mb-2">۴. پیشرفت</h3>
+            <p className="text-sm text-on-surface-variant">پیگیری روند بهبود و تنظیم مجدد برنامه‌ها.</p>
+          </div>
+        </div>
+      </section>
+
       {/* 3-App Hub */}
-      <section className="mb-24 px-4">
+      <section id="services" className="mb-24 px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-on-surface">اکوسیستم سلامت علاج‌گر</h2>
           <p className="text-on-surface-variant mt-2">یکپارچگی در مسیر درمان</p>
@@ -95,19 +197,142 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Discount Banner */}
-      <section className="mb-24 relative overflow-hidden rounded-[2.5rem] bg-white border border-outline-variant/20 shadow-sm bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row-reverse items-center justify-between gap-8 shadow-2xl">
-         <div className="relative z-10 text-right flex-1">
-            <h3 className="text-3xl font-bold mb-4">بسته جامع سلامت مفاصل</h3>
-            <p className="text-lg text-primary-fixed opacity-90">با تهیه اشتراک ویژه، به تمامی امکانات اکوسیستم با تخفیف ویژه دسترسی پیدا کنید.</p>
-         </div>
-         <div className="relative z-10 flex flex-col items-center justify-center bg-white/20 backdrop-blur-md p-8 rounded-3xl border border-white/30 shadow-inner">
-            <span className="text-sm text-primary-fixed mb-1 tracking-widest font-bold">تخفیف ویژه</span>
-            <span className="text-6xl font-black drop-shadow-md">۴۰٪</span>
-            <button className="mt-6 bg-white text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl">دریافت پیشنهاد</button>
-         </div>
+      {/* Stats Section */}
+      <section id="stats" className="mb-24 px-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
+            <span className="text-4xl font-black text-primary mb-2">۱۲</span>
+            <span className="text-sm font-medium text-on-surface-variant">مرحله ارزیابی</span>
+          </div>
+          <div className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
+            <span className="text-4xl font-black text-primary mb-2">۲۴</span>
+            <span className="text-sm font-medium text-on-surface-variant">نوع غذا</span>
+          </div>
+          <div className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
+            <span className="text-4xl font-black text-primary mb-2" dir="ltr">۰–۱۰۰</span>
+            <span className="text-sm font-medium text-on-surface-variant">امتیاز سلامت</span>
+          </div>
+          <div className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
+            <span className="text-4xl font-black text-primary mb-2">۴</span>
+            <span className="text-sm font-medium text-on-surface-variant">باشگاه شریک</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Gyms / Discount Banner */}
+      <section id="gyms" className="mb-24 px-4">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-on-surface">شبکه شرکای ما</h2>
+          <p className="text-on-surface-variant mt-2">علاج‌گر در بهترین باشگاه‌های سلامت</p>
+        </div>
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-outline-variant/20 shadow-sm bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row-reverse items-center justify-between gap-8 shadow-2xl">
+           <div className="relative z-10 text-right flex-1">
+              <h3 className="text-3xl font-bold mb-4">بسته جامع سلامت مفاصل</h3>
+              <p className="text-lg text-primary-fixed opacity-90">با تهیه اشتراک ویژه، به تمامی امکانات اکوسیستم با تخفیف ویژه دسترسی پیدا کنید و از خدمات حضوری باشگاه‌های شریک بهره‌مند شوید.</p>
+           </div>
+           <div className="relative z-10 flex flex-col items-center justify-center bg-white/20 backdrop-blur-md p-8 rounded-3xl border border-white/30 shadow-inner">
+              <span className="text-sm text-primary-fixed mb-1 tracking-widest font-bold">تخفیف ویژه</span>
+              <span className="text-6xl font-black drop-shadow-md">۴۰٪</span>
+              <Link href="/login">
+                <button className="mt-6 bg-white text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl">دریافت پیشنهاد</button>
+              </Link>
+           </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section id="testimonials" className="mb-24 px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-on-surface">نظرات کاربران</h2>
+          <p className="text-on-surface-variant mt-2">داستان موفقیت و بهبودی همراهان علاج‌گر</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-8 rounded-3xl border border-outline-variant/20 shadow-sm flex flex-col">
+            <div className="flex gap-1 mb-4 text-amber-400">
+              <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" />
+            </div>
+            <p className="text-on-surface-variant leading-relaxed mb-6 flex-1">
+              &quot;کمردرد مزمن من با استفاده از برنامه‌های اصلاحی علاج‌گر در کمتر از دو ماه به شدت کاهش یافت. واقعاً سیستم هوشمند و دقیقی دارد!&quot;
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary-container text-primary rounded-full flex items-center justify-center font-bold text-lg">س</div>
+              <div>
+                <h4 className="font-bold text-on-surface">سارا محمدی</h4>
+                <span className="text-xs text-on-surface-variant">کاربر اشتراک ویژه</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-3xl border border-outline-variant/20 shadow-sm flex flex-col">
+            <div className="flex gap-1 mb-4 text-amber-400">
+              <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" />
+            </div>
+            <p className="text-on-surface-variant leading-relaxed mb-6 flex-1">
+              &quot;ارزیابی اولیه بسیار دقیق بود و تمریناتی که به من پیشنهاد شد، کاملاً با شرایط بدنی‌ام همخوانی داشت. رابط کاربری هم بسیار ساده است.&quot;
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-secondary-container text-secondary rounded-full flex items-center justify-center font-bold text-lg">ع</div>
+              <div>
+                <h4 className="font-bold text-on-surface">علی رضایی</h4>
+                <span className="text-xs text-on-surface-variant">ورزشکار آسیب‌دیده</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-3xl border border-outline-variant/20 shadow-sm flex flex-col">
+            <div className="flex gap-1 mb-4 text-amber-400">
+              <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5" />
+            </div>
+            <p className="text-on-surface-variant leading-relaxed mb-6 flex-1">
+              &quot;پشتیبانی عالی و تمرینات آب‌درمانی که پیشنهاد دادند، باعث شد خیلی سریع‌تر از چیزی که فکر می‌کردم به فعالیت‌های روزمره‌ام برگردم.&quot;
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-tertiary-container text-tertiary rounded-full flex items-center justify-center font-bold text-lg">م</div>
+              <div>
+                <h4 className="font-bold text-on-surface">مریم کریمی</h4>
+                <span className="text-xs text-on-surface-variant">کاربر علاج‌گر</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
       
+      {/* Footer */}
+      <footer id="contact" className="border-t border-outline-variant/30 pt-12 pb-8 px-4 text-center md:text-right">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+          <div className="col-span-1 md:col-span-2">
+            <h3 className="text-2xl font-black text-primary tracking-tight mb-4">Elajgar</h3>
+            <p className="text-sm text-on-surface-variant max-w-sm leading-relaxed mx-auto md:mx-0">
+              پلتفرم جامع هوشمند برای سلامت مفاصل، ارزیابی درد و ارائه برنامه‌های تمرینی اختصاصی با بهره‌گیری از هوش مصنوعی.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-bold text-on-surface mb-4">دسترسی سریع</h4>
+            <div className="flex flex-col gap-2 text-sm text-on-surface-variant">
+              <Link href="#how-it-works" className="hover:text-primary transition-colors">چگونه کار می‌کند؟</Link>
+              <Link href="#services" className="hover:text-primary transition-colors">اکوسیستم سلامت</Link>
+              <Link href="#gyms" className="hover:text-primary transition-colors">شبکه باشگاه‌ها</Link>
+              <Link href="/login" className="hover:text-primary transition-colors">ورود / ثبت‌نام</Link>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-bold text-on-surface mb-4">پشتیبانی</h4>
+            <div className="flex flex-col gap-2 text-sm text-on-surface-variant">
+              <span dir="ltr" className="text-right inline-block w-full">021 - 12345678</span>
+              <span dir="ltr" className="text-right inline-block w-full">support@elajgar.com</span>
+              <span className="mt-2">تهران، خیابان ولیعصر، برج نوآوری</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-outline-variant/30 text-sm text-on-surface-variant gap-4">
+          <div className="flex gap-4">
+            <Link href="/terms" className="hover:text-primary transition-colors">شرایط استفاده</Link>
+            <Link href="/privacy" className="hover:text-primary transition-colors">حریم خصوصی</Link>
+          </div>
+          <p>© {new Date().getFullYear()} علاج‌گر. تمامی حقوق محفوظ است.</p>
+        </div>
+      </footer>
     </div>
   );
 }
