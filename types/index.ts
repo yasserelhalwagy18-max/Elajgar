@@ -28,7 +28,7 @@ export interface UserProfile {
     exerciseDaysPerWeek: number;
   };
   currentWizardStep?: number; // For step-by-step Auto-save persistence
-  nutritionGoal?: 'کاهش وزن' | 'افزایش وزن' | 'حفظ وزن';
+  nutritionGoal?: 'کاهش وزن' | 'افزایش وزن' | 'حفظ وزن' | 'سلامت عمومی';
   dailyLogs?: {
     date: string; // YYYY-MM-DD
     foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[];

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStore } from '@/lib/store';
-import { searchFoods, FoodItem, getFoodById } from '@/lib/food-service';
+import { searchFoods, FoodItem, getFoodById, getAllFoods } from '@/lib/food-service';
 import { Search, Plus, Droplet, Target, Utensils, X, Check, Sparkles } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
 
@@ -38,8 +38,13 @@ export default function NutritionPage() {
     let tdee = bmr * multiplier;
 
     // Apply goal modifier
-    if (userProfile?.nutritionGoal === 'کاهش وزن') tdee -= 500;
-    else if (userProfile?.nutritionGoal === 'افزایش وزن') tdee += 500;
+    if (userProfile?.nutritionGoal === 'کاهش وزن') {
+      tdee -= 500;
+    } else if (userProfile?.nutritionGoal === 'افزایش وزن') {
+      tdee += 500;
+    } else if (userProfile?.nutritionGoal === 'سلامت عمومی') {
+      tdee += 0;
+    }
 
     const targetCalories = Math.round(tdee);
 
@@ -58,6 +63,11 @@ export default function NutritionPage() {
        targetCarbs = Math.round((targetCalories * 0.5) / 4);
        targetProtein = Math.round((targetCalories * 0.25) / 4);
        targetFat = Math.round((targetCalories * 0.25) / 9);
+    } else if (userProfile?.nutritionGoal === 'سلامت عمومی') {
+       // Explicit balanced macros for general health
+       targetProtein = Math.round((targetCalories * 0.3) / 4);
+       targetCarbs = Math.round((targetCalories * 0.4) / 4);
+       targetFat = Math.round((targetCalories * 0.3) / 9);
     }
 
     return { targetCalories, targetProtein, targetCarbs, targetFat };
@@ -90,15 +100,68 @@ export default function NutritionPage() {
   };
 
   const handleGenerateMealPlan = () => {
-    // Ids of the 4 mock meals added to MOCK_FOOD_DATABASE
-    const planIds = ['21', '22', '23', '24'];
-    const mockPlanFoods: FoodItem[] = planIds
-      .map(id => getFoodById(id))
-      .filter((f): f is FoodItem => f !== undefined);
+    const allFoods = getAllFoods();
+    const minCalories = targetCalories * 0.9;
+    const maxCalories = targetCalories * 1.1;
+    const absoluteMax = targetCalories * 1.2;
 
-    if (mockPlanFoods.length > 0) {
+    let bestCombination: FoodItem[] = [];
+    let bestCalories = 0;
+
+    // Helper to shuffle array
+    const shuffle = (array: FoodItem[]) => {
+      let currentIndex = array.length;
+      let temporaryValue, randomIndex;
+      const newArray = [...array];
+      while (0 !== currentIndex) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+        temporaryValue = newArray[currentIndex];
+        newArray[currentIndex] = newArray[randomIndex];
+        newArray[randomIndex] = temporaryValue;
+      }
+      return newArray;
+    };
+
+    // Try a fixed number of random combinations
+    const ATTEMPTS = 100;
+    for (let i = 0; i < ATTEMPTS; i++) {
+      const shuffled = shuffle(allFoods);
+      let currentCombination: FoodItem[] = [];
+      let currentCalories = 0;
+
+      for (const food of shuffled) {
+        if (currentCalories + food.calories <= absoluteMax) {
+          currentCombination.push(food);
+          currentCalories += food.calories;
+        }
+
+        // Perfect match found
+        if (currentCalories >= minCalories && currentCalories <= maxCalories) {
+           if (clearAndSetFoods) {
+              clearAndSetFoods(todayDate, currentCombination);
+              return;
+           }
+        }
+      }
+
+      // Track the closest match as a fallback
+      const currentDiff = Math.abs(currentCalories - targetCalories);
+      const bestDiff = Math.abs(bestCalories - targetCalories);
+
+      if (currentCombination.length > 0 && currentDiff < bestDiff) {
+        bestCombination = currentCombination;
+        bestCalories = currentCalories;
+      } else if (bestCombination.length === 0 && currentCombination.length > 0) {
+        bestCombination = currentCombination;
+        bestCalories = currentCalories;
+      }
+    }
+
+    // Fallback if no ideal combination was found
+    if (bestCombination.length > 0) {
       if (clearAndSetFoods) {
-          clearAndSetFoods(todayDate, mockPlanFoods);
+        clearAndSetFoods(todayDate, bestCombination);
       }
     }
   };
@@ -271,7 +334,7 @@ export default function NutritionPage() {
                         </button>
                     </div>
                     <div className="flex flex-col gap-3">
-                        {['کاهش وزن', 'حفظ وزن', 'افزایش وزن'].map((goal) => (
+                        {['کاهش وزن', 'حفظ وزن', 'افزایش وزن', 'سلامت عمومی'].map((goal) => (
                             <button
                                 key={goal}
                                 onClick={() => {
