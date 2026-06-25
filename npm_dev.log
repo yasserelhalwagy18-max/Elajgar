@@ -1,0 +1,20 @@
+
+> ai-studio-applet@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 6.4s (699 modules)
+ GET /some-random-page-that-does-not-exist 404 in 7145ms
+ ○ Compiling /terms ...
+ ✓ Compiled /terms in 844ms (701 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /terms 200 in 1328ms
+ ✓ Compiled /privacy in 409ms (694 modules)
+ GET /privacy 200 in 731ms
+ ✓ Compiled in 506ms (262 modules)
