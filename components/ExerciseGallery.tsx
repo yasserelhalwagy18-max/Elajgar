@@ -22,7 +22,56 @@ const categories = ['همه', 'کششی', 'اصلاحی', 'تقویتی', 'آب 
 export function ExerciseGallery() {
     const [activeVideo, setActiveVideo] = useState<number | null>(null);
     const [activeCategory, setActiveCategory] = useState('همه');
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const [timerActive, setTimerActive] = useState(false);
+
     const { userProfile } = useStore();
+
+    // Timer logic
+    React.useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (timerActive && timeLeft !== null && timeLeft > 0) {
+            interval = setInterval(() => {
+                setTimeLeft((prev) => {
+                    if (prev !== null && prev > 1) {
+                        return prev - 1;
+                    }
+                    setTimerActive(false);
+                    return 0;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [timerActive, timeLeft]);
+
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    };
+
+    const handleStartExercise = () => {
+        if (!activeExerciseDetails) return;
+
+        // Parse Persian string to numbers (e.g. '۵ دقیقه')
+        const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        let englishStr = '';
+        for (const char of activeExerciseDetails.duration) {
+            const index = persianDigits.indexOf(char);
+            if (index !== -1) {
+                englishStr += index;
+            } else if (/\d/.test(char)) {
+                englishStr += char;
+            }
+        }
+
+        const minutes = parseInt(englishStr, 10);
+        if (!isNaN(minutes)) {
+            setTimeLeft(minutes * 60);
+            setTimerActive(true);
+        }
+    };
+
 
     const filteredExercises = activeCategory === 'همه'
         ? exercises
@@ -58,7 +107,7 @@ export function ExerciseGallery() {
         <section className="mb-10">
             <div className="flex justify-between items-end mb-4 px-1">
                 <h2 className="text-xl font-bold text-on-surface">برنامه تمرینی اختصاصی</h2>
-                <span className="text-sm font-bold text-primary cursor-pointer hover:underline">مشاهده همه</span>
+                <span className="text-sm font-bold text-primary cursor-pointer hover:underline" onClick={() => setActiveCategory('همه')}>مشاهده همه</span>
             </div>
 
             {/* Recommended Exercises based on pain */}
@@ -165,7 +214,7 @@ export function ExerciseGallery() {
                             animate={{ opacity: 1 }} 
                             exit={{ opacity: 0 }} 
                             className="absolute inset-0 bg-black/80 backdrop-blur-md"
-                            onClick={() => setActiveVideo(null)}
+                            onClick={() => { setActiveVideo(null); setTimerActive(false); setTimeLeft(null); }}
                         ></motion.div>
                         
                         <motion.div 
@@ -176,7 +225,7 @@ export function ExerciseGallery() {
                         >
                             <div className="relative w-full aspect-video bg-black">
                                 <button
-                                    onClick={() => setActiveVideo(null)}
+                                    onClick={() => { setActiveVideo(null); setTimerActive(false); setTimeLeft(null); }}
                                     className="absolute top-4 left-4 z-20 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-colors"
                                 >
                                     <X className="w-5 h-5" />
@@ -220,8 +269,19 @@ export function ExerciseGallery() {
                                     </div>
                                 </div>
 
-                                <button className="w-full btn-primary-glass py-3 rounded-xl font-bold text-sm">
-                                    شروع تمرین
+                                <button
+                                    onClick={timeLeft === null ? handleStartExercise : undefined}
+                                    disabled={timeLeft === 0}
+                                    className={cn(
+                                        "w-full py-3 rounded-xl font-bold text-sm transition-colors",
+                                        timeLeft === null ? "btn-primary-glass" :
+                                        timeLeft === 0 ? "bg-green-500 text-white cursor-not-allowed" :
+                                        "bg-primary text-white"
+                                    )}
+                                >
+                                    {timeLeft === null ? "شروع تمرین" :
+                                     timeLeft === 0 ? "پایان یافت ✓" :
+                                     formatTime(timeLeft)}
                                 </button>
                             </div>
                         </motion.div>

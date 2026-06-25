@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Status options: 'completed', 'pending', 'skipped'
-const sessions = [
+const initialSessions = [
   { id: 1, date: 15, text: 'تمرینات گردن', status: 'completed' },
   { id: 2, date: 16, text: 'حرکات اصلاحی کمر', status: 'completed' },
   { id: 3, date: 17, text: 'مدیتیشن', status: 'skipped' },
@@ -15,8 +15,12 @@ const sessions = [
   { id: 5, date: 19, text: 'حرکات اصلاحی کمر', status: 'pending' },
 ];
 
+const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+
 export function CorrectionalCalendar() {
   const [selectedDate, setSelectedDate] = useState(18);
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(2); // خرداد
+  const [sessions, setSessions] = useState(initialSessions);
 
   const getStatusColor = (status: string) => {
       switch (status) {
@@ -34,9 +38,19 @@ export function CorrectionalCalendar() {
         <div className="flex justify-between items-end mb-4 px-1">
             <h2 className="text-xl font-bold text-on-surface">تقویم تمرینات اصلاحی</h2>
             <div className="flex bg-white/40 glass-card rounded-full p-1 border border-white/50">
-                <button className="p-1 rounded-full text-on-surface-variant hover:bg-surface-variant"><ChevronRight className="w-4 h-4" /></button>
-                <span className="text-sm font-bold px-2 py-0.5">خرداد ۱۴۰۵</span>
-                <button className="p-1 rounded-full text-on-surface-variant hover:bg-surface-variant"><ChevronLeft className="w-4 h-4" /></button>
+                <button
+                    onClick={() => setCurrentMonthIndex((prev) => (prev > 0 ? prev - 1 : 11))}
+                    className="p-1 rounded-full text-on-surface-variant hover:bg-surface-variant"
+                >
+                    <ChevronRight className="w-4 h-4" />
+                </button>
+                <span className="text-sm font-bold px-2 py-0.5">{months[currentMonthIndex]} ۱۴۰۵</span>
+                <button
+                    onClick={() => setCurrentMonthIndex((prev) => (prev < 11 ? prev + 1 : 0))}
+                    className="p-1 rounded-full text-on-surface-variant hover:bg-surface-variant"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                </button>
             </div>
         </div>
 
@@ -82,7 +96,7 @@ export function CorrectionalCalendar() {
             <div className="bg-surface-variant/20 rounded-2xl p-4 min-h-[90px] relative overflow-hidden">
                 <AnimatePresence mode="wait">
                     <motion.div
-                        key={selectedDate}
+                        key={`${selectedDate}-${currentSession?.status}`}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 10 }}
@@ -100,7 +114,14 @@ export function CorrectionalCalendar() {
                                 </div>
                                 
                                 {currentSession.status === 'pending' && (
-                                    <button className="bg-primary hover:bg-primary-dark text-white shadow-md text-sm font-bold px-4 py-2 rounded-xl border border-primary-dark transition-all active:scale-95">
+                                    <button
+                                        onClick={() => {
+                                            setSessions(prev => prev.map(s =>
+                                                s.date === selectedDate ? { ...s, status: 'completed' } : s
+                                            ));
+                                        }}
+                                        className="bg-primary hover:bg-primary-dark text-white shadow-md text-sm font-bold px-4 py-2 rounded-xl border border-primary-dark transition-all active:scale-95"
+                                    >
                                         شروع جلسه
                                     </button>
                                 )}
