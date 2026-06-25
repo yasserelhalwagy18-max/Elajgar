@@ -13,6 +13,7 @@ interface AuthState {
   clearAndSetFoods: (date: string, foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[]) => void;
   addWater: (date: string, amount: number) => void;
   logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number }) => void;
+  resetAll: () => void;
 }
 
 export const useStore = create<AuthState>()(
@@ -145,6 +146,12 @@ export const useStore = create<AuthState>()(
           };
         }),
       logout: () => set({ isAuthenticated: false, userProfile: null }),
+      resetAll: () => {
+        set({ isAuthenticated: false, userProfile: null });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('alajgar-storage');
+        }
+      },
     }),
     {
       name: 'alajgar-storage',
