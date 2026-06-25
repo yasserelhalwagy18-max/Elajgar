@@ -17,7 +17,7 @@ export default function ProgressReport() {
     const days = timeRange === '7' ? 7 : 30;
     const mockData = timeRange === '7' ? mockData7Days : mockData30Days;
 
-    if (!userProfile) return mockData;
+    if (!userProfile) return { data: mockData, hasEnoughData: false };
 
     const today = new Date();
     // Reset time to start of day for accurate comparison
@@ -75,14 +75,10 @@ export default function ProgressReport() {
       });
     }
 
-    if (validEntriesCount < 3) {
-      return mockData;
-    }
-
-    return generatedData;
+    return { data: generatedData, hasEnoughData: validEntriesCount >= 3 };
   }, [timeRange, userProfile]);
 
-  const data = chartData;
+  const { data, hasEnoughData } = chartData;
 
   return (
     <div className="flex flex-col gap-6 mt-8">
@@ -106,6 +102,19 @@ export default function ProgressReport() {
         </div>
       </div>
 
+      {!hasEnoughData ? (
+        <div className="bg-white border border-outline-variant/20 p-8 rounded-3xl shadow-sm flex flex-col items-center justify-center min-h-[300px] text-center gap-4">
+            <div className="w-16 h-16 bg-surface-variant rounded-full flex items-center justify-center text-on-surface-variant/50 mb-2">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
+            <p className="text-on-surface-variant font-medium text-lg max-w-sm">
+                هنوز داده کافی ندارید. بعد از چند روز استفاده، نمودار نمایش داده می‌شود.
+            </p>
+        </div>
+      ) : (
+        <>
       {/* Weight Trend */}
       <div className="glass-panel p-6 rounded-[2rem] border-white/60 shadow-md">
         <h3 className="font-bold text-lg mb-4 text-on-surface">روند وزن (کیلوگرم)</h3>
@@ -217,6 +226,8 @@ export default function ProgressReport() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

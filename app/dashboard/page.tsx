@@ -6,6 +6,7 @@ import { motion, useMotionValue, useTransform, animate, AnimatePresence } from '
 import { Plus, X, Droplet, Activity, Scale, Activity as Pulse, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { calculateHealthScore, DailyHealthData } from '@/lib/healthScore';
 import { useStore } from '@/lib/store';
 
@@ -15,15 +16,24 @@ const HydrationChart = dynamic(() => import('@/components/HydrationChart'), { ss
 export default function DashboardIndex() {
 const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setTimeout(() => setMounted(true), 0);
+  }, []);
+
   // States
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [showWaterConf, setShowWaterConf] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
   // Sleep & Activity Modal state
   const [isSleepModalOpen, setIsSleepModalOpen] = useState(false);
   const [sleepHours, setSleepHours] = useState<number>(7);
   const [sleepQuality, setSleepQuality] = useState<'poor' | 'fair' | 'good'>('fair');
   const [activityMinutes, setActivityMinutes] = useState<number>(0);
+  const [sleepError, setSleepError] = useState<string | null>(null);
+  const [activityError, setActivityError] = useState<string | null>(null);
 
   // Date and logs
   const todayDate = new Date().toISOString().split('T')[0];
@@ -100,6 +110,42 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
     }
   }, []);
 
+  // Medical Disclaimer logic
+  useEffect(() => {
+    if (mounted && typeof window !== 'undefined') {
+      const seen = localStorage.getItem('elajgar-disclaimer-seen');
+      if (!seen) {
+        setTimeout(() => setShowDisclaimer(true), 0);
+      }
+    }
+  }, [mounted]);
+
+  // Real-time validation update
+  useEffect(() => {
+    if (sleepError && sleepHours >= 0 && sleepHours <= 24) {
+        setTimeout(() => setSleepError(null), 0);
+    }
+    if (sleepHours < 0 || sleepHours > 24) {
+        setTimeout(() => setSleepError('مقدار خواب باید بین ۰ تا ۲۴ باشد'), 0);
+    }
+
+    if (activityError && activityMinutes >= 0 && activityMinutes <= 1440) {
+        setTimeout(() => setActivityError(null), 0);
+    }
+    if (activityMinutes < 0 || activityMinutes > 1440) {
+        setTimeout(() => setActivityError('مقدار فعالیت باید بین ۰ تا ۱۴۴۰ باشد'), 0);
+    }
+  }, [sleepHours, activityMinutes, sleepError, activityError]);
+
+  if (!mounted) return null;
+
+  const handleAcceptDisclaimer = () => {
+    if (disclaimerAccepted) {
+      localStorage.setItem('elajgar-disclaimer-seen', 'true');
+      setShowDisclaimer(false);
+    }
+  };
+
   const handleQuickLog = (amount: number) => {
     logFood(todayDate, {
         id: Date.now().toString(),
@@ -142,6 +188,8 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
     setIsSleepModalOpen(false);
   };
 
+  const hasValidationError = sleepHours < 0 || sleepHours > 24 || activityMinutes < 0 || activityMinutes > 1440;
+
   // Determine status text based on health score
   const getStatusText = (score: number) => {
     if (score >= 85) return "وضعیت عالی است";
@@ -157,10 +205,10 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
                 <h1 className="text-2xl font-bold text-primary tracking-tight">Elajgar</h1>
                 <p className="text-sm text-on-surface-variant">سلام، کاربر عزیز</p>
             </div>
-            <div className="w-12 h-12 rounded-full bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-lg relative border-white">
+            <Link href="/dashboard/profile" className="w-12 h-12 rounded-full bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-lg relative border-white transition-transform hover:scale-105">
                 <span className="w-3 h-3 bg-error rounded-full absolute top-0 right-0 border-2 border-white"></span>
                 <span className="text-xl font-bold text-primary">A</span>
-            </div>
+            </Link>
         </header>
 
         {/* 3D Health Score Dial Component */}
@@ -217,7 +265,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
                  <div className="flex justify-between items-start z-10 w-full">
                     <div>
                         <h3 className="font-bold text-lg">کالری امروز</h3>
-                        <p className="text-sm text-on-surface-variant font-mono">{consumedCalories} / {targetCalories} kcal</p>
+                        {consumedCalories > 0 && <p className="text-sm text-on-surface-variant font-mono">{consumedCalories} / {targetCalories} kcal</p>}
                     </div>
                     {/* Quick Log Action */}
                     <button 
@@ -228,6 +276,17 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
                     </button>
                  </div>
                  
+                 {consumedCalories === 0 ? (
+                    <div className="flex flex-col items-center justify-center z-10 py-4 gap-3">
+                        <span className="text-on-surface-variant font-medium">کالری ثبت نشده</span>
+                        <button
+                            onClick={() => setIsLogModalOpen(true)}
+                            className="btn-primary-glass text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2"
+                        >
+                            <Plus className="w-4 h-4" /> ثبت غذا
+                        </button>
+                    </div>
+                 ) : (
                  <div className="flex items-center gap-6 z-10">
                     {/* Simulated 3D rings */}
                     <div className="relative w-24 h-24 flex items-center justify-center">
@@ -242,6 +301,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
                         <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-outline-variant shadow-sm" /> چربی: {Math.round(consumedFat)}g</div>
                     </div>
                  </div>
+                 )}
             </div>
 
             {/* Hydration */}
@@ -250,20 +310,38 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
                 <div className="flex justify-between items-start z-10 w-full mb-2">
                     <div>
                         <h3 className="font-bold text-on-surface mb-1">آب مصرفی</h3>
-                        <p className="text-2xl font-black text-primary">{waterAmountLiters} لیتر</p>
-                        <p className="text-xs text-on-surface-variant font-mono">{waterAmountMl} / {waterTarget} ml</p>
+                        {waterAmountMl > 0 && (
+                            <>
+                                <p className="text-2xl font-black text-primary">{waterAmountLiters} لیتر</p>
+                                <p className="text-xs text-on-surface-variant font-mono">{waterAmountMl} / {waterTarget} ml</p>
+                            </>
+                        )}
                     </div>
-                    <button 
-                        onClick={handleDrinkWater}
-                        className="btn-primary-glass text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm z-10 hover:opacity-90 flex items-center justify-center gap-1"
-                    >
-                        <Plus className="w-4 h-4" /> ۲۵۰ml
-                    </button>
                 </div>
                 
-                <div className="w-full dir-ltr z-10" dir="ltr">
-                    <HydrationChart />
-                </div>
+                {waterAmountMl === 0 ? (
+                    <div className="flex flex-col items-center justify-center z-10 py-6 gap-3">
+                        <span className="text-on-surface-variant font-medium">آبی ثبت نشده</span>
+                        <button
+                            onClick={handleDrinkWater}
+                            className="btn-primary-glass text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 hover:opacity-90"
+                        >
+                            <Plus className="w-4 h-4" /> ۲۵۰ml
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="w-full dir-ltr z-10" dir="ltr">
+                            <HydrationChart />
+                        </div>
+                        <button
+                            onClick={handleDrinkWater}
+                            className="absolute bottom-4 left-4 btn-primary-glass text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm z-10 hover:opacity-90 flex items-center justify-center gap-1"
+                        >
+                            <Plus className="w-4 h-4" /> ۲۵۰ml
+                        </button>
+                    </>
+                )}
 
                 {/* Sub-animation on click */}
                 <AnimatePresence>
@@ -283,27 +361,46 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
             {/* Workouts */}
             <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col min-h-[160px]">
                 <h3 className="font-bold text-on-surface mb-1">تمرینات</h3>
-                <p className="text-2xl font-black text-primary mb-2">{todayLog.activityMinutes || 0} دقیقه</p>
-                <div className="mt-auto px-4 py-2 bg-surface-variant/50 rounded-xl text-sm font-bold flex items-center justify-center">
-                    {todayLog.activityMinutes ? 'ثبت شده' : 'بدون فعالیت'}
-                </div>
+                {todayLog.activityMinutes ? (
+                    <>
+                        <p className="text-2xl font-black text-primary mb-2">{todayLog.activityMinutes} دقیقه</p>
+                        <div className="mt-auto px-4 py-2 bg-surface-variant/50 rounded-xl text-sm font-bold flex items-center justify-center">
+                            ثبت شده
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex flex-col items-center justify-center flex-grow gap-3 mt-4">
+                        <span className="text-on-surface-variant font-medium">فعالیتی ثبت نشده</span>
+                        <button
+                            onClick={() => {
+                                const el = document.getElementById('sleep-activity-section');
+                                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="btn-primary-glass text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 hover:opacity-90"
+                        >
+                            <Activity className="w-4 h-4" /> ثبت فعالیت
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Sleep Card */}
-            <div className="col-span-2 glass-panel p-4 rounded-2xl flex flex-col gap-4">
+            <div id="sleep-activity-section" className="col-span-2 glass-panel p-4 rounded-2xl flex flex-col gap-4">
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-on-surface">خواب و فعالیت</h3>
                     <div className="text-sm text-on-surface-variant font-mono">ثبت روزانه</div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    <div className="flex flex-col">
                         <label className="block text-xs font-bold mb-1 text-on-surface-variant">ساعت خواب</label>
-                        <input type="number" step="0.5" min="0" max="24" value={sleepHours} onChange={e => setSleepHours(parseFloat(e.target.value) || 0)} className="w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm" />
+                        <input type="number" step="0.5" min="0" max="24" value={sleepHours} onChange={e => setSleepHours(parseFloat(e.target.value) || 0)} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
+                        {sleepError && <span className="text-xs text-error mt-1">{sleepError}</span>}
                     </div>
-                    <div>
+                    <div className="flex flex-col">
                         <label className="block text-xs font-bold mb-1 text-on-surface-variant">فعالیت (دقیقه)</label>
-                        <input type="number" min="0" value={activityMinutes} onChange={e => setActivityMinutes(parseInt(e.target.value) || 0)} className="w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm" />
+                        <input type="number" min="0" max="1440" value={activityMinutes} onChange={e => setActivityMinutes(parseInt(e.target.value) || 0)} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${activityError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
+                        {activityError && <span className="text-xs text-error mt-1">{activityError}</span>}
                     </div>
                 </div>
 
@@ -318,7 +415,8 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
 
                 <button
                     onClick={handleSaveSleepActivity}
-                    className="btn-primary-glass text-white w-full py-3 rounded-2xl font-bold shadow-sm mt-2 flex justify-center items-center gap-2"
+                    disabled={hasValidationError}
+                    className={`btn-primary-glass text-white w-full py-3 rounded-2xl font-bold shadow-sm mt-2 flex justify-center items-center gap-2 ${hasValidationError ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                     ثبت <Plus className="w-4 h-4" />
                 </button>
@@ -327,6 +425,53 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
 
         {/* Progress Report Section */}
         <ProgressReport />
+
+        {/* Medical Disclaimer Modal Overlay */}
+        <AnimatePresence>
+            {showDisclaimer && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:pb-0">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-on-surface/50 backdrop-blur-md"
+                    ></motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 100 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 100 }}
+                        className="relative z-10 w-full max-w-sm bg-white rounded-[2rem] p-6 shadow-2xl border"
+                    >
+                        <h3 className="text-xl font-bold text-on-surface mb-4">توجه مهم</h3>
+                        <p className="text-on-surface-variant mb-6 leading-relaxed">
+                            این اپلیکیشن جایگزین پزشک نیست و تشخیص قطعی ارائه نمی‌دهد.
+                        </p>
+
+                        <div className="flex items-center gap-3 mb-6">
+                            <input
+                                type="checkbox"
+                                id="disclaimer-checkbox"
+                                className="w-5 h-5 accent-primary rounded cursor-pointer"
+                                checked={disclaimerAccepted}
+                                onChange={(e) => setDisclaimerAccepted(e.target.checked)}
+                            />
+                            <label htmlFor="disclaimer-checkbox" className="text-sm font-medium text-on-surface cursor-pointer select-none">
+                                متوجه شدم
+                            </label>
+                        </div>
+
+                        <button
+                            onClick={handleAcceptDisclaimer}
+                            disabled={!disclaimerAccepted}
+                            className={`w-full py-3 rounded-2xl font-bold shadow-sm flex justify-center items-center transition-all ${disclaimerAccepted ? 'btn-primary-glass text-white' : 'bg-surface-variant text-on-surface-variant/50 cursor-not-allowed'}`}
+                        >
+                            تأیید و ادامه
+                        </button>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
 
         {/* Quick Log Modal Overlay */}
         <AnimatePresence>

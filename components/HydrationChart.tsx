@@ -21,7 +21,7 @@ export default function HydrationChart() {
     const userProfile = useStore(state => state.userProfile);
 
     const chartData = useMemo(() => {
-        if (!userProfile) return mockData;
+        if (!userProfile) return { data: mockData, hasEnoughData: false };
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -53,15 +53,13 @@ export default function HydrationChart() {
             generatedData.push({ day: dayLabel, amount });
         }
 
-        if (validEntriesCount < 3) {
-            return mockData;
-        }
-
-        return generatedData;
+        return { data: generatedData, hasEnoughData: validEntriesCount >= 3 };
     }, [userProfile]);
 
+    const { data: activeData, hasEnoughData } = chartData;
+
     useEffect(() => {
-        if (!svgRef.current || !wrapperRef.current) return;
+        if (!svgRef.current || !wrapperRef.current || !hasEnoughData) return;
         
         // Make it responsive by using wrapper's width
         const width = wrapperRef.current.clientWidth || 300;
@@ -75,24 +73,24 @@ export default function HydrationChart() {
         const graphHeight = height - margin.top - margin.bottom;
 
         const x = d3.scalePoint()
-            .domain(chartData.map(d => d.day))
+            .domain(activeData.map(d => d.day))
             .range([0, graphWidth])
             .padding(0.1);
 
-        const maxAmount = d3.max(chartData, d => d.amount) || 0;
+        const maxAmount = d3.max(activeData, d => d.amount) || 0;
         const yMax = Math.max(3, Math.ceil(maxAmount)); // Dynamic upper limit, minimum 3
 
         const y = d3.scaleLinear()
             .domain([0, yMax])
             .range([graphHeight, 0]);
 
-        const area = d3.area<typeof chartData[0]>()
+        const area = d3.area<typeof activeData[0]>()
             .x(d => x(d.day) as number)
             .y0(graphHeight)
             .y1(d => y(d.amount))
             .curve(d3.curveMonotoneX);
 
-        const line = d3.line<typeof chartData[0]>()
+        const line = d3.line<typeof activeData[0]>()
             .x(d => x(d.day) as number)
             .y(d => y(d.amount))
             .curve(d3.curveMonotoneX);
@@ -116,13 +114,13 @@ export default function HydrationChart() {
 
         // Draw area
         g.append('path')
-            .datum(chartData)
+            .datum(activeData)
             .attr('fill', 'url(#hydration-gradient)')
             .attr('d', area);
 
         // Draw line
         g.append('path')
-            .datum(chartData)
+            .datum(activeData)
             .attr('fill', 'none')
             .attr('stroke', '#2563EB')
             .attr('stroke-width', 3)
@@ -130,7 +128,7 @@ export default function HydrationChart() {
 
         // Draw data points
         g.selectAll('.dot')
-            .data(chartData)
+            .data(activeData)
             .enter().append('circle')
             .attr('class', 'dot')
             .attr('cx', d => x(d.day) as number)
@@ -168,7 +166,20 @@ export default function HydrationChart() {
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '4,4');
 
-    }, [chartData]);
+    }, [activeData, hasEnoughData]);
+
+    if (!hasEnoughData) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[150px] mt-4 text-center gap-2">
+                <svg className="w-6 h-6 text-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <p className="text-on-surface-variant text-xs">
+                    هنوز داده کافی ندارید. بعد از چند روز استفاده، نمودار نمایش داده می‌شود.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div ref={wrapperRef} className="w-full h-[150px] mt-4 flex items-center justify-center relative">
