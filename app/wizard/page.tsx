@@ -42,6 +42,8 @@ export default function WizardPage() {
     exerciseDaysPerWeek: ''
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const step = userProfile?.currentWizardStep || 1;
 
   useEffect(() => {
@@ -52,7 +54,44 @@ export default function WizardPage() {
 
   if (!isAuthenticated) return null;
 
+  const validateStep = () => {
+    const newErrors: Record<string, string> = {};
+    if (step === 1) {
+      if (!fullName || fullName.length < 2) newErrors.fullName = 'نام و نام خانوادگی باید حداقل ۲ حرف باشد';
+      const parsedAge = parseInt(age);
+      if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) newErrors.age = 'سن باید بین ۱ تا ۱۲۰ باشد';
+    } else if (step === 2) {
+      const parsedHeight = parseInt(height);
+      if (isNaN(parsedHeight) || parsedHeight < 50 || parsedHeight > 250) newErrors.height = 'قد باید بین ۵۰ تا ۲۵۰ سانتی‌متر باشد';
+      const parsedWeight = parseInt(weight);
+      if (isNaN(parsedWeight) || parsedWeight < 10 || parsedWeight > 300) newErrors.weight = 'وزن باید بین ۱۰ تا ۳۰۰ کیلوگرم باشد';
+    } else if (step === 5) {
+      if (painZones.length === 0) newErrors.painZones = 'حداقل یک ناحیه درد باید انتخاب شود';
+    } else if (step === 6) {
+      const parsedSittingHours = parseInt(questionnaireAnswers.sittingHoursPerDay);
+      if (isNaN(parsedSittingHours) || parsedSittingHours < 0 || parsedSittingHours > 24) newErrors.sittingHoursPerDay = 'ساعات نشستن باید بین ۰ تا ۲۴ باشد';
+      const parsedExerciseDays = parseInt(questionnaireAnswers.exerciseDaysPerWeek);
+      if (isNaN(parsedExerciseDays) || parsedExerciseDays < 0 || parsedExerciseDays > 7) newErrors.exerciseDaysPerWeek = 'روزهای ورزش باید بین ۰ تا ۷ باشد';
+    }
+
+    setErrors(newErrors);
+
+    // Auto-scroll to the first error if any
+    if (Object.keys(newErrors).length > 0) {
+      setTimeout(() => {
+         const firstErrorElement = document.querySelector('.error-message');
+         if (firstErrorElement) {
+           firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+         }
+      }, 100);
+      return false;
+    }
+    return true;
+  };
+
   const nextStep = () => {
+    if (!validateStep()) return;
+
     if (step < 6) {
       saveCurrentStepData();
       setWizardStep(step + 1);
@@ -139,18 +178,26 @@ export default function WizardPage() {
               <input
                 type="text"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  if (errors.fullName) setErrors({ ...errors, fullName: '' });
+                }}
+                className={`w-full px-4 py-2 rounded-lg bg-surface border ${errors.fullName ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2`}
               />
+              {errors.fullName && <p className="text-red-500 text-xs mt-1 error-message">{errors.fullName}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">سن / Age</label>
               <input
                 type="number"
                 value={age}
-                onChange={(e) => setAge(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => {
+                  setAge(e.target.value);
+                  if (errors.age) setErrors({ ...errors, age: '' });
+                }}
+                className={`w-full px-4 py-2 rounded-lg bg-surface border ${errors.age ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2`}
               />
+              {errors.age && <p className="text-red-500 text-xs mt-1 error-message">{errors.age}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">جنسیت / Gender</label>
@@ -174,18 +221,26 @@ export default function WizardPage() {
                 <input
                   type="number"
                   value={height}
-                  onChange={(e) => setHeight(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                  onChange={(e) => {
+                    setHeight(e.target.value);
+                    if (errors.height) setErrors({ ...errors, height: '' });
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg bg-surface border ${errors.height ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2`}
                 />
+                {errors.height && <p className="text-red-500 text-xs mt-1 error-message">{errors.height}</p>}
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1">وزن (kg) / Weight</label>
                 <input
                   type="number"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                  onChange={(e) => {
+                    setWeight(e.target.value);
+                    if (errors.weight) setErrors({ ...errors, weight: '' });
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg bg-surface border ${errors.weight ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2`}
                 />
+                {errors.weight && <p className="text-red-500 text-xs mt-1 error-message">{errors.weight}</p>}
               </div>
             </div>
             <div>
@@ -280,11 +335,24 @@ export default function WizardPage() {
         )}
 
         {step === 5 && (
-            <Step5BodyMap painZones={painZones} setPainZones={setPainZones} />
+            <div className="relative">
+                <Step5BodyMap painZones={painZones} setPainZones={(zones) => {
+                    setPainZones(zones);
+                    if (errors.painZones && zones.length > 0) setErrors({ ...errors, painZones: '' });
+                }} />
+                {errors.painZones && <div className="absolute bottom-4 right-0 left-0 text-center"><p className="text-red-500 text-sm font-bold bg-white/90 inline-block px-4 py-1 rounded-full shadow-md error-message">{errors.painZones}</p></div>}
+            </div>
         )}
 
         {step === 6 && (
-            <Step6Questionnaire answers={questionnaireAnswers} setAnswers={setQuestionnaireAnswers} />
+            <Step6Questionnaire answers={questionnaireAnswers} setAnswers={(newAnswers) => {
+                setQuestionnaireAnswers(newAnswers);
+                const currentErrors = { ...errors };
+                if (typeof newAnswers === 'object') {
+                    // Update errors if fields are filled out correctly
+                    // Note: setAnswers in Step6Questionnaire passes a new object or uses a callback.
+                }
+            }} errors={errors} setErrors={setErrors} />
         )}
 
         <div className="flex justify-between mt-8 gap-4">
@@ -486,7 +554,7 @@ function Hotspot({ top, left, onClick, pulse = false }: { top: string, left: str
     )
 }
 
-function Step6Questionnaire({ answers, setAnswers }: {
+function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
     answers: {
         duration: string;
         aggravatedByActivity: string;
@@ -508,11 +576,16 @@ function Step6Questionnaire({ answers, setAnswers }: {
         stressLevel: string;
         sittingHoursPerDay: string;
         exerciseDaysPerWeek: string;
-    }>>
+    }>>,
+    errors?: Record<string, string>,
+    setErrors?: React.Dispatch<React.SetStateAction<Record<string, string>>>
 }) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setAnswers({ ...answers, [name]: value });
+        setAnswers(prev => ({ ...prev, [name]: value }));
+        if (errors && errors[name] && setErrors) {
+            setErrors({ ...errors, [name]: '' });
+        }
     };
 
     return (
@@ -591,30 +664,32 @@ function Step6Questionnaire({ answers, setAnswers }: {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <label className="block">
+                    <div className="block">
                         <span className="text-sm font-medium mb-1 block">ساعات نشستن در روز</span>
                         <input
                             type="number"
                             name="sittingHoursPerDay"
                             value={answers.sittingHoursPerDay}
                             onChange={handleChange}
-                            className="field w-full"
+                            className={`field w-full ${errors?.sittingHoursPerDay ? 'border-red-500 focus:ring-red-500' : ''}`}
                             min="0"
                             max="24"
                         />
-                    </label>
-                    <label className="block">
+                        {errors?.sittingHoursPerDay && <p className="text-red-500 text-xs mt-1 error-message">{errors.sittingHoursPerDay}</p>}
+                    </div>
+                    <div className="block">
                         <span className="text-sm font-medium mb-1 block">روزهای ورزش در هفته</span>
                         <input
                             type="number"
                             name="exerciseDaysPerWeek"
                             value={answers.exerciseDaysPerWeek}
                             onChange={handleChange}
-                            className="field w-full"
+                            className={`field w-full ${errors?.exerciseDaysPerWeek ? 'border-red-500 focus:ring-red-500' : ''}`}
                             min="0"
                             max="7"
                         />
-                    </label>
+                        {errors?.exerciseDaysPerWeek && <p className="text-red-500 text-xs mt-1 error-message">{errors.exerciseDaysPerWeek}</p>}
+                    </div>
                 </div>
             </div>
         </motion.div>
