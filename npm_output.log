@@ -7,11 +7,12 @@
    - Network:      http://192.168.0.2:3000
 
  ✓ Starting...
- ✓ Ready in 2s
+ ✓ Ready in 2.1s
  ○ Compiling / ...
- ✓ Compiled / in 8.3s (1516 modules)
- GET / 200 in 11029ms
- ○ Compiling /nutrition ...
- ✓ Compiled /nutrition in 1730ms (1558 modules)
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- GET /nutrition 200 in 2367ms
+ ✓ Compiled / in 9.9s (1536 modules)
+ GET / 200 in 11606ms
+ ✓ Compiled in 707ms (678 modules)
+ ✓ Compiled in 413ms (678 modules)
+ ✓ Compiled in 349ms (678 modules)
+ ✓ Compiled in 335ms (678 modules)
+ ✓ Compiled in 519ms (678 modules)
