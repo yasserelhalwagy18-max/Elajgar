@@ -107,7 +107,10 @@ export default function GymMap() {
                         <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1.5 rounded-full border border-primary/20">
                             {selectedGym.discount}
                         </span>
-                        <button className="text-sm font-bold text-white bg-primary px-4 py-1.5 rounded-full shadow-md">
+                        <button
+                            className="text-sm font-bold text-white bg-primary px-4 py-1.5 rounded-full shadow-md"
+                            onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(selectedGym.name)}+${encodeURIComponent(selectedGym.location)}`, '_blank')}
+                        >
                             مسیر یابی
                         </button>
                     </div>
