@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const PainHeatmap = dynamic(() => import('@/components/PainHeatmap'), { ssr: false });
+const PainHeatmap3D = dynamic(() => import('@/components/PainHeatmap3D'), { ssr: false });
 
 export default function AdminPage() {
     const router = useRouter();
@@ -88,7 +88,7 @@ export default function AdminPage() {
                         </h3>
                         <p className="text-sm text-on-surface-variant mb-6">Real-time heat map distribution across the active user base.</p>
                         <div className="flex-1 bg-white/40 rounded-2xl border border-white/50 overflow-hidden relative">
-                            <PainHeatmap />
+                            <PainHeatmap3D />
                         </div>
                     </section>
 
