@@ -8,6 +8,7 @@ interface AuthState {
   setAuthenticated: (status: boolean) => void;
   updateUserProfile: (profileUpdates: Partial<UserProfile>) => void;
   setWizardStep: (step: number) => void;
+  toggleRegion: (regionId: string) => void;
   logout: () => void;
   logFood: (date: string, food: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }) => void;
   clearAndSetFoods: (date: string, foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[]) => void;
@@ -36,6 +37,26 @@ export const useStore = create<AuthState>()(
             currentWizardStep: step,
           },
         })),
+      toggleRegion: (regionId) =>
+        set((state) => {
+          const profile = state.userProfile || {};
+          const zones = profile.painZones || [];
+          const exists = zones.find((z) => z.zone === regionId);
+
+          let newZones;
+          if (exists) {
+            newZones = zones.filter((z) => z.zone !== regionId);
+          } else {
+            newZones = [...zones, { zone: regionId, intensity: 5, type: 'مبهم' }];
+          }
+
+          return {
+            userProfile: {
+              ...profile,
+              painZones: newZones,
+            },
+          };
+        }),
       logFood: (date, food) =>
         set((state) => {
           const profile = state.userProfile || {};
