@@ -165,16 +165,16 @@ export default function WizardPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-lg p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant relative overflow-hidden">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-primary">تکمیل پروفایل / Profile</h1>
+          <h1 className="text-2xl font-bold text-primary">تکمیل پروفایل</h1>
           <span className="text-sm font-medium bg-primary-container text-on-primary-container px-3 py-1 rounded-full">
-            مرحله / Step {step} از 6
+            مرحله {step} از ۶
           </span>
         </div>
 
         {step === 1 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">نام و نام خانوادگی / Full Name</label>
+              <label className="block text-sm font-medium mb-1">نام و نام خانوادگی</label>
               <input
                 type="text"
                 value={fullName}
@@ -187,7 +187,7 @@ export default function WizardPage() {
               {errors.fullName && <p className="text-red-500 text-xs mt-1 error-message">{errors.fullName}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">سن / Age</label>
+              <label className="block text-sm font-medium mb-1">سن</label>
               <input
                 type="number"
                 value={age}
@@ -200,14 +200,14 @@ export default function WizardPage() {
               {errors.age && <p className="text-red-500 text-xs mt-1 error-message">{errors.age}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">جنسیت / Gender</label>
+              <label className="block text-sm font-medium mb-1">جنسیت</label>
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value as 'male' | 'female')}
                 className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="male">مرد / Male</option>
-                <option value="female">زن / Female</option>
+                <option value="male">مرد</option>
+                <option value="female">زن</option>
               </select>
             </div>
           </motion.div>
@@ -217,7 +217,7 @@ export default function WizardPage() {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">قد (cm) / Height</label>
+                <label className="block text-sm font-medium mb-1">قد (سانتی‌متر)</label>
                 <input
                   type="number"
                   value={height}
@@ -230,7 +230,7 @@ export default function WizardPage() {
                 {errors.height && <p className="text-red-500 text-xs mt-1 error-message">{errors.height}</p>}
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">وزن (kg) / Weight</label>
+                <label className="block text-sm font-medium mb-1">وزن (کیلوگرم)</label>
                 <input
                   type="number"
                   value={weight}
@@ -244,20 +244,20 @@ export default function WizardPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">سطح فعالیت / Activity Level</label>
+              <label className="block text-sm font-medium mb-1">سطح فعالیت</label>
               <select
                 value={activityLevel}
                 onChange={(e) => setActivityLevel(e.target.value as 'sedentary' | 'light' | 'moderate' | 'active')}
                 className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="sedentary">بدون فعالیت / Sedentary</option>
-                <option value="light">سبک / Light</option>
-                <option value="moderate">متوسط / Moderate</option>
-                <option value="active">فعال / Active</option>
+                <option value="sedentary">بدون فعالیت</option>
+                <option value="light">سبک</option>
+                <option value="moderate">متوسط</option>
+                <option value="active">فعال</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">شغل / Job</label>
+              <label className="block text-sm font-medium mb-1">شغل</label>
               <input
                 type="text"
                 value={jobTitle}
@@ -271,15 +271,15 @@ export default function WizardPage() {
         {step === 3 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">بیماری‌های زمینه‌ای / Underlying Diseases</label>
-              <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود / Press Enter to add</p>
+              <label className="block text-sm font-medium mb-1">بیماری‌های زمینه‌ای</label>
+              <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود</p>
               <input
                 type="text"
                 value={diseaseInput}
                 onChange={(e) => setDiseaseInput(e.target.value)}
                 onKeyDown={(e) => addTag(e, diseaseInput, setDiseaseInput, diseases, setDiseases)}
                 className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary mb-2"
-                placeholder="مثلا: دیابت / e.g. Diabetes"
+                placeholder="مثلا: دیابت"
               />
               <div className="flex flex-wrap gap-2">
                 {diseases.map((d) => (
@@ -300,15 +300,15 @@ export default function WizardPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">داروهای فعلی / Current Medications</label>
-              <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود / Press Enter to add</p>
+              <label className="block text-sm font-medium mb-1">داروهای فعلی</label>
+              <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود</p>
               <input
                 type="text"
                 value={medInput}
                 onChange={(e) => setMedInput(e.target.value)}
                 onKeyDown={(e) => addTag(e, medInput, setMedInput, meds, setMeds)}
                 className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary mb-2"
-                placeholder="مثلا: متفورمین / e.g. Metformin"
+                placeholder="مثلا: متفورمین"
               />
               <div className="flex flex-wrap gap-2">
                 {meds.map((m) => (
@@ -361,7 +361,7 @@ export default function WizardPage() {
               onClick={prevStep}
               className="py-2 px-6 border border-outline text-on-surface rounded-full hover:bg-surface-variant transition-colors"
             >
-              قبلی / Back
+              قبلی
             </button>
           ) : (
             <div />
@@ -373,7 +373,7 @@ export default function WizardPage() {
                 (step === 4 && !termsAccepted) ? "bg-surface-variant text-outline cursor-not-allowed" : "bg-primary text-on-primary hover:bg-primary/90"
             )}
           >
-            {step === 6 ? 'تکمیل / Finish' : 'بعدی / Next'} {step < 6 && <ArrowLeft className="w-4 h-4" />}
+            {step === 6 ? 'تکمیل' : 'بعدی'} {step < 6 && <ArrowLeft className="w-4 h-4" />}
           </button>
         </div>
       </div>
