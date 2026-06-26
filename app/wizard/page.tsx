@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import PainHeatmap from '@/components/PainHeatmap';
 export default function WizardPage() {
   const router = useRouter();
   const { isAuthenticated, userProfile, updateUserProfile, setWizardStep } = useStore();
@@ -29,7 +30,7 @@ export default function WizardPage() {
   const [meds, setMeds] = useState<string[]>(userProfile?.medications || []);
 
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [painZones, setPainZones] = useState<{ zone: string; intensity: number; type: string }[]>([]);
+  // painZones are now managed entirely by Zustand store
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState({
     duration: '',
     aggravatedByActivity: '',
@@ -66,7 +67,7 @@ export default function WizardPage() {
       const parsedWeight = parseInt(weight);
       if (isNaN(parsedWeight) || parsedWeight < 10 || parsedWeight > 300) newErrors.weight = 'وزن باید بین ۱۰ تا ۳۰۰ کیلوگرم باشد';
     } else if (step === 5) {
-      if (painZones.length === 0) newErrors.painZones = 'حداقل یک ناحیه درد باید انتخاب شود';
+      if ((userProfile?.painZones?.length || 0) === 0) newErrors.painZones = 'حداقل یک ناحیه درد باید انتخاب شود';
     } else if (step === 6) {
       const parsedSittingHours = parseInt(questionnaireAnswers.sittingHoursPerDay);
       if (isNaN(parsedSittingHours) || parsedSittingHours < 0 || parsedSittingHours > 24) newErrors.sittingHoursPerDay = 'ساعات نشستن باید بین ۰ تا ۲۴ باشد';
@@ -127,9 +128,7 @@ export default function WizardPage() {
         termsAccepted,
       });
     } else if (step === 5) {
-      updateUserProfile({
-        painZones,
-      });
+      // Zustand already has it updated via PainHeatmap onClick
     } else if (step === 6) {
       updateUserProfile({
         questionnaireAnswers: {
@@ -336,10 +335,7 @@ export default function WizardPage() {
 
         {step === 5 && (
             <div className="relative">
-                <Step5BodyMap painZones={painZones} setPainZones={(zones) => {
-                    setPainZones(zones);
-                    if (errors.painZones && zones.length > 0) setErrors({ ...errors, painZones: '' });
-                }} />
+                <Step5BodyMap />
                 {errors.painZones && <div className="absolute bottom-4 right-0 left-0 text-center"><p className="text-red-500 text-sm font-bold bg-white/90 inline-block px-4 py-1 rounded-full shadow-md error-message">{errors.painZones}</p></div>}
             </div>
         )}
@@ -408,17 +404,8 @@ function Step4Terms({ termsAccepted, setTermsAccepted }: { termsAccepted: boolea
     );
 }
 
-function Step5BodyMap({ painZones, setPainZones }: { painZones: { zone: string; intensity: number; type: string }[], setPainZones: (zones: { zone: string; intensity: number; type: string }[]) => void }) {
+function Step5BodyMap() {
     const [view, setView] = useState<'front' | 'back'>('back');
-    const [activeZone, setActiveZone] = useState<string | null>(null);
-    const [selectedIntensity, setSelectedIntensity] = useState<number>(6);
-    const [selectedType, setSelectedType] = useState<string>('تیر کشنده');
-
-    const handleSelectZone = (zone: string) => {
-        setActiveZone(zone);
-        setSelectedIntensity(6);
-        setSelectedType('تیر کشنده');
-    };
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full relative pb-8">
@@ -426,132 +413,46 @@ function Step5BodyMap({ painZones, setPainZones }: { painZones: { zone: string; 
                 <h2 className="text-2xl font-bold mb-2">نقشه درد</h2>
                 <p className="text-sm text-on-surface-variant mb-6">محل درد خود را روی تصویر لمس کنید</p>
 
-                <div className="glass-panel p-1 rounded-full inline-flex w-56 shadow-sm border-white/80 bg-surface-variant">
-                    <button onClick={() => setView('front')} className={cn("flex-1 py-1.5 rounded-full text-sm font-bold transition-colors", view === 'front' ? "bg-white text-primary shadow" : "text-on-surface-variant hover:bg-white/50")}>جلو</button>
-                    <button onClick={() => setView('back')} className={cn("flex-1 py-1.5 rounded-full text-sm font-bold transition-colors", view === 'back' ? "bg-white text-primary shadow" : "text-on-surface-variant hover:bg-white/50")}>پشت</button>
+                {/* Cinematic Glassmorphism Toggle */}
+                <div className="relative inline-flex items-center p-1 rounded-full backdrop-blur-md bg-slate-900/90 border border-white/10 shadow-2xl overflow-hidden w-64 mx-auto">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
+
+                    {/* The sliding pill indicator */}
+                    <motion.div
+                        className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-slate-700/80 shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/10 z-0"
+                        initial={false}
+                        animate={{
+                            left: view === 'front' ? '4px' : 'calc(50% + 0px)'
+                        }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+
+                    <button
+                        onClick={() => setView('front')}
+                        className={cn(
+                            "relative flex-1 py-2 rounded-full text-sm font-bold transition-colors z-10",
+                            view === 'front' ? "text-white" : "text-slate-400 hover:text-slate-200"
+                        )}
+                    >
+                        جلو
+                    </button>
+                    <button
+                        onClick={() => setView('back')}
+                        className={cn(
+                            "relative flex-1 py-2 rounded-full text-sm font-bold transition-colors z-10",
+                            view === 'back' ? "text-white" : "text-slate-400 hover:text-slate-200"
+                        )}
+                    >
+                        پشت
+                    </button>
                 </div>
             </div>
 
-            <div className="flex-1 relative glass-card rounded-3xl border border-white/60 shadow-inner flex items-center justify-center overflow-hidden mx-4 bg-surface-variant min-h-[300px]">
-               {/* Extremely Simplified Vector representation since we can't load complex SVG externally easily without URLs */}
-               <div className="relative w-48 h-full min-h-[300px] flex justify-center py-8">
-                    {/* Abstract silhouette */}
-                    <svg viewBox="0 0 100 250" className="w-full h-full drop-shadow-2xl opacity-80" fill="none" stroke="#d8dadc" strokeWidth="2">
-                        <path d="M50 10 C55 10, 60 15, 60 25 C60 35, 55 40, 50 40 C45 40, 40 35, 40 25 C40 15, 45 10, 50 10 M35 45 L65 45 L80 100 L70 100 L60 60 L60 140 L55 240 L45 240 L40 140 L40 60 L30 100 L20 100 L35 45" fill="rgba(255,255,255,0.7)"/>
-                    </svg>
-
-                    {/* Hotspots */}
-                    {view === 'back' && (
-                        <>
-                            <Hotspot top="12%" left="50%" onClick={() => handleSelectZone('گردن')} />
-                            <Hotspot top="25%" left="35%" onClick={() => handleSelectZone('شانه چپ')} />
-                            <Hotspot top="25%" left="65%" onClick={() => handleSelectZone('شانه راست')} />
-                            <Hotspot top="45%" left="50%" onClick={() => handleSelectZone('کمر')} pulse={!painZones.length} />
-
-                            {/* New Hotspots */}
-                            <Hotspot top="40%" left="33%" onClick={() => handleSelectZone('آرنج چپ')} />
-                            <Hotspot top="40%" left="67%" onClick={() => handleSelectZone('آرنج راست')} />
-                            <Hotspot top="55%" left="31%" onClick={() => handleSelectZone('مچ دست چپ')} />
-                            <Hotspot top="55%" left="69%" onClick={() => handleSelectZone('مچ دست راست')} />
-                            <Hotspot top="55%" left="42%" onClick={() => handleSelectZone('لگن چپ')} />
-                            <Hotspot top="55%" left="58%" onClick={() => handleSelectZone('لگن راست')} />
-                            <Hotspot top="82%" left="44%" onClick={() => handleSelectZone('ساق پا چپ')} />
-                            <Hotspot top="82%" left="56%" onClick={() => handleSelectZone('ساق پا راست')} />
-                            <Hotspot top="94%" left="45%" onClick={() => handleSelectZone('مچ پا چپ')} />
-                            <Hotspot top="94%" left="55%" onClick={() => handleSelectZone('مچ پا راست')} />
-                        </>
-                    )}
-                    {view === 'front' && (
-                        <>
-                            <Hotspot top="30%" left="50%" onClick={() => handleSelectZone('قفسه سینه')} />
-                            <Hotspot top="70%" left="42%" onClick={() => handleSelectZone('زانو چپ')} />
-                            <Hotspot top="70%" left="58%" onClick={() => handleSelectZone('زانو راست')} />
-
-                            {/* New Hotspots */}
-                            <Hotspot top="40%" left="33%" onClick={() => handleSelectZone('آرنج چپ')} />
-                            <Hotspot top="40%" left="67%" onClick={() => handleSelectZone('آرنج راست')} />
-                            <Hotspot top="55%" left="31%" onClick={() => handleSelectZone('مچ دست چپ')} />
-                            <Hotspot top="55%" left="69%" onClick={() => handleSelectZone('مچ دست راست')} />
-                            <Hotspot top="55%" left="42%" onClick={() => handleSelectZone('لگن چپ')} />
-                            <Hotspot top="55%" left="58%" onClick={() => handleSelectZone('لگن راست')} />
-                            <Hotspot top="82%" left="44%" onClick={() => handleSelectZone('ساق پا چپ')} />
-                            <Hotspot top="82%" left="56%" onClick={() => handleSelectZone('ساق پا راست')} />
-                            <Hotspot top="94%" left="45%" onClick={() => handleSelectZone('مچ پا چپ')} />
-                            <Hotspot top="94%" left="55%" onClick={() => handleSelectZone('مچ پا راست')} />
-                        </>
-                    )}
-               </div>
+            <div className="flex-1 w-full flex items-center justify-center">
+                <PainHeatmap view={view} />
             </div>
-
-            {/* Popover */}
-            <AnimatePresence>
-                {activeZone && (
-                     <motion.div 
-                        initial={{ opacity: 0, y: 100 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        exit={{ opacity: 0, y: 100 }}
-                        className="fixed bottom-24 left-4 right-4 glass-panel bg-white/95 rounded-[2rem] p-6 shadow-2xl border-white z-50"
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold">{activeZone}</h3>
-                            <button onClick={() => setActiveZone(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-variant hover:bg-surface-variant/80">X</button>
-                        </div>
-                        
-                        <div className="mb-6 p-4 rounded-2xl bg-white/50 border border-white/60">
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm font-medium">شدت درد</span>
-                                <span className="text-2xl font-bold text-primary">{selectedIntensity}</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="1"
-                                max="10"
-                                value={selectedIntensity}
-                                onChange={(e) => setSelectedIntensity(parseInt(e.target.value))}
-                                className="w-full accent-primary"
-                            />
-                            <div className="flex justify-between text-xs text-outline mt-2">
-                                <span>خفیف</span>
-                                <span>غیرقابل تحمل</span>
-                            </div>
-                        </div>
-
-                        <div className="mb-6">
-                            <span className="text-sm font-medium block mb-3">نوع درد</span>
-                            <div className="flex flex-wrap gap-2">
-                                {['تیر کشنده', 'سوزشی', 'مبهم', 'گرفتگی', 'التهاب'].map(t => (
-                                    <button
-                                        key={t}
-                                        onClick={() => setSelectedType(t)}
-                                        className={cn("px-4 py-2 rounded-full text-sm transition-colors border field", t === selectedType ? "bg-primary text-white border-primary" : "bg-white/50 border-outline-variant hover:border-primary/50 text-on-surface-variant")}
-                                    >
-                                        {t}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <button onClick={() => {
-                            setPainZones([...painZones, { zone: activeZone as string, intensity: selectedIntensity, type: selectedType }]);
-                            setActiveZone(null);
-                        }} className="w-full py-3 bg-surface-container hover:bg-surface-variant rounded-xl font-bold transition-colors">تایید و ثبت</button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </motion.div>
     );
-}
-
-function Hotspot({ top, left, onClick, pulse = false }: { top: string, left: string, onClick: () => void, pulse?: boolean }) {
-    return (
-        <button 
-            onClick={onClick}
-            style={{ top, left, transform: 'translate(-50%, -50%)' }}
-            className={cn("absolute w-6 h-6 rounded-full border-2 border-primary bg-white/50 flex items-center justify-center shadow-[0_0_10px_rgba(37,99,235,0.4)] hover:scale-125 transition-transform z-10", pulse && "animate-pulse shadow-[0_0_15px_rgba(37,99,235,0.8)] border-4")}
-        >
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
-        </button>
-    )
 }
 
 function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
