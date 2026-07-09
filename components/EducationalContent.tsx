@@ -90,6 +90,7 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                     <div className="relative w-full aspect-video bg-surface-variant">
                         <button
                             onClick={() => setActiveArticle(null)}
+                            aria-label="بستن"
                             className="absolute top-4 left-4 z-20 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center text-on-surface hover:bg-white/60 transition-colors"
                         >
                             <X className="w-5 h-5" />

@@ -289,6 +289,7 @@ export default function WizardPage() {
                     {d}
                     <button
                       onClick={() => removeTag(d, diseases, setDiseases)}
+                      aria-label={`حذف ${d}`}
                       className="text-on-secondary-container hover:text-error ml-1"
                     >
                       &times;
@@ -318,6 +319,7 @@ export default function WizardPage() {
                     {m}
                     <button
                       onClick={() => removeTag(m, meds, setMeds)}
+                      aria-label={`حذف ${m}`}
                       className="text-on-secondary-container hover:text-error ml-1"
                     >
                       &times;

@@ -276,6 +276,7 @@ export default function NutritionPage() {
                     </div>
                     <button
                         onClick={() => handleAddFood(food)}
+                        aria-label={`افزودن ${food.name}`}
                         className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                     >
                         <Plus className="w-4 h-4" />
@@ -329,7 +330,8 @@ export default function NutritionPage() {
                 >
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold">انتخاب هدف</h3>
-                        <button onClick={() => setGoalModalOpen(false)} className="p-2 rounded-full bg-surface-variant/50">
+                        <button onClick={() => setGoalModalOpen(false)} aria-label="بستن"
+                            className="p-2 rounded-full bg-surface-variant/50">
                             <X className="w-4 h-4" />
                         </button>
                     </div>
