@@ -270,6 +270,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
                     {/* Quick Log Action */}
                     <button 
                         onClick={() => setIsLogModalOpen(true)}
+                        aria-label="ثبت سریع غذا"
                         className="bg-primary/10 text-primary w-10 h-10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors shadow-sm"
                     >
                          <Plus className="w-5 h-5" />
@@ -495,6 +496,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
                             <h3 className="text-xl font-bold text-on-surface">ثبت سریع وعده</h3>
                             <button 
                                 onClick={() => setIsLogModalOpen(false)}
+                                aria-label="بستن"
                                 className="w-8 h-8 rounded-full bg-surface-variant/50 flex items-center justify-center hover:bg-surface-variant transition-colors"
                             >
                                 <X className="w-4 h-4" />

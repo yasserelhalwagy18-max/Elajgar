@@ -87,6 +87,7 @@ export default function GymsPage() {
                                 setIsSearching(false);
                                 setSearchQuery('');
                             }}
+                            aria-label="پاک کردن جستجو"
                             className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors"
                         >
                             <X className="w-5 h-5" />
@@ -108,6 +109,7 @@ export default function GymsPage() {
                         </div>
                         <button
                             onClick={() => setIsSearching(true)}
+                            aria-label="جستجو"
                             className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary shadow-sm border border-outline-variant/20 hover:bg-surface-variant transition-colors"
                         >
                             <Search className="w-5 h-5" />

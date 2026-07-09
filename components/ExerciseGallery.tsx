@@ -226,6 +226,7 @@ export function ExerciseGallery() {
                             <div className="relative w-full aspect-video bg-black">
                                 <button
                                     onClick={() => { setActiveVideo(null); setTimerActive(false); setTimeLeft(null); }}
+                                    aria-label="بستن"
                                     className="absolute top-4 left-4 z-20 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-colors"
                                 >
                                     <X className="w-5 h-5" />

@@ -106,6 +106,7 @@ export default function EducationPage() {
                         >
                             <button
                                 onClick={() => setShowPremiumModal(false)}
+                                aria-label="بستن"
                                 className="absolute top-4 left-4 z-20 w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface hover:bg-surface-variant/80 transition-colors"
                             >
                                 <X className="w-5 h-5" />
