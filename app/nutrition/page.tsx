@@ -244,7 +244,7 @@ export default function NutritionPage() {
              </div>
          </div>
 
-         <div className="grid grid-cols-3 gap-4">
+         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
              <MacroBar label="پروتئین" current={consumedProtein} target={targetProtein} color="bg-blue-500" />
              <MacroBar label="کربوهیدرات" current={consumedCarbs} target={targetCarbs} color="bg-green-500" />
              <MacroBar label="چربی" current={consumedFat} target={targetFat} color="bg-orange-500" />

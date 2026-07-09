@@ -239,7 +239,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
         </section>
 
         {/* Quick Metrics Grid */}
-        <section className="grid grid-cols-3 gap-6 mb-8">
+        <section className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
             <div className="bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col items-center justify-center text-center ">
               <Scale className="w-6 h-6 text-primary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وزن</p>
@@ -258,9 +258,9 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
         </section>
 
         {/* Today's Activity Grid */}
-        <section className="grid grid-cols-2 gap-6 mb-8">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Calorie */}
-            <div className="col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden ">
+            <div className="col-span-1 md:col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden ">
                  <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
                  <div className="flex justify-between items-start z-10 w-full">
                     <div>
@@ -306,7 +306,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
             </div>
 
             {/* Hydration */}
-            <div className="col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col relative overflow-hidden  min-h-[160px]">
+            <div className="col-span-1 md:col-span-2 bg-white border border-outline-variant/20 shadow-sm p-6 rounded-3xl flex flex-col relative overflow-hidden  min-h-[160px]">
                 <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-primary/10 to-transparent blur-sm"></div>
                 <div className="flex justify-between items-start z-10 w-full mb-2">
                     <div>
@@ -386,13 +386,13 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
             </div>
 
             {/* Sleep Card */}
-            <div id="sleep-activity-section" className="col-span-2 glass-panel p-4 rounded-2xl flex flex-col gap-4">
+            <div id="sleep-activity-section" className="col-span-1 md:col-span-2 glass-panel p-4 rounded-2xl flex flex-col gap-4">
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-on-surface">خواب و فعالیت</h3>
                     <div className="text-sm text-on-surface-variant font-mono">ثبت روزانه</div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col">
                         <label className="block text-xs font-bold mb-1 text-on-surface-variant">ساعت خواب</label>
                         <input type="number" step="0.5" min="0" max="24" value={sleepHours} onChange={e => setSleepHours(parseFloat(e.target.value) || 0)} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
@@ -430,7 +430,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
         {/* Medical Disclaimer Modal Overlay */}
         <AnimatePresence>
             {showDisclaimer && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:pb-0">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pb-4 sm:pb-0">
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -477,7 +477,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
         {/* Quick Log Modal Overlay */}
         <AnimatePresence>
             {isLogModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center px-4 pb-4 sm:pb-0">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pb-4 sm:pb-0">
                     <motion.div 
                         initial={{ opacity: 0 }} 
                         animate={{ opacity: 1 }} 
