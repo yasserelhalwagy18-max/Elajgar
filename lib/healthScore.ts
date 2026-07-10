@@ -1,3 +1,5 @@
+import { UserProfile } from "../types";
+
 export interface DailyHealthData {
   date: string; // Persian date string for display
   weight: number;
@@ -10,7 +12,6 @@ export interface DailyHealthData {
   sleepQuality: 'poor' | 'fair' | 'good';
   healthScore?: number;
 }
-
 // Health Score Calculation
 export function calculateHealthScore(data: Omit<DailyHealthData, 'healthScore' | 'date'>): number {
   let score = 0;
@@ -159,3 +160,66 @@ function generateMockData(days: number): DailyHealthData[] {
 
 export const mockData7Days = generateMockData(7);
 export const mockData30Days = generateMockData(30);
+
+export function buildHealthDataFromLogs(userProfile: Partial<UserProfile> | null, days: number): { data: DailyHealthData[], hasEnoughData: boolean } {
+  if (!userProfile) return { data: [], hasEnoughData: false };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let weight = userProfile.weight || 0;
+  let heightMeters = (userProfile.height || 170) / 100;
+  let bmi = weight > 0 ? Number((weight / (heightMeters * heightMeters)).toFixed(1)) : 0;
+
+  let pain = 0;
+  if (userProfile.painZones && userProfile.painZones.length > 0) {
+    const totalPain = userProfile.painZones.reduce((sum, zone) => sum + zone.intensity, 0);
+    pain = Math.round(totalPain / userProfile.painZones.length);
+  }
+
+  const generatedData: DailyHealthData[] = [];
+  let validEntriesCount = 0;
+
+  const formatter = new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'short' });
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+
+    const dateLabel = formatter.format(d);
+
+    const log = userProfile.dailyLogs?.find((l: any) => l.date === dateStr);
+
+    if (log) {
+      validEntriesCount++;
+    }
+
+    const calories = log?.foods ? log.foods.reduce((sum: number, food: any) => sum + food.calories, 0) : 0;
+    const water = log?.waterIntake ? Number((log.waterIntake / 1000).toFixed(1)) : 0;
+    const activity = log?.activityMinutes || 0;
+    const sleepHours = log?.sleepHours || 0;
+    const sleepQuality = log?.sleepQuality || 'poor';
+
+    const dataPoint: DailyHealthData = {
+      date: dateLabel,
+      weight,
+      bmi,
+      pain,
+      activity,
+      calories,
+      water,
+      sleepHours,
+      sleepQuality
+    };
+
+    dataPoint.healthScore = calculateHealthScore(dataPoint);
+    generatedData.push(dataPoint);
+  }
+
+  return { data: generatedData, hasEnoughData: validEntriesCount >= 3 };
+}

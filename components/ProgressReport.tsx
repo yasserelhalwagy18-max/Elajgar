@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, AreaChart, Area
 } from 'recharts';
-import { mockData7Days, mockData30Days, DailyHealthData } from '@/lib/healthScore';
+import { DailyHealthData, buildHealthDataFromLogs } from '@/lib/healthScore';
 import { useStore } from '@/lib/store';
 
 export default function ProgressReport() {
@@ -15,67 +15,7 @@ export default function ProgressReport() {
 
   const chartData = useMemo(() => {
     const days = timeRange === '7' ? 7 : 30;
-    const mockData = timeRange === '7' ? mockData7Days : mockData30Days;
-
-    if (!userProfile) return { data: mockData, hasEnoughData: false };
-
-    const today = new Date();
-    // Reset time to start of day for accurate comparison
-    today.setHours(0, 0, 0, 0);
-
-    let weight = userProfile.weight || 0;
-    let heightMeters = (userProfile.height || 170) / 100; // default to 170cm if not set to avoid infinity
-    let bmi = weight > 0 ? Number((weight / (heightMeters * heightMeters)).toFixed(1)) : 0;
-
-    let pain = 0;
-    if (userProfile.painZones && userProfile.painZones.length > 0) {
-      const totalPain = userProfile.painZones.reduce((sum, zone) => sum + zone.intensity, 0);
-      pain = Math.round(totalPain / userProfile.painZones.length);
-    }
-
-    const generatedData: DailyHealthData[] = [];
-    let validEntriesCount = 0;
-
-    const formatter = new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'short' });
-
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-
-      // format YYYY-MM-DD
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
-
-      const dateLabel = formatter.format(d);
-
-      const log = userProfile.dailyLogs?.find(l => l.date === dateStr);
-
-      if (log) {
-        validEntriesCount++;
-      }
-
-      const calories = log?.foods ? log.foods.reduce((sum, food) => sum + food.calories, 0) : 0;
-      const water = log?.waterIntake ? Number((log.waterIntake / 1000).toFixed(1)) : 0;
-      const activity = log?.activityMinutes || 0;
-      const sleepHours = log?.sleepHours || 0;
-      const sleepQuality = log?.sleepQuality || 'poor';
-
-      generatedData.push({
-        date: dateLabel,
-        weight,
-        bmi,
-        pain,
-        activity,
-        calories,
-        water,
-        sleepHours,
-        sleepQuality
-      });
-    }
-
-    return { data: generatedData, hasEnoughData: validEntriesCount >= 3 };
+    return buildHealthDataFromLogs(userProfile, days);
   }, [timeRange, userProfile]);
 
   const { data, hasEnoughData } = chartData;
