@@ -12,7 +12,7 @@ const PainHeatmap3D = dynamic(() => import('@/components/PainHeatmap3D'), { ssr:
 
 export default function AdminPage() {
     const router = useRouter();
-    const logoutStore = useStore((state) => state.logout);
+    const { logout: logoutStore, isAuthenticated } = useStore();
 
     const [activeItem, setActiveItem] = useState('Overview');
 
@@ -26,6 +26,14 @@ export default function AdminPage() {
 
     // File Input Ref
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+        if (!isAuthenticated) {
+            router.push('/login');
+        }
+    }, [isAuthenticated, router]);
+
+    if (!isAuthenticated) return null;
 
     const handleLogout = () => {
         logoutStore();
