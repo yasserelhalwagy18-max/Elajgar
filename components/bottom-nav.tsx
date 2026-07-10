@@ -21,7 +21,7 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 rounded-t-[2rem] bg-white/40 backdrop-blur-[25px] border-t border-white/50 shadow-[0_-10px_40px_rgba(37,99,235,0.1)] flex flex-row-reverse justify-around items-center px-4 pb-safe pt-2 min-h-[80px]">
       {navItems.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const isActive = item.href === '/dashboard' ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
 
         return (
