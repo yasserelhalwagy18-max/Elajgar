@@ -507,7 +507,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                     />
                 </label>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">تشدید با فعالیت</span>
                         <select name="aggravatedByActivity" value={answers.aggravatedByActivity} onChange={handleChange} className="field w-full">
@@ -526,7 +526,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                     </label>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">سابقه آسیب</span>
                         <select name="injuryHistory" value={answers.injuryHistory} onChange={handleChange} className="field w-full">
@@ -545,7 +545,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                     </label>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">کیفیت خواب</span>
                         <select name="sleepQuality" value={answers.sleepQuality} onChange={handleChange} className="field w-full">
@@ -566,7 +566,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                     </label>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="block">
                         <span className="text-sm font-medium mb-1 block">ساعات نشستن در روز</span>
                         <input

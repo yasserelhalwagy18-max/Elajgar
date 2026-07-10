@@ -122,13 +122,13 @@ export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
                     src={view === 'front' ? '/body-front.png' : '/body-back.png'}
                     alt={view === 'front' ? 'آناتومی جلو' : 'آناتومی پشت'}
                     fill
-                    className="object-contain p-4 opacity-90"
+                    className="object-contain opacity-90"
                     priority
                  />
             </div>
 
             {/* Markers overlay */}
-            <div className="absolute inset-0 w-full h-full p-4">
+            <div className="absolute inset-0 w-full h-full">
                 <div className="relative w-full h-full">
                     {activeRegions.map((region) => {
                         const isSelected = selectedZones.includes(region.label); // we use label for state matching existing logic
