@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { Search, MapPin, Star, Tag, CheckCircle2, Ticket, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { useStore } from '@/lib/store';
+import { useRouter } from 'next/navigation';
 
 const GymMap = dynamic(() => import('@/components/GymMap'), { ssr: false });
 
@@ -63,6 +65,9 @@ const MOCK_GYMS = [
 const FILTERS = ['همه', 'یوگا', 'استخر', 'کراس‌فیت'];
 
 export default function GymsPage() {
+    const router = useRouter();
+    const { isAuthenticated } = useStore();
+
     const [activeFilter, setActiveFilter] = React.useState('همه');
     const [isSearching, setIsSearching] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState('');
@@ -76,6 +81,14 @@ export default function GymsPage() {
             return matchesFilter && matchesSearch;
         });
     }, [activeFilter, searchQuery]);
+
+    React.useEffect(() => {
+        if (!isAuthenticated) {
+            router.push('/login');
+        }
+    }, [isAuthenticated, router]);
+
+    if (!isAuthenticated) return null;
 
     return (
         <div className="p-6 pb-32 max-w-2xl mx-auto">

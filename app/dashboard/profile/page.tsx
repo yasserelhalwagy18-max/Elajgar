@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, Droplet, Activity, ChevronLeft, User, Shield, LogOut, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
@@ -11,9 +11,17 @@ import { useRouter } from 'next/navigation';
 export default function ProfilePage() {
     const [hydrationReminders, setHydrationReminders] = useState(true);
     const [activityReminders, setActivityReminders] = useState(false);
-    const { userProfile, logout, updateUserProfile } = useStore();
+    const { isAuthenticated, userProfile, logout, updateUserProfile } = useStore();
     const router = useRouter();
     const [showToast, setShowToast] = useState(false);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.push('/login');
+        }
+    }, [isAuthenticated, router]);
+
+    if (!isAuthenticated) return null;
 
     const requestNotificationPermission = async (type: 'hydration' | 'activity', setter: (v: boolean) => void, currentValue: boolean) => {
         if (!currentValue) {
