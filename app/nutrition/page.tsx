@@ -2,13 +2,15 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { searchFoods, FoodItem, getFoodById, getAllFoods } from '@/lib/food-service';
 import { Search, Plus, Droplet, Target, Utensils, X, Check, Sparkles } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
 
 export default function NutritionPage() {
-  const { userProfile, updateUserProfile, logFood, addWater, clearAndSetFoods } = useStore();
+  const router = useRouter();
+  const { isAuthenticated, userProfile, updateUserProfile, logFood, addWater, clearAndSetFoods } = useStore();
   const [goalModalOpen, setGoalModalOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchResults, setSearchResults] = React.useState<FoodItem[]>([]);
@@ -180,6 +182,14 @@ export default function NutritionPage() {
     fetchInitial();
     return () => { active = false; };
   }, []);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="min-h-screen pb-24 px-4 pt-8">

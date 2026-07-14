@@ -8,13 +8,21 @@ import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { calculateHealthScore, DailyHealthData } from '@/lib/healthScore';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 
 const ProgressReport = dynamic(() => import('@/components/ProgressReport'), { ssr: false });
 const HydrationChart = dynamic(() => import('@/components/HydrationChart'), { ssr: false });
 
 export default function DashboardIndex() {
-const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
+  const router = useRouter();
+  const { isAuthenticated, userProfile, addWater, logDailyMetrics, logFood } = useStore();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -137,6 +145,7 @@ const { userProfile, addWater, logDailyMetrics, logFood } = useStore();
     }
   }, [sleepHours, activityMinutes, sleepError, activityError]);
 
+  if (!isAuthenticated) return null;
   if (!mounted) return null;
 
   const handleAcceptDisclaimer = () => {

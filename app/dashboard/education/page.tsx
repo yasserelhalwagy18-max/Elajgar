@@ -3,18 +3,31 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { Lock, Play, Verified, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { CorrectionalCalendar } from '@/components/CorrectionalCalendar';
 import { ExerciseGallery } from '@/components/ExerciseGallery';
 import { SmartAnalysis } from '@/components/SmartAnalysis';
 import { EducationalContent } from '@/components/EducationalContent';
+import { useStore } from '@/lib/store';
+import { useRouter } from 'next/navigation';
 
 export default function EducationPage() {
+    const router = useRouter();
+    const { isAuthenticated } = useStore();
+
     const tags = ['همه', 'آب درمانی', 'تغذیه', 'اصلاح وضعیت', 'سلامت مفاصل', 'سبک زندگی'];
     const [activeTag, setActiveTag] = useState('همه');
     const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.push('/login');
+        }
+    }, [isAuthenticated, router]);
+
+    if (!isAuthenticated) return null;
 
     return (
         <div className="p-6 pb-32">
