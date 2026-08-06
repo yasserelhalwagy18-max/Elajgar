@@ -6,14 +6,7 @@ import { BookOpen, Droplet, Apple, Activity, HeartPulse, X } from 'lucide-react'
 import Link from 'next/link';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'motion/react';
-
-const articles = [
-  { id: 1, title: 'فواید آب درمانی برای مفاصل', category: 'آب درمانی', icon: Droplet, color: 'text-primary', bg: 'bg-primary/10', image: 'water_therapy', readTime: '۴ دقیقه' },
-  { id: 2, title: 'تغذیه مناسب برای کاهش التهاب', category: 'تغذیه', icon: Apple, color: 'text-error', bg: 'bg-error/10', image: 'healthy_food', readTime: '۶ دقیقه' },
-  { id: 3, title: 'اصول صحیح نشستن پشت میز', category: 'اصلاح وضعیت', icon: Activity, color: 'text-secondary', bg: 'bg-secondary/10', image: 'posture_sitting', readTime: '۵ دقیقه' },
-  { id: 4, title: 'چگونه از زانو درد پیشگیری کنیم؟', category: 'سلامت مفاصل', icon: HeartPulse, color: 'text-tertiary', bg: 'bg-tertiary/10', image: 'knee_health', readTime: '۸ دقیقه' },
-  { id: 5, title: 'سبک زندگی سالم و تاثیر آن بر درد', category: 'سبک زندگی', icon: BookOpen, color: 'text-primary', bg: 'bg-primary/10', image: 'healthy_lifestyle', readTime: '۳ دقیقه' }
-];
+import { articles } from '@/lib/education-content';
 
 export function EducationalContent({ activeTag = 'همه' }: { activeTag?: string }) {
   const [activeArticle, setActiveArticle] = React.useState<typeof articles[0] | null>(null);
@@ -112,9 +105,9 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                         </div>
                         <h3 className="text-xl font-bold text-on-surface mb-4 leading-tight">{activeArticle.title}</h3>
                         <div className="text-sm text-on-surface-variant leading-relaxed space-y-4">
-                            <p>لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ، و با استفاده از طراحان گرافیک است، چاپگرها و متون بلکه روزنامه و مجله در ستون و سطرآنچنان که لازم است، و برای شرایط فعلی تکنولوژی مورد نیاز، و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد، کتابهای زیادی در شصت و سه درصد گذشته حال و آینده، شناخت فراوان جامعه و متخصصان را می طلبد.</p>
-                            <p>تا با نرم افزارها شناخت بیشتری را برای طراحان رایانه ای علی الخصوص طراحان خلاقی، و فرهنگ پیشرو در زبان فارسی ایجاد کرد، در این صورت می توان امید داشت که تمام و دشواری موجود در ارائه راهکارها، و شرایط سخت تایپ به پایان رسد و زمان مورد نیاز شامل حروفچینی دستاوردهای اصلی، و جوابگوی سوالات پیوسته اهل دنیای موجود طراحی اساسا مورد استفاده قرار گیرد.</p>
-                            <p>لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ، و با استفاده از طراحان گرافیک است، چاپگرها و متون بلکه روزنامه و مجله در ستون و سطرآنچنان که لازم است، و برای شرایط فعلی تکنولوژی مورد نیاز، و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد.</p>
+                            {activeArticle.content.map((paragraph, index) => (
+                                <p key={index}>{paragraph}</p>
+                            ))}
                         </div>
                     </div>
                 </motion.div>
