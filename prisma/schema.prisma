@@ -1,0 +1,256 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// NextAuth standard models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// User Profile extended models
+model User {
+  id                 String         @id @default(cuid())
+  name               String?
+  email              String?        @unique
+  emailVerified      DateTime?
+  image              String?
+  phoneNumber        String?        @unique
+  fullName           String?
+  age                Int?
+  gender             Gender?
+  height             Float? // in cm
+  weight             Float? // in kg
+  activityLevel      ActivityLevel?
+  jobTitle           String?
+  underlyingDiseases String[]
+  medications        String[]
+  termsAccepted      Boolean        @default(false)
+  currentWizardStep  Int?           @default(0)
+  nutritionGoal      NutritionGoal?
+
+  accounts Account[]
+  sessions Session[]
+
+  // Relations to other models
+  painZones       PainZone[]
+  questionnaire   QuestionnaireAnswer?
+  dailyLogs       DailyLog[]
+  painAssessments PainAssessment[]
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+}
+
+enum NutritionGoal {
+  WEIGHT_LOSS    @map("کاهش وزن")
+  WEIGHT_GAIN    @map("افزایش وزن")
+  MAINTAIN       @map("حفظ وزن")
+  GENERAL_HEALTH @map("سلامت عمومی")
+}
+
+// Questionnaire and Pain Tracking Models
+model QuestionnaireAnswer {
+  id                   String       @id @default(cuid())
+  userId               String       @unique
+  duration             String
+  aggravatedByActivity Boolean
+  relievedByRest       Boolean
+  injuryHistory        Boolean
+  surgeryHistory       Boolean
+  sleepQuality         SleepQuality
+  stressLevel          StressLevel
+  sittingHoursPerDay   Int
+  exerciseDaysPerWeek  Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PainZone {
+  id        String      @id @default(cuid())
+  userId    String
+  zone      BodySection
+  intensity Int // 1 to 10 mapped in logic
+  type      PainType
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // A PainZone can optionally be part of a recorded assessment point-in-time
+  assessmentId String?
+  assessment   PainAssessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+}
+
+model PainAssessment {
+  id                  String   @id @default(cuid())
+  userId              String
+  generatedAnalysisId String?
+  createdAt           DateTime @default(now())
+
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selectedZones PainZone[]
+}
+
+enum SleepQuality {
+  POOR @map("poor")
+  FAIR @map("fair")
+  GOOD @map("good")
+}
+
+enum StressLevel {
+  LOW    @map("low")
+  MEDIUM @map("medium")
+  HIGH   @map("high")
+}
+
+enum BodySection {
+  NECK     @map("neck")
+  SHOULDER @map("shoulder")
+  ELBOW    @map("elbow")
+  WRIST    @map("wrist")
+  BACK     @map("back")
+  PELVIS   @map("pelvis")
+  KNEE     @map("knee")
+  CALF     @map("calf")
+  ANKLE    @map("ankle")
+  CHEST    @map("chest")
+  ABDOMEN  @map("abdomen")
+}
+
+enum PainType {
+  SHOOTING     @map("تیر کشنده")
+  BURNING      @map("سوزشی")
+  VAGUE        @map("مبهم")
+  CRAMP        @map("گرفتگی عضله")
+  INFLAMMATION @map("التهاب")
+}
+
+// Daily Log and Nutrition Models
+model DailyLog {
+  id              String        @id @default(cuid())
+  userId          String
+  date            DateTime      @db.Date // Store only the date portion (e.g. YYYY-MM-DD equivalent)
+  waterIntake     Int           @default(0) // in ml
+  sleepHours      Float?
+  sleepQuality    SleepQuality?
+  activityMinutes Int?          @default(0)
+
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foods FoodLog[]
+
+  @@unique([userId, date]) // Ensure one DailyLog per user per date
+}
+
+model Food {
+  id       String @id @default(cuid())
+  name     String
+  calories Float
+  protein  Float
+  carbs    Float
+  fat      Float
+
+  foodLogs FoodLog[]
+}
+
+model FoodLog {
+  id         String @id @default(cuid())
+  dailyLogId String
+  foodId     String
+  quantity   Float  @default(1.0) // multiplier for the base nutritional values
+
+  dailyLog DailyLog @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  food     Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+}
+
+// Content Models (Exercise, VideoContent, Gym)
+model Exercise {
+  id             String        @id @default(cuid())
+  title          String
+  description    String?
+  videoContentId String?       @unique
+  videoContent   VideoContent? @relation(fields: [videoContentId], references: [id], onDelete: SetNull)
+}
+
+model VideoContent {
+  id                 String          @id @default(cuid())
+  title              String
+  url                String
+  thumbnailUrl       String?
+  isPremium          Boolean         @default(false)
+  associatedPainTags BodySection[] // Native scalar list (array) of enums supported in Postgres
+  durationInMinutes  Int
+  level              DifficultyLevel
+
+  exercise Exercise?
+}
+
+enum DifficultyLevel {
+  BEGINNER     @map("beginner")
+  INTERMEDIATE @map("intermediate")
+  ADVANCED     @map("advanced")
+}
+
+model Gym {
+  id                 String      @id @default(cuid())
+  name               String
+  location           String
+  category           GymCategory
+  rating             Float       @default(0.0)
+  isPremium          Boolean     @default(false)
+  discountPercentage Float       @default(0.0)
+  amenities          String[] // Postgres array
+  imageUrl           String?
+}
+
+enum GymCategory {
+  YOGA         @map("yoga")
+  POOL         @map("pool")
+  CROSSFIT     @map("crossfit")
+  MARTIAL_ARTS @map("martial_arts")
+  GENERAL      @map("general")
+}
