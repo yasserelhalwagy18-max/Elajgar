@@ -15,6 +15,8 @@ interface AuthState {
   addWater: (date: string, amount: number) => void;
   logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number }) => void;
   resetAll: () => void;
+  fetchUserFromServer: (phoneNumber: string) => Promise<void>;
+  saveUserToServer: (profile: Partial<UserProfile>) => Promise<void>;
 }
 
 export const useStore = create<AuthState>()(
@@ -167,6 +169,36 @@ export const useStore = create<AuthState>()(
           };
         }),
       logout: () => set({ isAuthenticated: false, userProfile: null }),
+      fetchUserFromServer: async (phoneNumber: string) => {
+        try {
+          const res = await fetch(`/api/user?phoneNumber=${encodeURIComponent(phoneNumber)}`);
+          if (res.ok) {
+            const data = await res.json();
+            set((state) => ({
+              userProfile: {
+                ...state.userProfile,
+                ...data,
+              },
+            }));
+          }
+        } catch (error) {
+          console.error('Failed to fetch user from server:', error);
+        }
+      },
+      saveUserToServer: async (profile: Partial<UserProfile>) => {
+        try {
+          const res = await fetch('/api/user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(profile),
+          });
+          if (!res.ok) {
+            console.error('Failed to save user to server:', await res.text());
+          }
+        } catch (error) {
+          console.error('Error saving user to server:', error);
+        }
+      },
       resetAll: () => {
         set({ isAuthenticated: false, userProfile: null });
         if (typeof window !== 'undefined') {

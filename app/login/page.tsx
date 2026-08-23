@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [otpError, setOtpError] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const router = useRouter();
-  const { setAuthenticated, updateUserProfile } = useStore();
+  const { setAuthenticated, updateUserProfile, fetchUserFromServer, saveUserToServer } = useStore();
 
   const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,12 +25,28 @@ export default function LoginPage() {
     }
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setOtpError('');
     if (otp === '1234') { // Simulated OTP check
       setAuthenticated(true);
       updateUserProfile({ phoneNumber });
+
+      try {
+        await fetchUserFromServer(phoneNumber);
+
+        // Ensure userProfile gets synchronized if it wasn't found in DB
+        // Note: the component state doesn't update synchronously here,
+        // but saveUserToServer takes current user profile info, or just the phone number at minimum.
+        // We will call saveUserToServer to ensure a record exists.
+        // Actually, we can check if fetch successfully got the user by making another fetch request or relying on the DB upsert in backend.
+        // Wait, store.fetchUserFromServer doesn't return anything.
+        // Let's just blindly call saveUserToServer({ phoneNumber }) and let the upsert handle it if it doesn't exist.
+        await saveUserToServer({ phoneNumber });
+      } catch (error) {
+        console.error("Failed server synchronization:", error);
+      }
+
       router.push('/wizard');
     } else {
       setOtpError('کد تایید نادرست است');
