@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../../lib/store';
 import { Info } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -11,15 +12,36 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setAuthenticated, updateUserProfile, fetchUserFromServer, saveUserToServer } = useStore();
+  const { setAuthenticated, updateUserProfile, fetchUserFromServer } = useStore();
 
-  const handlePhoneSubmit = (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneError('');
+
     if (/^09[0-9]{9}$/.test(phoneNumber)) {
-      // Simulate sending OTP
-      setStep('otp');
+      setIsLoading(true);
+      try {
+        const res = await fetch('/api/auth/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          setStep('otp');
+          toast.success('کد تایید ارسال شد');
+        } else {
+          setPhoneError(data.error || 'خطا در ارسال کد تایید');
+        }
+      } catch (error) {
+        setPhoneError('ارتباط با سرور برقرار نشد');
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       setPhoneError('شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود');
     }
@@ -28,34 +50,41 @@ export default function LoginPage() {
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setOtpError('');
-    if (otp === '1234') { // Simulated OTP check
-      setAuthenticated(true);
-      updateUserProfile({ phoneNumber });
 
-      try {
-        await fetchUserFromServer(phoneNumber);
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, code: otp }),
+      });
 
-        // Ensure userProfile gets synchronized if it wasn't found in DB
-        // Note: the component state doesn't update synchronously here,
-        // but saveUserToServer takes current user profile info, or just the phone number at minimum.
-        // We will call saveUserToServer to ensure a record exists.
-        // Actually, we can check if fetch successfully got the user by making another fetch request or relying on the DB upsert in backend.
-        // Wait, store.fetchUserFromServer doesn't return anything.
-        // Let's just blindly call saveUserToServer({ phoneNumber }) and let the upsert handle it if it doesn't exist.
-        await saveUserToServer({ phoneNumber });
-      } catch (error) {
-        console.error("Failed server synchronization:", error);
+      const data = await res.json();
+
+      if (res.ok) {
+        setAuthenticated(true);
+        updateUserProfile({ phoneNumber });
+
+        try {
+          await fetchUserFromServer(phoneNumber);
+        } catch (error) {
+          console.error("Failed server synchronization:", error);
+        }
+
+        router.push('/wizard');
+      } else {
+        setOtpError(data.error || 'کد تایید نادرست است');
       }
-
-      router.push('/wizard');
-    } else {
-      setOtpError('کد تایید نادرست است');
+    } catch (error) {
+      setOtpError('ارتباط با سرور برقرار نشد');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant">
+      <div className="w-full max-w-md p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant glass-panel">
         <h1 className="text-2xl font-bold mb-6 text-center text-primary">
           {step === 'phone' ? 'ورود' : 'تایید شماره'}
         </h1>
@@ -75,6 +104,7 @@ export default function LoginPage() {
                 className={`w-full px-4 py-2 rounded-lg bg-surface border ${phoneError ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2 text-left`}
                 dir="ltr"
                 required
+                disabled={isLoading}
               />
               {phoneError && (
                 <p className="text-red-500 text-xs mt-1">{phoneError}</p>
@@ -82,30 +112,28 @@ export default function LoginPage() {
             </div>
             <button
               type="submit"
-              className="w-full py-2 px-4 bg-primary text-on-primary rounded-full hover:bg-primary/90 transition-colors"
+              disabled={isLoading}
+              className="w-full py-2 px-4 bg-primary text-on-primary rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-primary-glass"
             >
-              ارسال کد
+              {isLoading ? 'در حال ارسال...' : 'ارسال کد'}
             </button>
           </form>
         ) : (
           <form onSubmit={handleOtpSubmit} className="flex flex-col gap-4">
-            <div className="bg-amber-100 text-amber-900 rounded-xl p-3 flex items-center justify-center gap-2 text-sm font-medium">
-              <Info className="w-5 h-5" />
-              <span>نسخه دمو: کد تأیید ۱۲۳۴ است</span>
-            </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="otp">
-                کد تایید (۱۲۳۴)
+                کد تایید
               </label>
               <input
                 id="otp"
                 type="text"
                 value={otp}
                 onChange={(e) => { setOtp(e.target.value); setOtpError(''); }}
-                placeholder="1234"
+                placeholder="123456"
                 className={`w-full px-4 py-2 rounded-lg bg-surface border ${otpError ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2 text-center tracking-widest`}
                 dir="ltr"
                 required
+                disabled={isLoading}
               />
               {otpError && (
                 <p className="text-red-500 text-xs mt-1 text-center">{otpError}</p>
@@ -113,14 +141,15 @@ export default function LoginPage() {
             </div>
             <button
               type="submit"
-              disabled={!!otpError}
-              className="w-full py-2 px-4 bg-primary text-on-primary rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!!otpError || isLoading}
+              className="w-full py-2 px-4 bg-primary text-on-primary rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-primary-glass"
             >
-              تایید
+              {isLoading ? 'در حال بررسی...' : 'تایید'}
             </button>
             <button
               type="button"
               onClick={() => { setStep('phone'); setOtpError(''); setOtp(''); }}
+              disabled={isLoading}
               className="w-full py-2 px-4 text-primary hover:bg-primary-container rounded-full transition-colors text-sm"
             >
               تغییر شماره

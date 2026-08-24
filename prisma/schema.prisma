@@ -255,3 +255,14 @@ enum GymCategory {
   MARTIAL_ARTS @map("martial_arts")
   GENERAL      @map("general")
 }
+
+model OtpCode {
+  id          String   @id @default(cuid())
+  phoneNumber String
+  code        String
+  expiresAt   DateTime
+  consumed    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([phoneNumber])
+}
