@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not defined');
+function getEncodedSecret() {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not defined');
+  }
+  return new TextEncoder().encode(JWT_SECRET);
 }
-const encodedSecret = new TextEncoder().encode(JWT_SECRET);
 
 export async function middleware(request: NextRequest) {
   // Extract token from cookie
@@ -14,6 +16,7 @@ export async function middleware(request: NextRequest) {
 
   if (token) {
     try {
+      const encodedSecret = getEncodedSecret();
       // Verify token
       const { payload } = await jwtVerify(token, encodedSecret);
 

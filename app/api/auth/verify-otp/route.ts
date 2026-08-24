@@ -3,14 +3,17 @@ import prisma from '@/lib/prisma';
 import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not defined');
+function getEncodedSecret() {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not defined');
+  }
+  return new TextEncoder().encode(JWT_SECRET);
 }
-const encodedSecret = new TextEncoder().encode(JWT_SECRET);
 
 export async function POST(request: Request) {
   try {
+    const encodedSecret = getEncodedSecret();
     const { phoneNumber, code } = await request.json();
 
     if (!phoneNumber || !code) {
