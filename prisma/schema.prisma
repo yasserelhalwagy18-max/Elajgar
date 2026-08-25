@@ -66,6 +66,7 @@ model User {
   termsAccepted      Boolean        @default(false)
   currentWizardStep  Int?           @default(0)
   nutritionGoal      NutritionGoal?
+  role               Role           @default(USER)
 
   accounts Account[]
   sessions Session[]
@@ -265,4 +266,9 @@ model OtpCode {
   createdAt   DateTime @default(now())
 
   @@index([phoneNumber])
+}
+
+enum Role {
+  USER
+  ADMIN
 }

@@ -1,25 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
-
-function getEncodedSecret() {
-  const JWT_SECRET = process.env.JWT_SECRET;
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET environment variable is not defined');
-  }
-  return new TextEncoder().encode(JWT_SECRET);
-}
+import { verifyToken } from '@/lib/auth';
 
 export async function middleware(request: NextRequest) {
   // Extract token from cookie
   const token = request.cookies.get('session')?.value;
 
   if (token) {
-    try {
-      const encodedSecret = getEncodedSecret();
-      // Verify token
-      const { payload } = await jwtVerify(token, encodedSecret);
+    const payload = await verifyToken(token);
 
+    if (payload && payload.userId) {
       // Clone the request headers and add user ID
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set('x-user-id', payload.userId as string);
@@ -30,9 +20,6 @@ export async function middleware(request: NextRequest) {
           headers: requestHeaders,
         },
       });
-    } catch (error) {
-      // Token verification failed, proceed without user info
-      console.error('JWT verification failed:', error);
     }
   }
 
