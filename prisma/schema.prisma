@@ -190,11 +190,12 @@ model DailyLog {
 
 model Food {
   id       String @id @default(cuid())
-  name     String
+  name     String @unique
   calories Float
   protein  Float
   carbs    Float
   fat      Float
+  source   String @default("estimated")
 
   foodLogs FoodLog[]
 }

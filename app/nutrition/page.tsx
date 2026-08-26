@@ -101,8 +101,8 @@ export default function NutritionPage() {
     setSearchResults([]);
   };
 
-  const handleGenerateMealPlan = () => {
-    const allFoods = getAllFoods();
+  const handleGenerateMealPlan = async () => {
+    const allFoods = await getAllFoods();
     const minCalories = targetCalories * 0.9;
     const maxCalories = targetCalories * 1.1;
     const absoluteMax = targetCalories * 1.2;
