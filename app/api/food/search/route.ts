@@ -11,6 +11,12 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
+    const all = searchParams.get('all');
+
+    if (all === 'true') {
+      const allFoods = await prisma.food.findMany();
+      return NextResponse.json(allFoods);
+    }
 
     if (!q || q.trim() === '') {
       // Default to 5 items if query is empty
@@ -21,13 +27,6 @@ export async function GET(request: Request) {
         },
       });
       return NextResponse.json(defaultFoods);
-    }
-
-    // Fetch all for meal generation if 'all' parameter is passed implicitly or explicitly
-    // BUT the requirement was: "If `q` is present, search Food records by name". Wait, I can just use a simple `contains` filter.
-    if (q === 'ALL_FOODS_FOR_GENERATION') {
-        const allFoods = await prisma.food.findMany();
-        return NextResponse.json(allFoods);
     }
 
     const foods = await prisma.food.findMany({

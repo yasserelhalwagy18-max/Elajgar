@@ -24,7 +24,7 @@ export const getFoodById = async (id: string): Promise<FoodItem | undefined> => 
 
 export const getAllFoods = async (): Promise<FoodItem[]> => {
   try {
-    const res = await fetch('/api/food/search?q=ALL_FOODS_FOR_GENERATION');
+    const res = await fetch('/api/food/search?all=true');
     if (!res.ok) throw new Error('Failed to fetch foods');
     return await res.json();
   } catch (error) {
