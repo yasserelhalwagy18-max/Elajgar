@@ -248,6 +248,7 @@ model Gym {
   discountPercentage Float       @default(0.0)
   amenities          String[] // Postgres array
   imageUrl           String?
+  isPlaceholder      Boolean     @default(false)
 }
 
 enum GymCategory {

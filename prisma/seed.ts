@@ -1,3 +1,4 @@
+import { GymCategory } from '@prisma/client';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -214,7 +215,59 @@ const foods = [
   { name: 'کره فندق (یک قاشق غذاخوری)', calories: 90, protein: 2, carbs: 3, fat: 8 }
 ];
 
+
+const placeholderGyms = [
+  {
+    name: 'نمونه باشگاه ۱',
+    location: 'تهران، خیابان ولیعصر',
+    category: GymCategory.GENERAL,
+    discountPercentage: 15,
+    isPlaceholder: true,
+  },
+  {
+    name: 'نمونه باشگاه ۲',
+    location: 'تهران، سعادت آباد',
+    category: GymCategory.POOL,
+    discountPercentage: 20,
+    isPlaceholder: true,
+  },
+  {
+    name: 'نمونه باشگاه ۳',
+    location: 'تهران، نیاوران',
+    category: GymCategory.YOGA,
+    discountPercentage: 10,
+    isPlaceholder: true,
+  },
+];
+
+async function seedGyms() {
+  console.log('Start seeding gyms...');
+  let count = 0;
+  for (const gym of placeholderGyms) {
+    // Generate a placeholder ID if needed, or rely on cuid() via db schema for create.
+    // There isn't a unique constraint on 'name' in Gym model currently, so we need to
+    // find first, then create/update. Or updateMany and if 0, create.
+    const existing = await prisma.gym.findFirst({
+        where: { name: gym.name }
+    });
+
+    if (existing) {
+        await prisma.gym.update({
+            where: { id: existing.id },
+            data: gym
+        });
+    } else {
+        await prisma.gym.create({
+            data: gym
+        });
+    }
+    count++;
+  }
+  console.log(`Finished seeding ${count} gyms.`);
+}
+
 async function main() {
+  await seedGyms();
   console.log('Start seeding foods...');
   let count = 0;
   for (const food of foods) {
