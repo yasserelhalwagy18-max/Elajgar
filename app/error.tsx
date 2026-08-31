@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
+import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
   error,
@@ -11,7 +12,9 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service securely
+    // Log the error to Sentry
+    Sentry.captureException(error);
+    // Log the error to console securely
     console.error('Application Error:', error);
   }, [error]);
 
