@@ -7,3 +7,4 @@ npm_dev.log
 /generated/prisma
 .env
 .env*.local
+coverage

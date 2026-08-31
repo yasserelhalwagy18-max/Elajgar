@@ -5,9 +5,16 @@ import './globals.css';
 const vazirmatn = Vazirmatn({ subsets: ['arabic', 'latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'Elajgar - Premium Health & Body Mapping',
-  description: 'AI-powered joint and muscle health assessment, personalized exercises, and advanced tracking.',
-  manifest: '/manifest.json', // Placeholder for PWA compliance 
+  title: 'علاجگر',
+  description: 'علاجگر.برای سلامت شما',
+  manifest: '/manifest.json',
+  openGraph: {
+    title: 'علاجگر',
+    description: 'علاجگر.برای سلامت شما',
+    siteName: 'علاجگر',
+    locale: 'fa_IR',
+    type: 'website',
+  },
 };
 
 import { Toaster } from 'react-hot-toast';
