@@ -70,7 +70,7 @@ describe('healthScore', () => {
             activityMinutes: 30,
             sleepHours: 7,
             sleepQuality: 'good' as const,
-            foods: [{ calories: 500 }],
+            foods: [{ id: "1", name: "food", calories: 500, protein: 0, carbs: 0, fat: 0 }],
           },
         ],
       };
@@ -93,7 +93,7 @@ describe('healthScore', () => {
       const userProfile = {
         weight: 70,
         height: 175,
-        painZones: [{ id: '1', name: 'Back', intensity: 5 }],
+        painZones: [{ zone: "back", type: "vague", intensity: 5 }],
         dailyLogs: [
           {
             date: getFormattedDate(0),
@@ -101,7 +101,7 @@ describe('healthScore', () => {
             activityMinutes: 30,
             sleepHours: 7,
             sleepQuality: 'good' as const,
-            foods: [{ calories: 500 }],
+            foods: [{ id: "1", name: "food", calories: 500, protein: 0, carbs: 0, fat: 0 }],
           },
           {
             date: getFormattedDate(1),
@@ -109,7 +109,7 @@ describe('healthScore', () => {
             activityMinutes: 45,
             sleepHours: 8,
             sleepQuality: 'good' as const,
-            foods: [{ calories: 600 }],
+            foods: [{ id: "2", name: "food", calories: 600, protein: 0, carbs: 0, fat: 0 }],
           },
           {
             date: getFormattedDate(2),
@@ -117,7 +117,7 @@ describe('healthScore', () => {
             activityMinutes: 20,
             sleepHours: 6,
             sleepQuality: 'fair' as const,
-            foods: [{ calories: 400 }],
+            foods: [{ id: "3", name: "food", calories: 400, protein: 0, carbs: 0, fat: 0 }],
           },
         ],
       };

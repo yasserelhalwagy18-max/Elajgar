@@ -61,8 +61,8 @@ model User {
   weight             Float? // in kg
   activityLevel      ActivityLevel?
   jobTitle           String?
-  underlyingDiseases String[]
-  medications        String[]
+  underlyingDiseases Json?
+  medications        Json?
   termsAccepted      Boolean        @default(false)
   currentWizardStep  Int?           @default(0)
   nutritionGoal      NutritionGoal?
@@ -225,7 +225,7 @@ model VideoContent {
   url                String
   thumbnailUrl       String?
   isPremium          Boolean         @default(false)
-  associatedPainTags BodySection[] // Native scalar list (array) of enums supported in Postgres
+  associatedPainTags Json? // Was BodySection[]
   durationInMinutes  Int
   level              DifficultyLevel
 
@@ -246,7 +246,7 @@ model Gym {
   rating             Float       @default(0.0)
   isPremium          Boolean     @default(false)
   discountPercentage Float       @default(0.0)
-  amenities          String[] // Postgres array
+  amenities          Json?
   imageUrl           String?
   isPlaceholder      Boolean     @default(false)
 }
