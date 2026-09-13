@@ -1,3 +1,10 @@
 {
- "port":3000
+"app":"jolly-ardinghelli-mxupe7gcp"
+"port":3000
+"build":{
+"location":"iran"
+}
+"disks":[
+{...}
+]
 }
