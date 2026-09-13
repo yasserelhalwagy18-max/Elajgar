@@ -33,7 +33,6 @@ export async function GET(request: Request) {
       where: {
         name: {
           contains: q,
-          mode: 'insensitive', // Case-insensitive partial match
         },
       },
       take: 20, // Reasonable limit for search results
