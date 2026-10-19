@@ -37,9 +37,42 @@ export async function POST(request: Request) {
       },
     });
 
-    // Mock SMS provider call
-    console.log(`[MOCK SMS] Sending OTP code ${code} to ${phoneNumber}`);
-    // TODO: Add real SMS provider API call here once credentials are available
+        const apiKey = process.env.SMS_IR_API_KEY;
+    const lineNumber = process.env.SMS_IR_LINE_NUMBER;
+
+    if (apiKey && lineNumber) {
+      // Send real SMS
+      const messageText = `کد تایید شما: ${code}`;
+      const response = await fetch('https://api.sms.ir/v1/send/bulk', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'ACCEPT': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lineNumber: Number(lineNumber),
+          MessageText: messageText,
+          Mobiles: [phoneNumber],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('[SMS.ir Error]:', errorData);
+        // We log the error but still return success to the user so they can potentially try again
+        // or we could return a 500 error if we strictly require the SMS to succeed.
+        // For OTP, usually it's best to fail if the SMS failed, but for fallback/testing
+        // we might want to just log it if we aren't completely sure. Let's return error on fail.
+        return NextResponse.json(
+          { error: 'خطا در ارسال پیامک' },
+          { status: 500 }
+        );
+      }
+    } else {
+      // Mock SMS provider call
+      console.log(`[MOCK SMS] Sending OTP code ${code} to ${phoneNumber}`);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
