@@ -111,13 +111,6 @@ export default function DashboardIndex() {
     return animation.stop;
   }, [count, targetScore]);
 
-  // Request Notification Permission on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
-
   // Medical Disclaimer logic
   useEffect(() => {
     if (mounted && typeof window !== 'undefined') {
@@ -160,9 +153,9 @@ export default function DashboardIndex() {
         id: Date.now().toString(),
         name: 'وعده سریع',
         calories: amount,
-        protein: Math.round(amount * 0.03),
-        carbs: Math.round(amount * 0.1),
-        fat: Math.round(amount * 0.02),
+        protein: 0,
+        carbs: 0,
+        fat: 0,
     });
     setIsLogModalOpen(false);
   };
@@ -175,7 +168,11 @@ export default function DashboardIndex() {
     setTimeout(() => setShowWaterConf(false), 2000);
 
     // Schedule notification (Simulated with setTimeout for 2 hours, using 2 secs for demo here)
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+      if (Notification.permission === 'granted') {
       // For real app: 2 * 60 * 60 * 1000
       // We will trigger a notification immediately to demonstrate, and set a "simulated" timer
       setTimeout(() => {
@@ -185,10 +182,11 @@ export default function DashboardIndex() {
             // Standard browser notification
             new Notification("وقت آب خوردنه!", {
               body: "شما ۲ ساعت پیش آب نوشیدید. برای حفظ سلامتی یک لیوان دیگر بنوشید.",
-              icon: "/icon.png" // placeholder
+              icon: "/icon.svg" // placeholder
             });
         }
       }, 5000); // Demo: 5 seconds instead of 2 hours
+      }
     }
   };
 
@@ -212,11 +210,10 @@ export default function DashboardIndex() {
         <header className="flex justify-between items-center mb-8 sticky top-0 pt-4 z-40 bg-surface/80 backdrop-blur-md">
             <div>
                 <h1 className="text-2xl font-bold text-primary tracking-tight">Elajgar</h1>
-                <p className="text-sm text-on-surface-variant">سلام، کاربر عزیز</p>
+                <p className="text-sm text-on-surface-variant">سلام، {userProfile?.fullName || 'کاربر عزیز'}</p>
             </div>
             <Link href="/dashboard/profile" className="w-12 h-12 rounded-full bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-lg relative border-white transition-transform hover:scale-105">
-                <span className="w-3 h-3 bg-error rounded-full absolute top-0 right-0 border-2 border-white"></span>
-                <span className="text-xl font-bold text-primary">A</span>
+                <span className="text-xl font-bold text-primary">{userProfile?.fullName ? userProfile.fullName.charAt(0) : 'A'}</span>
             </Link>
         </header>
 
@@ -232,16 +229,26 @@ export default function DashboardIndex() {
                 transition={{ duration: 1, type: 'spring' }}
                 className="relative w-56 h-56 z-10 flex items-center justify-center mb-4"
             >
-                {/* Simulated 3D Dial with CSS */}
-                <div className="absolute inset-0 rounded-full border-[16px] border-primary-fixed drop-shadow-xl"></div>
-                <motion.div 
-                    initial={{ rotate: -135 }}
-                    animate={{ rotate: 45 }}
-                    transition={{ duration: 2, ease: "easeOut" }}
-                    className="absolute inset-0 rounded-full border-[16px] border-primary border-l-transparent border-b-transparent shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]"
-                ></motion.div>
-                <div className="w-40 h-40 bg-white/40 backdrop-blur-xl rounded-full border-4 border-white shadow-2xl flex flex-col items-center justify-center">
-                    <motion.span className="text-6xl font-black text-primary drop-shadow-lg">{roundedCount}</motion.span>
+                <svg className="absolute inset-0 w-56 h-56" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="var(--color-primary-fixed)" strokeWidth={9} fill="none" />
+                    <g transform="rotate(-90 50 50)">
+                        <motion.circle
+                            cx={50}
+                            cy={50}
+                            r={42}
+                            stroke="var(--color-primary)"
+                            strokeWidth={9}
+                            strokeLinecap="round"
+                            fill="none"
+                            strokeDasharray={2 * Math.PI * 42}
+                            initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                            animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - targetScore / 100) }}
+                            transition={{ duration: 2, ease: "easeOut" }}
+                        />
+                    </g>
+                </svg>
+                <div className="w-40 h-40 bg-white rounded-full border-4 border-white shadow-2xl flex flex-col items-center justify-center">
+                    <motion.span className="text-6xl font-black text-primary">{roundedCount}</motion.span>
                     <span className="text-sm font-bold text-on-surface-variant">از ۱۰۰</span>
                 </div>
             </motion.div>
@@ -297,20 +304,32 @@ export default function DashboardIndex() {
                         </button>
                     </div>
                  ) : (
-                 <div className="flex items-center gap-6 z-10">
-                    {/* Simulated 3D rings */}
-                    <div className="relative w-24 h-24 flex items-center justify-center">
-                         <div className="absolute inset-0 rounded-full border-8 border-primary shadow-lg border-r-transparent transition-all duration-500" style={{ transform: `rotate(${Math.min(consumedCalories / targetCalories * 360, 360)}deg)` }}></div>
-                         <div className="absolute inset-2 rounded-full border-8 border-secondary-container shadow-lg border-l-transparent"></div>
-                         <div className="absolute inset-4 rounded-full border-8 border-outline-variant border-b-transparent"></div>
+                    <div className="flex items-center gap-6 z-10">
+                        <div className="w-full flex flex-col gap-2">
+                            {(() => {
+                                const proteinCals = consumedProtein * 4;
+                                const carbsCals = consumedCarbs * 4;
+                                const fatCals = consumedFat * 9;
+                                const total = proteinCals + carbsCals + fatCals;
+                                if (total === 0) {
+                                    return <div className="h-3 w-full rounded-full bg-surface-variant" />;
+                                }
+                                return (
+                                    <div className="h-3 w-full rounded-full overflow-hidden">
+                                        <div className="h-full bg-primary" style={{ width: `${(proteinCals / total) * 100}%` }} />
+                                        <div className="h-full bg-secondary" style={{ width: `${(carbsCals / total) * 100}%` }} />
+                                        <div className="h-full bg-tertiary" style={{ width: `${(fatCals / total) * 100}%` }} />
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        <div className="flex flex-col gap-2 text-sm font-medium">
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-primary shadow-sm" /> پروتئین: {Math.round(consumedProtein)}g</div>
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-secondary shadow-sm" /> کربوهیدرات: {Math.round(consumedCarbs)}g</div>
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-tertiary shadow-sm" /> چربی: {Math.round(consumedFat)}g</div>
+                        </div>
                     </div>
-                    
-                    <div className="flex flex-col gap-2 text-sm font-medium">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-primary shadow-sm" /> پروتئین: {Math.round(consumedProtein)}g</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-secondary-container shadow-sm" /> کربوهیدرات: {Math.round(consumedCarbs)}g</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-outline-variant shadow-sm" /> چربی: {Math.round(consumedFat)}g</div>
-                    </div>
-                 </div>
                  )}
             </div>
 

@@ -139,7 +139,7 @@ export function ExerciseGallery() {
 
                             <div className="absolute bottom-3 left-3 right-3">
                                 <h3 className="text-white font-bold text-sm leading-tight mb-1">{ex.title}</h3>
-                                <div className="flex justify-between items-center text-[10px] text-white/80 font-medium">
+                                <div className="flex justify-between items-center text-xs text-white/80 font-medium">
                                     <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full">{ex.duration}</span>
                                     <span>{ex.level}</span>
                                 </div>
@@ -196,7 +196,7 @@ export function ExerciseGallery() {
 
                         <div className="absolute bottom-3 left-3 right-3">
                             <h3 className="text-white font-bold text-sm leading-tight mb-1">{ex.title}</h3>
-                            <div className="flex justify-between items-center text-[10px] text-white/80 font-medium">
+                            <div className="flex justify-between items-center text-xs text-white/80 font-medium">
                                 <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full">{ex.duration}</span>
                                 <span>{ex.level}</span>
                             </div>

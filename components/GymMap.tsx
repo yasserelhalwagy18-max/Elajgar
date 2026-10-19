@@ -66,7 +66,7 @@ export default function GymMap() {
                 <div key={gym.id} className="glass-card relative overflow-hidden">
                     {/* Placeholder Badge */}
                     {gym.isPlaceholder && (
-                        <div className="absolute top-3 left-3 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 border border-amber-200">
+                        <div className="absolute top-3 left-3 bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 border border-amber-200">
                             <Construction size={12} />
                             <span>نمونه (بزودی)</span>
                         </div>

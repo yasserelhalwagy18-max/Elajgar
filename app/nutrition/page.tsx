@@ -245,7 +245,7 @@ export default function NutritionPage() {
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center">
                      <span className="text-sm font-bold text-on-surface">{targetCalories - consumedCalories}</span>
-                     <span className="text-[10px] text-on-surface-variant">باقیمانده</span>
+                      <span className="text-xs text-on-surface-variant">باقیمانده</span>
                  </div>
              </div>
              <div className="text-center">
