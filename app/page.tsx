@@ -23,7 +23,7 @@ export default function LandingPage() {
           >
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="absolute top-6 right-6 p-2 text-on-surface hover:text-primary transition-colors"
+              className="absolute top-6 end-6 p-2 text-on-surface hover:text-primary transition-colors"
             >
               <X className="w-8 h-8" />
             </button>
@@ -41,11 +41,11 @@ export default function LandingPage() {
       </AnimatePresence>
 
       {/* Top Nav */}
-      <nav className="flex flex-row-reverse justify-between items-center w-full py-4 bg-white border border-outline-variant/20 shadow-sm rounded-full px-6 md:px-8 mb-16 sticky top-4 z-50">
+      <nav className="flex flex-row justify-between items-center w-full py-4 bg-white border border-outline-variant/20 shadow-sm rounded-full px-6 md:px-8 mb-16 sticky top-4 z-50">
         <div className="text-2xl font-black text-primary tracking-tight">Elajgar</div>
 
         {/* Desktop Nav Links */}
-        <div className="hidden md:flex flex-row-reverse gap-8 text-sm font-medium">
+        <div className="hidden md:flex flex-row gap-8 text-sm font-medium">
           <Link href="#services" className="text-on-surface-variant hover:text-primary transition-colors">اکوسیستم</Link>
           <Link href="#how-it-works" className="text-on-surface-variant hover:text-primary transition-colors">خدمات</Link>
           <Link href="#gyms" className="text-on-surface-variant hover:text-primary transition-colors">شبکه</Link>
@@ -67,8 +67,8 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative w-full flex flex-col md:flex-row-reverse items-center justify-between gap-12 mb-24 md:min-h-[70vh]">
-        <div className="flex-1 text-right z-10 flex flex-col gap-6 items-end">
+      <section className="relative w-full flex flex-col md:flex-row items-center justify-between gap-12 mb-24 md:min-h-[70vh]">
+        <div className="flex-1 text-start z-10 flex flex-col gap-6 items-start">
           <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium border border-primary/20 backdrop-blur-md">
             پیشگام در سلامت دیجیتال
           </div>
@@ -225,8 +225,8 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-on-surface">شبکه شرکای ما</h2>
           <p className="text-on-surface-variant mt-2">علاج‌گر در بهترین باشگاه‌های سلامت</p>
         </div>
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-outline-variant/20 shadow-sm bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row-reverse items-center justify-between gap-8 shadow-2xl">
-           <div className="relative z-10 text-right flex-1">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-outline-variant/20 shadow-sm bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+           <div className="relative z-10 text-start flex-1">
               <h3 className="text-3xl font-bold mb-4">بسته جامع سلامت مفاصل</h3>
               <p className="text-lg text-primary-fixed opacity-90">با تهیه اشتراک ویژه، به تمامی امکانات اکوسیستم با تخفیف ویژه دسترسی پیدا کنید و از خدمات حضوری باشگاه‌های شریک بهره‌مند شوید.</p>
            </div>
@@ -298,7 +298,7 @@ export default function LandingPage() {
       </section>
       
       {/* Footer */}
-      <footer id="contact" className="border-t border-outline-variant/30 pt-12 pb-8 px-4 text-center md:text-right">
+      <footer id="contact" className="border-t border-outline-variant/30 pt-12 pb-8 px-4 text-center md:text-start">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-1 md:col-span-2">
             <h3 className="text-2xl font-black text-primary tracking-tight mb-4">Elajgar</h3>
@@ -318,8 +318,8 @@ export default function LandingPage() {
           <div>
             <h4 className="font-bold text-on-surface mb-4">پشتیبانی</h4>
             <div className="flex flex-col gap-2 text-sm text-on-surface-variant">
-              <span dir="ltr" className="text-right inline-block w-full">021 - 12345678</span>
-              <span dir="ltr" className="text-right inline-block w-full">support@elajgar.com</span>
+              <span dir="ltr" className="text-center md:text-right inline-block w-full">021 - 12345678</span>
+              <span dir="ltr" className="text-center md:text-right inline-block w-full">support@elajgar.com</span>
               <span className="mt-2">تهران، خیابان ولیعصر، برج نوآوری</span>
             </div>
           </div>
