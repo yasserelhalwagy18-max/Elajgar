@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { useStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +53,8 @@ const regionsData: RegionData[] = [
 ];
 
 export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
-    const { userProfile, toggleRegion } = useStore();
+    const userProfile = useStore((state) => state.userProfile);
+    const toggleRegion = useStore((state) => state.toggleRegion);
     const selectedZones = userProfile?.painZones?.map(z => z.zone) || [];
 
     const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(null);
@@ -146,6 +147,9 @@ export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
                                 onClick={() => toggleRegion(region.label)}
                                 onMouseEnter={(e) => handleHover(e, region)}
                                 onMouseLeave={(e) => handleHover(e, null)}
+                                onFocus={() => setHoveredRegion(region)}
+                                onBlur={() => setHoveredRegion(null)}
+                                aria-pressed={isSelected}
                                 aria-label={region.label}
                             >
                                 <div className={cn(

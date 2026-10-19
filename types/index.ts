@@ -1,7 +1,3 @@
-export type PainIntensity = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
-export type PainType = 'stabbing' | 'burning' | 'vague' | 'cramp' | 'inflammation';
-export type BodySection = 'neck' | 'shoulder' | 'elbow' | 'wrist' | 'back' | 'pelvis' | 'knee' | 'calf' | 'ankle' | 'chest' | 'abdomen';
-
 export interface UserProfile {
   id?: string;
   phoneNumber?: string;
@@ -15,6 +11,7 @@ export interface UserProfile {
   underlyingDiseases?: string[];
   medications?: string[];
   termsAccepted?: boolean;
+  /** A body region the user reported pain in. */
   painZones?: { zone: string; intensity: number; type: string }[];
   questionnaireAnswers?: {
     duration: string;
@@ -30,61 +27,15 @@ export interface UserProfile {
   currentWizardStep?: number; // For step-by-step Auto-save persistence
   nutritionGoal?: 'کاهش وزن' | 'افزایش وزن' | 'حفظ وزن' | 'سلامت عمومی';
   dailyLogs?: {
-    date: string; // YYYY-MM-DD
+    date: string; // YYYY-MM-DD (local calendar day)
     foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[];
     waterIntake: number; // in ml
     sleepHours?: number;
     sleepQuality?: 'poor' | 'fair' | 'good';
     activityMinutes?: number;
+    /** Weight recorded for this specific day, in kg. */
+    weight?: number;
+    /** Average pain intensity for this specific day, 0-10. */
+    painIntensity?: number;
   }[];
-}
-
-export interface PainAssessment {
-  userId: string;
-  selectedZones: {
-    zone: BodySection;
-    intensity: PainIntensity;
-    type: PainType;
-  }[];
-  questionnaireAnswers: {
-    duration: string;
-    aggravatedByActivity: boolean;
-    relievedByRest: boolean;
-    injuryHistory: boolean;
-    surgeryHistory: boolean;
-    sleepQuality: 'poor' | 'fair' | 'good';
-    stressLevel: 'low' | 'medium' | 'high';
-    sittingHoursPerDay: number;
-    exerciseDaysPerWeek: number;
-  };
-  generatedAnalysisId: string;
-}
-
-export interface VideoContent {
-  id: string;
-  title: string;
-  url: string;
-  isPremium: boolean;
-  associatedPainTags: BodySection[]; // Dynamic relation array
-  durationInMinutes: number;
-  level: 'beginner' | 'intermediate' | 'advanced';
-}
-
-export interface HealthScoreWeights {
-  weightWeight: number;      // default: 0.30
-  exerciseWeight: number;    // default: 0.30
-  painReductionWeight: number;// default: 0.25
-  waterIntakeWeight: number;  // default: 0.15
-}
-
-export interface GymPartner {
-  id: string;
-  name: string;
-  location: string;
-  category: 'yoga' | 'pool' | 'crossfit' | 'martial_arts' | 'general';
-  rating: number;
-  isPremium: boolean;
-  discountPercentage: number;
-  amenities: string[];
-  imageUrl: string;
 }

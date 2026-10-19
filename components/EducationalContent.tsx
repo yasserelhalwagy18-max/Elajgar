@@ -11,6 +11,24 @@ import { articles } from '@/lib/education-content';
 export function EducationalContent({ activeTag = 'همه' }: { activeTag?: string }) {
   const [activeArticle, setActiveArticle] = React.useState<typeof articles[0] | null>(null);
 
+  // Close the article dialog with the Escape key.
+  React.useEffect(() => {
+    if (!activeArticle) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveArticle(null);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [activeArticle]);
+
   const filteredArticles = activeTag === 'همه'
     ? articles
     : articles.filter(article => article.category === activeTag);
@@ -27,11 +45,12 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
         {filteredArticles.map((article) => {
           const Icon = article.icon;
           return (
-            <motion.div
+            <motion.button
+              type="button"
               key={article.id}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="glass-card p-4 rounded-[2rem] border border-white/60 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-white/50 transition-colors"
+              className="glass-card p-4 rounded-[2rem] border border-white/60 shadow-sm flex items-center gap-4 text-start cursor-pointer hover:bg-white/50 transition-colors"
               onClick={() => setActiveArticle(article)}
             >
               <div className="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-inner">
@@ -57,7 +76,7 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                   <span>زمان مطالعه: {article.readTime}</span>
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
           );
         })}
       </div>
@@ -78,6 +97,9 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                     initial={{ opacity: 0, scale: 0.9, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={`article-title-${activeArticle.id}`}
                     className="relative z-10 w-full max-w-lg bg-surface rounded-[2rem] overflow-hidden shadow-2xl border border-white/20 max-h-[90vh] flex flex-col"
                 >
                     <div className="relative w-full aspect-video bg-surface-variant">
@@ -103,7 +125,7 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                             <span className="text-xs font-bold text-on-surface-variant uppercase">{activeArticle.category}</span>
                             <span className="text-xs text-on-surface-variant mr-auto">{activeArticle.readTime} مطالعه</span>
                         </div>
-                        <h3 className="text-xl font-bold text-on-surface mb-4 leading-tight">{activeArticle.title}</h3>
+                        <h3 id={`article-title-${activeArticle.id}`} className="text-xl font-bold text-on-surface mb-4 leading-tight">{activeArticle.title}</h3>
                         <div className="text-sm text-on-surface-variant leading-relaxed space-y-4">
                             {activeArticle.content.map((paragraph, index) => (
                                 <p key={index}>{paragraph}</p>

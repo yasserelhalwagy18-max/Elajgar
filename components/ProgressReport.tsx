@@ -58,7 +58,7 @@ export default function ProgressReport() {
       {/* Weight Trend */}
       <div className="glass-panel p-6 rounded-[2rem] border-white/60 shadow-md">
         <h3 className="font-bold text-lg mb-4 text-on-surface">روند وزن (کیلوگرم)</h3>
-        <div className="h-64 w-full dir-ltr" dir="ltr">
+        <div className="h-64 w-full" dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.2)" />
@@ -78,7 +78,7 @@ export default function ProgressReport() {
       {/* BMI Trend */}
       <div className="glass-panel p-6 rounded-[2rem] border-white/60 shadow-md">
         <h3 className="font-bold text-lg mb-4 text-on-surface">شاخص توده بدنی (BMI)</h3>
-        <div className="h-48 w-full dir-ltr" dir="ltr">
+        <div className="h-48 w-full" dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.2)" />
@@ -98,7 +98,7 @@ export default function ProgressReport() {
       {/* Pain Intensity */}
       <div className="glass-panel p-6 rounded-[2rem] border-white/60 shadow-md">
         <h3 className="font-bold text-lg mb-4 text-on-surface">شدت درد (۰-۱۰)</h3>
-        <div className="h-64 w-full dir-ltr" dir="ltr">
+        <div className="h-64 w-full" dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
@@ -125,7 +125,7 @@ export default function ProgressReport() {
         {/* Physical Activity */}
         <div className="glass-panel p-6 rounded-[2rem] border-white/60 shadow-md">
           <h3 className="font-bold text-lg mb-4 text-on-surface">فعالیت فیزیکی (دقیقه)</h3>
-          <div className="h-48 w-full dir-ltr" dir="ltr">
+          <div className="h-48 w-full" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.2)" />
@@ -145,7 +145,7 @@ export default function ProgressReport() {
         {/* Calories & Water Combo (Using Line and Bar) */}
         <div className="glass-panel p-6 rounded-[2rem] border-white/60 shadow-md">
           <h3 className="font-bold text-lg mb-4 text-on-surface">کالری و آب</h3>
-          <div className="h-48 w-full dir-ltr" dir="ltr">
+          <div className="h-48 w-full" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.2)" />

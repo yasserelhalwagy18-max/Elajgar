@@ -1,9 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import { useStore } from '@/lib/store';
+import { toDateKey } from '@/lib/utils';
 
 const mockData = [
     { day: 'شنبه', amount: 1.2 },
@@ -19,6 +20,8 @@ export default function HydrationChart() {
     const svgRef = useRef<SVGSVGElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const userProfile = useStore(state => state.userProfile);
+    /** Width of the chart container; bumped on resize so the chart re-draws. */
+    const [chartWidth, setChartWidth] = useState(0);
 
     const chartData = useMemo(() => {
         if (!userProfile) return { data: mockData, hasEnoughData: false };
@@ -35,10 +38,8 @@ export default function HydrationChart() {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
 
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const dateStr = `${year}-${month}-${day}`;
+            // Local calendar day - must match the key used when writing logs.
+            const dateStr = toDateKey(d);
 
             const dayLabel = formatter.format(d);
 
@@ -60,7 +61,7 @@ export default function HydrationChart() {
 
     useEffect(() => {
         if (!svgRef.current || !wrapperRef.current || !hasEnoughData) return;
-        
+
         // Make it responsive by using wrapper's width
         const width = wrapperRef.current.clientWidth || 300;
         const height = 150;
@@ -68,7 +69,7 @@ export default function HydrationChart() {
 
         const svg = d3.select(svgRef.current);
         svg.selectAll('*').remove();
-        
+
         const graphWidth = width - margin.left - margin.right;
         const graphHeight = height - margin.top - margin.bottom;
 
@@ -166,7 +167,24 @@ export default function HydrationChart() {
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '4,4');
 
-    }, [activeData, hasEnoughData]);
+    }, [activeData, hasEnoughData, chartWidth]);
+
+    // Re-draw the chart when its container is resized. Without this the paths
+    // keep the coordinates they were drawn with and become misaligned.
+    useEffect(() => {
+        const wrapper = wrapperRef.current;
+        if (!wrapper || !hasEnoughData) return;
+
+        setChartWidth(wrapper.clientWidth);
+
+        const observer = new ResizeObserver((entries) => {
+            const width = entries[0]?.contentRect.width;
+            if (width) setChartWidth(width);
+        });
+
+        observer.observe(wrapper);
+        return () => observer.disconnect();
+    }, [hasEnoughData]);
 
     if (!hasEnoughData) {
         return (

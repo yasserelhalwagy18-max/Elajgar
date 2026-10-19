@@ -11,11 +11,13 @@ import { ExerciseGallery } from '@/components/ExerciseGallery';
 import { SmartAnalysis } from '@/components/SmartAnalysis';
 import { EducationalContent } from '@/components/EducationalContent';
 import { useStore } from '@/lib/store';
+import { useMounted } from '@/hooks/use-mounted';
 import { useRouter } from 'next/navigation';
 
 export default function EducationPage() {
     const router = useRouter();
-    const { isAuthenticated } = useStore();
+    const isAuthenticated = useStore((state) => state.isAuthenticated);
+    const mounted = useMounted();
 
     const tags = ['همه', 'آب درمانی', 'تغذیه', 'اصلاح وضعیت', 'سلامت مفاصل', 'سبک زندگی'];
     const [activeTag, setActiveTag] = useState('همه');
@@ -27,6 +29,27 @@ export default function EducationPage() {
         }
     }, [isAuthenticated, router]);
 
+    // Close the premium dialog with the Escape key and lock background scroll.
+    useEffect(() => {
+        if (!showPremiumModal) return;
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setShowPremiumModal(false);
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [showPremiumModal]);
+
+    // The persisted store hydrates on the client only: wait for the client
+    // render so the server and first client render match.
+    if (!mounted) return null;
     if (!isAuthenticated) return null;
 
     return (
@@ -115,6 +138,9 @@ export default function EducationPage() {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="premium-modal-title"
                             className="relative z-10 w-full max-w-2xl bg-surface rounded-[2rem] overflow-hidden shadow-2xl border border-white/20 p-6 flex flex-col"
                         >
                             <button
@@ -125,7 +151,7 @@ export default function EducationPage() {
                                 <X className="w-5 h-5" />
                             </button>
 
-                            <h2 className="text-2xl font-bold text-center text-on-surface mb-6 mt-4">پلن‌های اشتراک ویژه</h2>
+                            <h2 id="premium-modal-title" className="text-2xl font-bold text-center text-on-surface mb-6 mt-4">پلن‌های اشتراک ویژه</h2>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {/* Base Tier */}

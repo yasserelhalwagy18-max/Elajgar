@@ -3,7 +3,9 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { MapPin, Star, Percent, Construction } from 'lucide-react';
-import { Gym } from '@prisma/client';
+// Type-only import: a value import would pull the Prisma engine into the
+// browser bundle.
+import type { Gym } from '@prisma/client';
 
 const gymCategoryLabels: Record<string, string> = {
     YOGA: 'یوگا',
@@ -19,19 +21,24 @@ export default function GymMap() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         async function fetchGyms() {
             try {
-                const res = await fetch('/api/gyms');
+                const res = await fetch('/api/gyms', { signal: controller.signal });
                 if (!res.ok) throw new Error('خطا در دریافت اطلاعات باشگاه‌ها');
                 const data = await res.json();
                 setGyms(data);
             } catch (err: any) {
+                if (err?.name === 'AbortError') return;
                 setError(err.message || 'مشکلی پیش آمد');
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
         }
         fetchGyms();
+
+        return () => controller.abort();
     }, []);
 
     if (loading) {

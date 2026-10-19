@@ -13,15 +13,15 @@ interface AuthState {
   logFood: (date: string, food: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }) => void;
   clearAndSetFoods: (date: string, foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[]) => void;
   addWater: (date: string, amount: number) => void;
-  logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number }) => void;
+  logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number; weight?: number; painIntensity?: number }) => void;
   resetAll: () => void;
-  fetchUserFromServer: (phoneNumber: string) => Promise<void>;
-  saveUserToServer: (profile: Partial<UserProfile>) => Promise<void>;
+  fetchUserFromServer: () => Promise<void>;
+  saveUserToServer: (profile?: Partial<UserProfile>) => Promise<boolean>;
 }
 
 export const useStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isAuthenticated: false,
       userProfile: null,
       setAuthenticated: (status) => set({ isAuthenticated: status }),
@@ -168,35 +168,57 @@ export const useStore = create<AuthState>()(
             },
           };
         }),
-      logout: () => set({ isAuthenticated: false, userProfile: null }),
-      fetchUserFromServer: async (phoneNumber: string) => {
+      logout: () => {
+        set({ isAuthenticated: false, userProfile: null });
+        // The session lives in an HTTP-only cookie, so clearing the local
+        // store is not enough - the server would still consider the user
+        // signed in.
+        void fetch('/api/auth/logout', { method: 'POST' }).catch((error) => {
+          console.error('Failed to clear the server session:', error);
+        });
+      },
+      fetchUserFromServer: async () => {
         try {
-          const res = await fetch(`/api/user?phoneNumber=${encodeURIComponent(phoneNumber)}`);
-          if (res.ok) {
-            const data = await res.json();
-            set((state) => ({
-              userProfile: {
-                ...state.userProfile,
-                ...data,
-              },
-            }));
+          // The server identifies the caller from the session cookie, so no
+          // phone number is sent.
+          const res = await fetch('/api/user', { cache: 'no-store' });
+          if (!res.ok) {
+            console.error('Failed to fetch user from server:', res.status);
+            return;
           }
+          const data = await res.json();
+          set((state) => ({
+            userProfile: {
+              ...state.userProfile,
+              ...data,
+              // The server is the source of truth for persisted fields, but
+              // keep any local-only fields (daily logs that have not been
+              // synced yet) that the server does not know about.
+              dailyLogs: data.dailyLogs?.length ? data.dailyLogs : state.userProfile?.dailyLogs,
+            },
+          }));
         } catch (error) {
           console.error('Failed to fetch user from server:', error);
         }
       },
-      saveUserToServer: async (profile: Partial<UserProfile>) => {
+      saveUserToServer: async (profile) => {
         try {
+          const payload = profile ?? get().userProfile;
+          if (!payload) return false;
+
           const res = await fetch('/api/user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(profile),
+            body: JSON.stringify(payload),
           });
           if (!res.ok) {
-            console.error('Failed to save user to server:', await res.text());
+            console.error('Failed to save user to server:', res.status, await res.text());
+            return false;
           }
+          return true;
         } catch (error) {
           console.error('Error saving user to server:', error);
+          return false;
         }
       },
       resetAll: () => {

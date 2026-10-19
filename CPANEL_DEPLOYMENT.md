@@ -5,22 +5,23 @@ This guide is written specifically for beginners who have no prior experience up
 Your project consists of the following:
 - **Next.js**: The main framework for the frontend and parts of the backend (API Routes).
 - **Prisma**: The tool used to interact with the database.
-- **Database**: Based on your code, it currently uses `PostgreSQL`. However, since most standard cPanel environments only support MySQL, we need to adjust Prisma to use MySQL (explained in the steps below).
+- **Database**: MySQL. `prisma/schema.prisma` already declares `provider = "mysql"` — no change is needed (see Step 1).
 
 ---
 
-## Step 1: Change the Database to MySQL (If Needed)
-Since typical cPanel setups support MySQL and your current code is configured for PostgreSQL, we must prepare the code for MySQL first.
+## Step 1: Confirm the Database Provider
+`prisma/schema.prisma` already targets MySQL:
 
-1. Open the file `prisma/schema.prisma` on your computer.
-2. Find the `datasource` section and change the word `"postgresql"` to `"mysql"`:
 ```prisma
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 ```
-*Note: If you are using a separate external database server like Supabase or Neon (which are PostgreSQL), you do not need to make this change.*
+
+No change is needed. If you use a PostgreSQL host (Supabase, Neon, …) you must
+change the provider **and** the connection string together — mixing a
+PostgreSQL URL with the MySQL provider makes Prisma fail at startup.
 
 ---
 
@@ -108,12 +109,26 @@ If you are using the database provided by cPanel:
    - **Application root:** The folder name where you want your project files to live (e.g., `elajgar_app`).
    - **Application URL:** Choose the domain or subdomain where you want the site to load.
    - **Application startup file:** Type `server.js`.
-4. Scroll down slightly to the **Environment variables** section and click **ADD VARIABLE**. Add the following three variables:
-   - Name: `NODE_ENV` / Value: `production`
-   - Name: `JWT_SECRET` / Value: (Type a long, random sequence of characters)
-   - Name: `DATABASE_URL` / Value: You must write the connection link for the database you created in Step 5 using this format:
-     `mysql://USERNAME:PASSWORD@localhost:3306/DATABASENAME`
-     *(Replace USERNAME, PASSWORD, and DATABASENAME with the details from Step 5)*
+4. Scroll down slightly to the **Environment variables** section and click **ADD VARIABLE**. Add the following variables:
+
+   | Name | Value | Required |
+   | --- | --- | --- |
+   | `NODE_ENV` | `production` | yes |
+   | `JWT_SECRET` | a long random string (see below) | yes |
+   | `DATABASE_URL` | `mysql://USERNAME:PASSWORD@localhost:3306/DATABASENAME` | yes |
+   | `SMSIR_API_KEY` | the API key from your sms.ir panel | for OTP login |
+   | `SMSIR_TEMPLATE_ID` | the id of your "Verify" template in sms.ir | for OTP login |
+   | `SMSIR_CODE_PARAM` | the parameter name used in the template text (usually `CODE`) | for OTP login |
+   | `NEXT_PUBLIC_SENTRY_DSN` | your Sentry DSN, or leave empty | optional |
+
+   Generate a good `JWT_SECRET` with:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+   ```
+
+   **Never commit real credentials.** `.env.exsample` in the repository only
+   contains placeholders — copy it to `.env` and fill it in locally, and set
+   the real values as cPanel environment variables.
 5. Click **SAVE** and then click **CREATE** at the top of the page.
 
 ---
@@ -141,10 +156,14 @@ If you are using the database provided by cPanel:
 npm install --production
 ```
 
-**Apply database changes (only needed the first time):**
+**Apply database changes (run this after every schema change):**
 ```bash
 npx prisma db push
 ```
+
+`prisma db push` is safe to re-run: it applies only the difference between the
+schema in `prisma/schema.prisma` and the tables already in the database, and
+it never drops data.
 
 **Generate Prisma code:**
 ```bash

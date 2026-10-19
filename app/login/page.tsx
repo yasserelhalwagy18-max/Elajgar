@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '../../lib/store';
 import { Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { normalizeDigits } from '../../lib/utils';
 
-export default function LoginPage() {
+function LoginForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [otp, setOtp] = useState('');
@@ -16,7 +16,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setAuthenticated, updateUserProfile, fetchUserFromServer } = useStore();
+
+  // Where to go after a successful login. The middleware sends unauthenticated
+  // visitors here with a `next` parameter.
+  const nextPath = searchParams.get('next');
+  const destination = nextPath && nextPath.startsWith('/') ? nextPath : '/wizard';
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,12 +77,12 @@ export default function LoginPage() {
         updateUserProfile({ phoneNumber });
 
         try {
-          await fetchUserFromServer(phoneNumber);
+          await fetchUserFromServer();
         } catch (error) {
           console.error("Failed server synchronization:", error);
         }
 
-        router.push('/wizard');
+        router.push(destination);
       } else {
         setOtpError(data.error || 'کد تایید نادرست است');
       }
@@ -222,7 +228,7 @@ export default function LoginPage() {
             )}
             <button
               type="button"
-              onClick={() => { setStep('phone'); setOtpError(''); setOtp(''); }}
+              onClick={() => { setStep('phone'); setOtpError(''); setOtp(''); setPhoneNumber(''); }}
               disabled={isLoading}
               className="w-full py-2 px-4 text-primary hover:bg-primary-container rounded-full transition-colors text-sm"
             >
@@ -232,5 +238,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center" role="status" aria-label="در حال بارگذاری" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

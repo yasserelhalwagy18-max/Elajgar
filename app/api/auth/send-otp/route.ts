@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { randomInt } from 'crypto';
 import prisma from '@/lib/prisma';
 import { sendOtpSms } from '@/lib/sms';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
+import {
+  OTP_MAX_SENDS,
+  OTP_SEND_WINDOW_MS,
+  OTP_TTL_MS,
+  OTP_CODE_LENGTH,
+} from '@/lib/otp';
 
 export async function POST(request: Request) {
   try {
@@ -14,8 +21,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // --- Rate limiting ---------------------------------------------------
+    // Layer 1: per source IP, to blunt SMS bombing across many numbers.
+    const ipLimit = rateLimit(`otp-send:ip:${clientIp(request.headers)}`, 10, OTP_SEND_WINDOW_MS);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        { error: 'تعداد درخواست‌ها زیاد است. لطفاً بعداً تلاش کنید' },
+        { status: 429, headers: { 'Retry-After': String(ipLimit.retryAfter) } }
+      );
+    }
+
+    // Layer 2: per phone number, authoritative (survives restarts/instances).
+    const recentSends = await prisma.otpCode.count({
+      where: {
+        phoneNumber,
+        createdAt: { gte: new Date(Date.now() - OTP_SEND_WINDOW_MS) },
+      },
+    });
+
+    if (recentSends >= OTP_MAX_SENDS) {
+      return NextResponse.json(
+        { error: 'تعداد کدهای ارسال‌شده بیش از حد مجاز است. لطفاً کمی بعد دوباره تلاش کنید' },
+        { status: 429 }
+      );
+    }
+
     // Generate a 6-digit random code
-    const code = randomInt(100000, 1000000).toString();
+    const code = randomInt(0, 10 ** OTP_CODE_LENGTH).toString().padStart(OTP_CODE_LENGTH, '0');
 
     // Invalidate previous unconsumed codes for this phone number
     await prisma.otpCode.updateMany({
@@ -29,7 +61,7 @@ export async function POST(request: Request) {
     });
 
     // Create a new OTP code with a 5-minute expiry
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+    const expiresAt = new Date(Date.now() + OTP_TTL_MS);
 
     const otpRecord = await prisma.otpCode.create({
       data: {

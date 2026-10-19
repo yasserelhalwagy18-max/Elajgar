@@ -7,17 +7,27 @@ import { useStore } from '@/lib/store';
 import { searchFoods, FoodItem, getFoodById, getAllFoods } from '@/lib/food-service';
 import { Search, Plus, Droplet, Target, Utensils, X, Check, Sparkles } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
+import { toDateKey } from '@/lib/utils';
+import { useMounted } from '@/hooks/use-mounted';
 
 export default function NutritionPage() {
   const router = useRouter();
-  const { isAuthenticated, userProfile, updateUserProfile, logFood, addWater, clearAndSetFoods } = useStore();
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const userProfile = useStore((state) => state.userProfile);
+  const updateUserProfile = useStore((state) => state.updateUserProfile);
+  const logFood = useStore((state) => state.logFood);
+  const addWater = useStore((state) => state.addWater);
+  const clearAndSetFoods = useStore((state) => state.clearAndSetFoods);
+  const mounted = useMounted();
   const [goalModalOpen, setGoalModalOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchResults, setSearchResults] = React.useState<FoodItem[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
+  const [isGeneratingPlan, setIsGeneratingPlan] = React.useState(false);
+  const [planError, setPlanError] = React.useState<string | null>(null);
 
-  // Get current date string (YYYY-MM-DD)
-  const todayDate = new Date().toISOString().split('T')[0];
+  // Get current date string (YYYY-MM-DD) - local calendar day
+  const todayDate = toDateKey();
   const todayLog = userProfile?.dailyLogs?.find((log) => log.date === todayDate) || { foods: [], waterIntake: 0 };
 
   // Nutrition calculations (Mifflin-St Jeor)
@@ -82,18 +92,38 @@ export default function NutritionPage() {
   const waterGlasses = Math.ceil(waterTarget / 250);
 
   // Current intake
-  const consumedCalories = todayLog.foods.reduce((acc, food) => acc + food.calories, 0);
-  const consumedProtein = todayLog.foods.reduce((acc, food) => acc + food.protein, 0);
-  const consumedCarbs = todayLog.foods.reduce((acc, food) => acc + food.carbs, 0);
-  const consumedFat = todayLog.foods.reduce((acc, food) => acc + food.fat, 0);
+  // `todayLog.foods` can be undefined when the profile was merged from a
+  // server response that had no logs - guard it rather than throwing.
+  const todayFoods = todayLog.foods ?? [];
+  const consumedCalories = todayFoods.reduce((acc, food) => acc + food.calories, 0);
+  const consumedProtein = todayFoods.reduce((acc, food) => acc + food.protein, 0);
+  const consumedCarbs = todayFoods.reduce((acc, food) => acc + food.carbs, 0);
+  const consumedFat = todayFoods.reduce((acc, food) => acc + food.fat, 0);
+
+  // Abort the previous search when a new one starts, so a slower earlier
+  // response can never overwrite the results of a newer one.
+  const searchAbortRef = React.useRef<AbortController | null>(null);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     setIsSearching(true);
-    const results = await searchFoods(query);
+
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+
+    const results = await searchFoods(query, controller.signal);
+    if (controller.signal.aborted) return;
+
     setSearchResults(results);
     setIsSearching(false);
   };
+
+  React.useEffect(() => {
+    return () => {
+      searchAbortRef.current?.abort();
+    };
+  }, []);
 
   const handleAddFood = (food: FoodItem) => {
     logFood(todayDate, food);
@@ -102,85 +132,102 @@ export default function NutritionPage() {
   };
 
   const handleGenerateMealPlan = async () => {
-    const allFoods = await getAllFoods();
-    const minCalories = targetCalories * 0.9;
-    const maxCalories = targetCalories * 1.1;
-    const absoluteMax = targetCalories * 1.2;
+    if (isGeneratingPlan) return;
+    setIsGeneratingPlan(true);
+    setPlanError(null);
 
-    let bestCombination: FoodItem[] = [];
-    let bestCalories = 0;
-
-    // Helper to shuffle array
-    const shuffle = (array: FoodItem[]) => {
-      let currentIndex = array.length;
-      let temporaryValue, randomIndex;
-      const newArray = [...array];
-      while (0 !== currentIndex) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-        temporaryValue = newArray[currentIndex];
-        newArray[currentIndex] = newArray[randomIndex];
-        newArray[randomIndex] = temporaryValue;
+    try {
+      const allFoods = await getAllFoods();
+      if (allFoods.length === 0) {
+        setPlanError('دریافت لیست غذاها ناموفق بود. لطفاً دوباره تلاش کنید.');
+        return;
       }
-      return newArray;
-    };
 
-    // Try a fixed number of random combinations
-    const ATTEMPTS = 100;
-    for (let i = 0; i < ATTEMPTS; i++) {
-      const shuffled = shuffle(allFoods);
-      let currentCombination: FoodItem[] = [];
-      let currentCalories = 0;
+      const minCalories = targetCalories * 0.9;
+      const maxCalories = targetCalories * 1.1;
 
-      for (const food of shuffled) {
-        if (currentCalories + food.calories <= absoluteMax) {
-          currentCombination.push(food);
-          currentCalories += food.calories;
+      let bestCombination: FoodItem[] = [];
+      let bestCalories = 0;
+      let bestDiff = Number.POSITIVE_INFINITY;
+
+      // Helper to shuffle array
+      const shuffle = (array: FoodItem[]) => {
+        let currentIndex = array.length;
+        let temporaryValue, randomIndex;
+        const newArray = [...array];
+        while (0 !== currentIndex) {
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex -= 1;
+          temporaryValue = newArray[currentIndex];
+          newArray[currentIndex] = newArray[randomIndex];
+          newArray[randomIndex] = temporaryValue;
+        }
+        return newArray;
+      };
+
+      // Try a fixed number of random combinations
+      const ATTEMPTS = 100;
+      for (let i = 0; i < ATTEMPTS; i++) {
+        const shuffled = shuffle(allFoods);
+        let currentCombination: FoodItem[] = [];
+        let currentCalories = 0;
+
+        for (const food of shuffled) {
+          // Stop as soon as we are inside the target band.
+          if (currentCalories >= minCalories && currentCalories <= maxCalories) {
+            currentCombination.push(food);
+            currentCalories += food.calories;
+            break;
+          }
+
+          if (currentCalories + food.calories <= maxCalories) {
+            currentCombination.push(food);
+            currentCalories += food.calories;
+          }
         }
 
-        // Perfect match found
-        if (currentCalories >= minCalories && currentCalories <= maxCalories) {
-           if (clearAndSetFoods) {
-              clearAndSetFoods(todayDate, currentCombination);
-              return;
-           }
+        // Track the closest match as a fallback
+        const currentDiff = Math.abs(currentCalories - targetCalories);
+        if (currentCombination.length > 0 && currentDiff < bestDiff) {
+          bestCombination = currentCombination;
+          bestCalories = currentCalories;
+          bestDiff = currentDiff;
         }
       }
 
-      // Track the closest match as a fallback
-      const currentDiff = Math.abs(currentCalories - targetCalories);
-      const bestDiff = Math.abs(bestCalories - targetCalories);
-
-      if (currentCombination.length > 0 && currentDiff < bestDiff) {
-        bestCombination = currentCombination;
-        bestCalories = currentCalories;
-      } else if (bestCombination.length === 0 && currentCombination.length > 0) {
-        bestCombination = currentCombination;
-        bestCalories = currentCalories;
+      if (bestCombination.length === 0) {
+        setPlanError('نتوانستیم یک برنامه غذایی مناسب پیدا کنیم. لطفاً بعداً دوباره تلاش کنید.');
+        return;
       }
-    }
 
-    // Fallback if no ideal combination was found
-    if (bestCombination.length > 0) {
-      if (clearAndSetFoods) {
-        clearAndSetFoods(todayDate, bestCombination);
-      }
+      // Replacing the day's log destroys what the user already recorded, so
+      // ask first.
+      const confirmed = window.confirm(
+        `برنامه غذایی پیشنهادی حدود ${Math.round(bestCalories)} کالری دارد و وعده‌های ثبت‌شده امروز را جایگزین می‌کند. ادامه می‌دهید؟`
+      );
+      if (!confirmed) return;
+
+      clearAndSetFoods(todayDate, bestCombination);
+    } catch (error) {
+      console.error('Error generating meal plan:', error);
+      setPlanError('دریافت برنامه غذایی با خطا مواجه شد. لطفاً دوباره تلاش کنید.');
+    } finally {
+      setIsGeneratingPlan(false);
     }
   };
 
   // Run initial search
   React.useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
     const fetchInitial = async () => {
       setIsSearching(true);
-      const results = await searchFoods('');
-      if (active) {
-        setSearchResults(results);
-        setIsSearching(false);
-      }
+      const results = await searchFoods('', controller.signal);
+      if (controller.signal.aborted) return;
+      setSearchResults(results);
+      setIsSearching(false);
     };
     fetchInitial();
-    return () => { active = false; };
+    return () => controller.abort();
   }, []);
 
   React.useEffect(() => {
@@ -189,6 +236,27 @@ export default function NutritionPage() {
     }
   }, [isAuthenticated, router]);
 
+  // Close the goal dialog with the Escape key and lock background scroll.
+  React.useEffect(() => {
+    if (!goalModalOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setGoalModalOpen(false);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [goalModalOpen]);
+
+  // The persisted store hydrates on the client only: wait for the client
+  // render so the server and first client render match.
+  if (!mounted) return null;
   if (!isAuthenticated) return null;
 
   return (
@@ -220,11 +288,16 @@ export default function NutritionPage() {
 
         <button
             onClick={handleGenerateMealPlan}
-            className="w-full flex items-center justify-center gap-2 btn-primary-glass py-3 rounded-xl font-bold shadow-sm"
+            disabled={isGeneratingPlan}
+            aria-busy={isGeneratingPlan}
+            className="w-full flex items-center justify-center gap-2 btn-primary-glass py-3 rounded-xl font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-            <Sparkles className="w-5 h-5" />
-            پیشنهاد رژیم امروز
+            <Sparkles className={`w-5 h-5 ${isGeneratingPlan ? 'animate-spin' : ''}`} />
+            {isGeneratingPlan ? 'در حال محاسبه...' : 'پیشنهاد رژیم امروز'}
         </button>
+        {planError && (
+            <p role="alert" className="mt-2 text-sm text-error text-center">{planError}</p>
+        )}
       </section>
 
       {/* Macros Overview */}
@@ -336,10 +409,13 @@ export default function NutritionPage() {
                 />
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="goal-modal-title"
                     className="relative w-full max-w-sm glass-popover bg-white/90 rounded-[2rem] p-6 shadow-2xl z-10"
                 >
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold">انتخاب هدف</h3>
+                        <h3 id="goal-modal-title" className="text-xl font-bold">انتخاب هدف</h3>
                         <button onClick={() => setGoalModalOpen(false)} aria-label="بستن"
                             className="p-2 rounded-full bg-surface-variant/50">
                             <X className="w-4 h-4" />

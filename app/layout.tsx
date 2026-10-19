@@ -1,5 +1,6 @@
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import { Vazirmatn } from 'next/font/google';
+import { Toaster } from 'react-hot-toast';
 import './globals.css';
 
 const vazirmatn = Vazirmatn({ subsets: ['arabic', 'latin'], variable: '--font-sans' });
@@ -17,7 +18,12 @@ export const metadata: Metadata = {
   },
 };
 
-import { Toaster } from 'react-hot-toast';
+// Next 15 wants the viewport in its own export rather than inside `metadata`.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#2563eb',
+};
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
@@ -29,7 +35,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           toastOptions={{
             style: {
               background: '#fff',
-              color: '#0f172a',
+              color: '#0f1722',
               borderRadius: '16px',
               border: '1px solid #e2e8f0'
             }

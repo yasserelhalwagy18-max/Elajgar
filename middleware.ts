@@ -2,31 +2,38 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
+/**
+ * Routes that require a signed-in user. The pages also guard themselves on
+ * the client, but the client-side check is trivially bypassed - this is the
+ * server-side half.
+ */
+const PROTECTED_PREFIXES = ['/dashboard', '/wizard', '/nutrition', '/admin'];
+
 export async function middleware(request: NextRequest) {
-  // Extract token from cookie
+  const { pathname } = request.nextUrl;
+
+  const needsAuth = PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+
+  if (!needsAuth) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get('session')?.value;
 
   if (token) {
     const payload = await verifyToken(token);
-
-    if (payload && payload.userId) {
-      // Clone the request headers and add user ID
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set('x-user-id', payload.userId as string);
-
-      // Continue request with modified headers
-      return NextResponse.next({
-        request: {
-          headers: requestHeaders,
-        },
-      });
+    if (payload?.userId) {
+      return NextResponse.next();
     }
   }
 
-  return NextResponse.next();
+  const loginUrl = new URL('/login', request.url);
+  loginUrl.searchParams.set('next', pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
-// Only run middleware on API routes (except auth routes where it's not needed or could interfere)
 export const config = {
   matcher: [
     /*
@@ -34,8 +41,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - api/auth (auth routes)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/auth).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

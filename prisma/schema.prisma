@@ -69,6 +69,11 @@ model User {
   nutritionGoal      NutritionGoal?
   role               Role           @default(USER)
 
+  /// Body regions the user reported pain in, with intensity and type.
+  /// Stored as JSON because the client's region granularity (27 labelled
+  /// regions incl. left/right) is finer than the BodySection enum.
+  painRegions        Json?
+
   accounts Account[]
   sessions Session[]
 
@@ -146,9 +151,9 @@ enum SleepQuality {
 }
 
 enum StressLevel {
-  LOW    @map("low")
-  MEDIUM @map("medium")
-  HIGH   @map("high")
+  LOW    @map("کم")
+  MEDIUM @map("متوسط")
+  HIGH   @map("زیاد")
 }
 
 enum BodySection {
@@ -182,6 +187,10 @@ model DailyLog {
   sleepHours      Float?
   sleepQuality    SleepQuality?
   activityMinutes Int?          @default(0)
+  /// Weight recorded for this day, in kg. Null when not measured.
+  weight          Float?
+  /// Average pain intensity for this day, 0-10. Null when not recorded.
+  painIntensity   Int?
 
   user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   foods FoodLog[]
@@ -202,13 +211,22 @@ model Food {
 }
 
 model FoodLog {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   dailyLogId String
-  foodId     String
-  quantity   Float  @default(1.0) // multiplier for the base nutritional values
+  /// Reference to the master food entry. Null for items the user typed in
+  /// that are not part of the food database.
+  foodId     String?
+  /// Snapshot of the food at the time it was logged, so the log stays
+  /// meaningful even if the master entry changes later.
+  foodName   String?
+  calories   Float?
+  protein    Float?
+  carbs      Float?
+  fat        Float?
+  quantity   Float   @default(1.0) // multiplier for the base nutritional values
 
   dailyLog DailyLog @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
-  food     Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  food     Food?    @relation(fields: [foodId], references: [id], onDelete: SetNull)
 }
 
 // Content Models (Exercise, VideoContent, Gym)
@@ -266,9 +284,13 @@ model OtpCode {
   code        String
   expiresAt   DateTime
   consumed    Boolean  @default(false)
+  /// Number of failed verification attempts against this code. Once it
+  /// reaches the limit the code is burned so it cannot be brute-forced.
+  attempts    Int      @default(0)
   createdAt   DateTime @default(now())
 
   @@index([phoneNumber])
+  @@index([phoneNumber, createdAt])
 }
 
 enum Role {

@@ -3,9 +3,10 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { Search, MapPin, Star, Tag, CheckCircle2, Ticket, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, normalizeText } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useStore } from '@/lib/store';
+import { useMounted } from '@/hooks/use-mounted';
 import { useRouter } from 'next/navigation';
 
 const GymMap = dynamic(() => import('@/components/GymMap'), { ssr: false });
@@ -66,19 +67,27 @@ const FILTERS = ['همه', 'یوگا', 'استخر', 'کراس‌فیت'];
 
 export default function GymsPage() {
     const router = useRouter();
-    const { isAuthenticated } = useStore();
+    const isAuthenticated = useStore((state) => state.isAuthenticated);
+    const mounted = useMounted();
 
     const [activeFilter, setActiveFilter] = React.useState('همه');
     const [isSearching, setIsSearching] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState('');
 
     const filteredGyms = React.useMemo(() => {
+        const query = normalizeText(searchQuery);
         return MOCK_GYMS.filter(gym => {
             const matchesFilter = gym.tags.includes(activeFilter);
-            const matchesSearch = searchQuery === '' ||
-                gym.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                gym.location.toLowerCase().includes(searchQuery.toLowerCase());
-            return matchesFilter && matchesSearch;
+            if (!matchesFilter) return false;
+            if (query === '') return true;
+            // Match the name, the location, the description and the tags - and
+            // normalize Arabic/Persian letter variants so the search works.
+            return (
+                normalizeText(gym.name).includes(query) ||
+                normalizeText(gym.location).includes(query) ||
+                normalizeText(gym.desc ?? '').includes(query) ||
+                gym.tags.some((tag) => normalizeText(tag).includes(query))
+            );
         });
     }, [activeFilter, searchQuery]);
 
@@ -88,6 +97,9 @@ export default function GymsPage() {
         }
     }, [isAuthenticated, router]);
 
+    // The persisted store hydrates on the client only: wait for the client
+    // render so the server and first client render match.
+    if (!mounted) return null;
     if (!isAuthenticated) return null;
 
     return (
@@ -172,10 +184,7 @@ function GymCard({ name, location, discount, discountCode, rating, desc, imageSe
     };
 
     return (
-        <article
-            className="bg-white rounded-[2rem] overflow-hidden relative group border border-outline-variant/20 shadow-sm transition-all hover:shadow-md cursor-pointer"
-            onClick={() => setIsExpanded(!isExpanded)}
-        >
+        <article className="bg-white rounded-[2rem] overflow-hidden relative group border border-outline-variant/20 shadow-sm transition-all hover:shadow-md">
             <div className={cn(
                 "absolute top-4 right-4 z-10 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm",
                 isPremium ? "bg-white/90 backdrop-blur-md text-primary" : "bg-primary text-white"
@@ -212,7 +221,7 @@ function GymCard({ name, location, discount, discountCode, rating, desc, imageSe
                 </p>
 
                 {isExpanded && (
-                    <div className="mb-4 p-4 bg-surface rounded-2xl border border-outline-variant/30 animate-in fade-in slide-in-from-top-2">
+                    <div id={`gym-details-${imageSeed}`} className="mb-4 p-4 bg-surface rounded-2xl border border-outline-variant/30 animate-in fade-in slide-in-from-top-2">
                         {isClaimed ? (
                             <div className="flex flex-col items-center text-center gap-2">
                                 <CheckCircle2 className="w-8 h-8 text-green-500 mb-1" />
@@ -238,6 +247,10 @@ function GymCard({ name, location, discount, discountCode, rating, desc, imageSe
                 )}
 
                 <button
+                    type="button"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    aria-expanded={isExpanded}
+                    aria-controls={`gym-details-${imageSeed}`}
                     className={cn(
                         "w-full py-3 rounded-xl font-bold text-sm flex justify-center items-center transition-colors",
                         isExpanded ? "bg-surface text-on-surface-variant" : "bg-primary/10 text-primary hover:bg-primary/20"

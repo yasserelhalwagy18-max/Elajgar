@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 
 const PainHeatmap3D = dynamic(() => import('@/components/PainHeatmap3D'), { ssr: false });
 
@@ -218,19 +218,48 @@ export default function AdminPage() {
     );
 }
 
-function NavItem({ icon: Icon, label, active = false, onClick }: any) {
+function NavItem({
+    icon: Icon,
+    label,
+    active = false,
+    onClick,
+}: {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    active?: boolean;
+    onClick: () => void;
+}) {
     return (
-        <div onClick={onClick} className={cn(
-            "flex items-center gap-4 px-8 py-4 mr-4 rounded-l-full cursor-pointer transition-all duration-300",
-            active ? "bg-secondary-container text-on-secondary-container font-black shadow-inner" : "text-on-surface-variant hover:bg-surface-variant hover:-translate-x-2 font-bold"
-        )}>
+        <button
+            type="button"
+            onClick={onClick}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+                "flex items-center gap-4 px-8 py-4 mr-4 rounded-l-full cursor-pointer transition-all duration-300 text-start",
+                active ? "bg-secondary-container text-on-secondary-container font-black shadow-inner" : "text-on-surface-variant hover:bg-surface-variant hover:-translate-x-2 font-bold"
+            )}
+        >
             <Icon className="w-5 h-5 ml-2" />
             {label}
-        </div>
+        </button>
     );
 }
 
-function TableRow({ id, name, status, risk, isHighRisk = false, onView }: any) {
+function TableRow({
+    id,
+    name,
+    status,
+    risk,
+    isHighRisk = false,
+    onView,
+}: {
+    id: string;
+    name: string;
+    status: string;
+    risk: string;
+    isHighRisk?: boolean;
+    onView: (data: { id: string; name: string; status: string; risk: string; isHighRisk: boolean }) => void;
+}) {
     return (
         <tr className="hover:bg-white/60 transition-colors">
             <td className="p-4 font-mono text-sm text-outline">{id}</td>

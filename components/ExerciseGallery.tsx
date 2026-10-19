@@ -23,26 +23,47 @@ export function ExerciseGallery() {
     const [activeVideo, setActiveVideo] = useState<number | null>(null);
     const [activeCategory, setActiveCategory] = useState('همه');
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
-    const [timerActive, setTimerActive] = useState(false);
+    // Derived rather than stored: the timer is running exactly while there is
+    // time left on the clock.
+    const timerActive = timeLeft !== null && timeLeft > 0;
 
-    const { userProfile } = useStore();
+    const userProfile = useStore((state) => state.userProfile);
 
-    // Timer logic
+    // Close the exercise dialog with the Escape key and stop the timer.
     React.useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (timerActive && timeLeft !== null && timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimeLeft((prev) => {
-                    if (prev !== null && prev > 1) {
-                        return prev - 1;
-                    }
-                    setTimerActive(false);
-                    return 0;
-                });
-            }, 1000);
-        }
+        if (activeVideo === null) return;
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            setActiveVideo(null);
+            setTimeLeft(null);
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [activeVideo]);
+
+    // Timer logic.
+    // The interval is deliberately *not* dependent on `timeLeft`: depending on
+    // it would tear the interval down and recreate it on every tick. The
+    // countdown is driven by a functional update, which keeps the updater
+    // pure - calling setState inside another setState's updater fires the side
+    // effect twice under React StrictMode.
+    React.useEffect(() => {
+        if (!timerActive) return;
+
+        const interval = setInterval(() => {
+            setTimeLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
         return () => clearInterval(interval);
-    }, [timerActive, timeLeft]);
+    }, [timerActive]);
 
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
@@ -50,6 +71,7 @@ export function ExerciseGallery() {
         return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
+    // Restarting: allow the finished exercise to be started again.
     const handleStartExercise = () => {
         if (!activeExerciseDetails) return;
 
@@ -68,7 +90,6 @@ export function ExerciseGallery() {
         const minutes = parseInt(englishStr, 10);
         if (!isNaN(minutes)) {
             setTimeLeft(minutes * 60);
-            setTimerActive(true);
         }
     };
 
@@ -107,7 +128,13 @@ export function ExerciseGallery() {
         <section className="mb-10">
             <div className="flex justify-between items-end mb-4 px-1">
                 <h2 className="text-xl font-bold text-on-surface">برنامه تمرینی اختصاصی</h2>
-                <span className="text-sm font-bold text-primary cursor-pointer hover:underline" onClick={() => setActiveCategory('همه')}>مشاهده همه</span>
+                <button
+                    type="button"
+                    onClick={() => setActiveCategory('همه')}
+                    className="text-sm font-bold text-primary cursor-pointer hover:underline"
+                >
+                    مشاهده همه
+                </button>
             </div>
 
             {/* Recommended Exercises based on pain */}
@@ -115,13 +142,14 @@ export function ExerciseGallery() {
                 <h3 className="text-sm font-bold text-on-surface-variant mb-3 px-1">پیشنهادی بر اساس درد شما</h3>
                 <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                     {recommendedExercises.map((ex) => (
-                        <motion.div
+                        <motion.button
+                            type="button"
                             key={`rec-${ex.id}`}
                             layout
                             whileHover={{ y: -5 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setActiveVideo(ex.id)}
-                            className="relative min-w-[140px] w-[140px] rounded-3xl overflow-hidden glass-panel group cursor-pointer border border-white/60 shadow-lg aspect-square flex-shrink-0"
+                            className="relative min-w-[140px] w-[140px] rounded-3xl overflow-hidden glass-panel group cursor-pointer border border-white/60 shadow-lg aspect-square flex-shrink-0 text-start"
                         >
                             <Image
                                 src={`https://picsum.photos/seed/${ex.img}/400/400`}
@@ -144,7 +172,7 @@ export function ExerciseGallery() {
                                     <span>{ex.level}</span>
                                 </div>
                             </div>
-                        </motion.div>
+                        </motion.button>
                     ))}
                 </div>
             </div>
@@ -169,7 +197,8 @@ export function ExerciseGallery() {
 
             <div className="grid grid-cols-2 gap-4">
                 {filteredExercises.map((ex) => (
-                    <motion.div 
+                    <motion.button
+                        type="button"
                         key={ex.id}
                         layout
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -178,7 +207,7 @@ export function ExerciseGallery() {
                         whileHover={{ y: -5 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setActiveVideo(ex.id)}
-                        className="relative rounded-3xl overflow-hidden glass-panel group cursor-pointer border border-white/60 shadow-lg aspect-square"
+                        className="relative rounded-3xl overflow-hidden glass-panel group cursor-pointer border border-white/60 shadow-lg aspect-square text-start"
                     >
                         <Image 
                             src={`https://picsum.photos/seed/${ex.img}/400/400`}
@@ -201,7 +230,7 @@ export function ExerciseGallery() {
                                 <span>{ex.level}</span>
                             </div>
                         </div>
-                    </motion.div>
+                    </motion.button>
                 ))}
             </div>
 
@@ -214,18 +243,21 @@ export function ExerciseGallery() {
                             animate={{ opacity: 1 }} 
                             exit={{ opacity: 0 }} 
                             className="absolute inset-0 bg-black/80 backdrop-blur-md"
-                            onClick={() => { setActiveVideo(null); setTimerActive(false); setTimeLeft(null); }}
+                            onClick={() => { setActiveVideo(null); setTimeLeft(null); }}
                         ></motion.div>
                         
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }} 
-                            animate={{ opacity: 1, scale: 1, y: 0 }} 
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="exercise-modal-title"
                             className="relative z-10 w-full max-w-lg bg-surface rounded-[2rem] overflow-hidden shadow-2xl border border-white/20 max-h-[90vh] overflow-y-auto"
                         >
                             <div className="relative w-full aspect-video bg-black">
                                 <button
-                                    onClick={() => { setActiveVideo(null); setTimerActive(false); setTimeLeft(null); }}
+                                    onClick={() => { setActiveVideo(null); setTimeLeft(null); }}
                                     aria-label="بستن"
                                     className="absolute top-4 left-4 z-20 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-colors"
                                 >
@@ -250,7 +282,7 @@ export function ExerciseGallery() {
 
                             {/* Exercise Details */}
                             <div className="p-6 bg-white rounded-b-[2rem]">
-                                <h3 className="text-2xl font-bold text-on-surface mb-2">{activeExerciseDetails?.title}</h3>
+                                <h3 id="exercise-modal-title" className="text-2xl font-bold text-on-surface mb-2">{activeExerciseDetails?.title}</h3>
                                 <p className="text-sm text-on-surface-variant mb-6 leading-relaxed">
                                     {activeExerciseDetails?.description}
                                 </p>
@@ -271,17 +303,15 @@ export function ExerciseGallery() {
                                 </div>
 
                                 <button
-                                    onClick={timeLeft === null ? handleStartExercise : undefined}
-                                    disabled={timeLeft === 0}
+                                    onClick={timeLeft === null || timeLeft === 0 ? handleStartExercise : undefined}
                                     className={cn(
                                         "w-full py-3 rounded-xl font-bold text-sm transition-colors",
-                                        timeLeft === null ? "btn-primary-glass" :
-                                        timeLeft === 0 ? "bg-green-500 text-white cursor-not-allowed" :
+                                        timeLeft === null || timeLeft === 0 ? "btn-primary-glass" :
                                         "bg-primary text-white"
                                     )}
                                 >
                                     {timeLeft === null ? "شروع تمرین" :
-                                     timeLeft === 0 ? "پایان یافت ✓" :
+                                     timeLeft === 0 ? "پایان یافت ✓ - شروع دوباره" :
                                      formatTime(timeLeft)}
                                 </button>
                             </div>

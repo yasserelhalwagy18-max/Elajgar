@@ -1,17 +1,62 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../../lib/store';
 import { UserProfile } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useProfileSync } from '@/hooks/use-profile-sync';
+import { useMounted } from '@/hooks/use-mounted';
 
 import PainHeatmap from '@/components/PainHeatmap';
 export default function WizardPage() {
   const router = useRouter();
-  const { isAuthenticated, userProfile, updateUserProfile, setWizardStep } = useStore();
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const mounted = useMounted();
+
+  // Keep the server copy of the profile in sync with the local store.
+  const { isLoaded } = useProfileSync();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
+
+  // The persisted store hydrates on the client only, so the server renders
+  // nothing. Wait for mount before rendering to avoid a hydration mismatch.
+  if (!mounted) return null;
+  if (!isAuthenticated) return null;
+
+  // The wizard's form state is seeded from the profile. If the form mounted
+  // before the profile arrived from the server, the seed would run against an
+  // empty profile and saving the form would wipe the stored answers. So the
+  // form only mounts once the profile is in.
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div
+          role="status"
+          aria-live="polite"
+          className="w-full max-w-lg p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant text-center text-on-surface-variant"
+        >
+          در حال بارگذاری پروفایل...
+        </div>
+      </div>
+    );
+  }
+
+  return <WizardForm />;
+}
+
+function WizardForm() {
+  const router = useRouter();
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const userProfile = useStore((state) => state.userProfile);
+  const updateUserProfile = useStore((state) => state.updateUserProfile);
+  const setWizardStep = useStore((state) => state.setWizardStep);
 
   const [fullName, setFullName] = useState(userProfile?.fullName || '');
   const [age, setAge] = useState(userProfile?.age?.toString() || '');
@@ -29,31 +74,35 @@ export default function WizardPage() {
   const [medInput, setMedInput] = useState('');
   const [meds, setMeds] = useState<string[]>(userProfile?.medications || []);
 
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  // Seed the consent and the questionnaire from the stored profile. Without
+  // this, re-opening the wizard at step 6 shows a blank form and saving it
+  // wipes the answers the user already gave.
+  const [termsAccepted, setTermsAccepted] = useState(userProfile?.termsAccepted ?? false);
   // painZones are now managed entirely by Zustand store
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState({
-    duration: '',
-    aggravatedByActivity: '',
-    relievedByRest: '',
-    injuryHistory: '',
-    surgeryHistory: '',
-    sleepQuality: '',
-    stressLevel: '',
-    sittingHoursPerDay: '',
-    exerciseDaysPerWeek: ''
+    duration: userProfile?.questionnaireAnswers?.duration ?? '',
+    aggravatedByActivity: userProfile?.questionnaireAnswers?.aggravatedByActivity ?? '',
+    relievedByRest: userProfile?.questionnaireAnswers?.relievedByRest ?? '',
+    injuryHistory: userProfile?.questionnaireAnswers?.injuryHistory ?? '',
+    surgeryHistory: userProfile?.questionnaireAnswers?.surgeryHistory ?? '',
+    sleepQuality: userProfile?.questionnaireAnswers?.sleepQuality ?? '',
+    stressLevel: userProfile?.questionnaireAnswers?.stressLevel ?? '',
+    sittingHoursPerDay: userProfile?.questionnaireAnswers?.sittingHoursPerDay?.toString() ?? '',
+    exerciseDaysPerWeek: userProfile?.questionnaireAnswers?.exerciseDaysPerWeek?.toString() ?? ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const step = userProfile?.currentWizardStep || 1;
+  const formRef = useRef<HTMLDivElement>(null);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+    return () => {
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
+  }, []);
 
-  if (!isAuthenticated) return null;
+  const step = userProfile?.currentWizardStep || 1;
 
   const validateStep = () => {
     const newErrors: Record<string, string> = {};
@@ -77,13 +126,15 @@ export default function WizardPage() {
 
     setErrors(newErrors);
 
-    // Auto-scroll to the first error if any
+    // Auto-scroll to the first error of *this* step. Query the whole document
+    // would scroll to an error belonging to a different step.
     if (Object.keys(newErrors).length > 0) {
-      setTimeout(() => {
-         const firstErrorElement = document.querySelector('.error-message');
-         if (firstErrorElement) {
-           firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-         }
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+      scrollTimerRef.current = setTimeout(() => {
+        const firstErrorElement = formRef.current?.querySelector('.error-message');
+        if (firstErrorElement) {
+          firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }, 100);
       return false;
     }
@@ -162,7 +213,7 @@ export default function WizardPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-lg p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant relative overflow-hidden">
+      <div ref={formRef} className="w-full max-w-lg p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant relative overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-primary">تکمیل پروفایل</h1>
           <span className="text-sm font-medium bg-primary-container text-on-primary-container px-3 py-1 rounded-full">
@@ -170,11 +221,15 @@ export default function WizardPage() {
           </span>
         </div>
 
+        {/* AnimatePresence is required for the per-step `exit` animations to
+            run - without it React unmounts each step instantly. */}
+        <AnimatePresence mode="wait">
         {step === 1 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">نام و نام خانوادگی</label>
+              <label className="block text-sm font-medium mb-1" htmlFor="wizard-full-name">نام و نام خانوادگی</label>
               <input
+                id="wizard-full-name"
                 type="text"
                 value={fullName}
                 onChange={(e) => {
@@ -186,8 +241,9 @@ export default function WizardPage() {
               {errors.fullName && <p className="text-red-500 text-xs mt-1 error-message">{errors.fullName}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">سن</label>
+              <label className="block text-sm font-medium mb-1" htmlFor="wizard-age">سن</label>
               <input
+                id="wizard-age"
                 type="number"
                 value={age}
                 onChange={(e) => {
@@ -199,8 +255,8 @@ export default function WizardPage() {
               {errors.age && <p className="text-red-500 text-xs mt-1 error-message">{errors.age}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">جنسیت</label>
-              <select
+              <label className="block text-sm font-medium mb-1" htmlFor="wizard-gender">جنسیت</label>
+                <select id="wizard-gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value as 'male' | 'female')}
                 className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
@@ -216,8 +272,8 @@ export default function WizardPage() {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">قد (سانتی‌متر)</label>
-                <input
+                <label className="block text-sm font-medium mb-1" htmlFor="wizard-height">قد (سانتی‌متر)</label>
+                <input id="wizard-height"
                   type="number"
                   value={height}
                   onChange={(e) => {
@@ -229,8 +285,8 @@ export default function WizardPage() {
                 {errors.height && <p className="text-red-500 text-xs mt-1 error-message">{errors.height}</p>}
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">وزن (کیلوگرم)</label>
-                <input
+                <label className="block text-sm font-medium mb-1" htmlFor="wizard-weight">وزن (کیلوگرم)</label>
+                <input id="wizard-weight"
                   type="number"
                   value={weight}
                   onChange={(e) => {
@@ -243,8 +299,8 @@ export default function WizardPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">سطح فعالیت</label>
-              <select
+              <label className="block text-sm font-medium mb-1" htmlFor="wizard-activity">سطح فعالیت</label>
+                <select id="wizard-activity"
                 value={activityLevel}
                 onChange={(e) => setActivityLevel(e.target.value as 'sedentary' | 'light' | 'moderate' | 'active')}
                 className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
@@ -256,8 +312,9 @@ export default function WizardPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">شغل</label>
+              <label className="block text-sm font-medium mb-1" htmlFor="wizard-job">شغل</label>
               <input
+                id="wizard-job"
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
@@ -270,9 +327,9 @@ export default function WizardPage() {
         {step === 3 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">بیماری‌های زمینه‌ای</label>
+              <label className="block text-sm font-medium mb-1" htmlFor="wizard-diseases">بیماری‌های زمینه‌ای</label>
               <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود</p>
-              <input
+              <input id="wizard-diseases"
                 type="text"
                 value={diseaseInput}
                 onChange={(e) => setDiseaseInput(e.target.value)}
@@ -300,9 +357,9 @@ export default function WizardPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">داروهای فعلی</label>
+              <label className="block text-sm font-medium mb-1" htmlFor="wizard-meds">داروهای فعلی</label>
               <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود</p>
-              <input
+              <input id="wizard-meds"
                 type="text"
                 value={medInput}
                 onChange={(e) => setMedInput(e.target.value)}
@@ -332,26 +389,41 @@ export default function WizardPage() {
         )}
 
         {step === 4 && (
-            <Step4Terms termsAccepted={termsAccepted} setTermsAccepted={setTermsAccepted} />
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col gap-4"
+            >
+                <Step4Terms termsAccepted={termsAccepted} setTermsAccepted={setTermsAccepted} />
+            </motion.div>
         )}
 
         {step === 5 && (
-            <div className="relative">
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="relative"
+            >
                 <Step5BodyMap />
                 {errors.painZones && <div className="absolute bottom-4 right-0 left-0 text-center"><p className="text-red-500 text-sm font-bold bg-white/90 inline-block px-4 py-1 rounded-full shadow-md error-message">{errors.painZones}</p></div>}
-            </div>
+            </motion.div>
         )}
 
         {step === 6 && (
-            <Step6Questionnaire answers={questionnaireAnswers} setAnswers={(newAnswers) => {
-                setQuestionnaireAnswers(newAnswers);
-                const currentErrors = { ...errors };
-                if (typeof newAnswers === 'object') {
-                    // Update errors if fields are filled out correctly
-                    // Note: setAnswers in Step6Questionnaire passes a new object or uses a callback.
-                }
-            }} errors={errors} setErrors={setErrors} />
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col gap-4"
+            >
+                <Step6Questionnaire answers={questionnaireAnswers} setAnswers={(newAnswers) => {
+                    setQuestionnaireAnswers(newAnswers);
+                }} errors={errors} setErrors={setErrors} />
+            </motion.div>
         )}
+        </AnimatePresence>
 
         <div className="flex justify-between mt-8 gap-4">
           {step > 1 ? (
@@ -424,7 +496,10 @@ function Step5BodyMap() {
                         className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-slate-700/80 shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/10 z-0"
                         initial={false}
                         animate={{
-                            left: view === 'front' ? '4px' : 'calc(50% + 0px)'
+                            // The row is RTL, so "front" is the physically
+                            // right-hand button. The pill must be positioned
+                            // with `right`, not `left`.
+                            right: view === 'front' ? '4px' : 'calc(50% + 0px)'
                         }}
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
@@ -567,7 +642,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="block">
+                    <label className="block">
                         <span className="text-sm font-medium mb-1 block">ساعات نشستن در روز</span>
                         <input
                             type="number"
@@ -579,8 +654,8 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                             max="24"
                         />
                         {errors?.sittingHoursPerDay && <p className="text-red-500 text-xs mt-1 error-message">{errors.sittingHoursPerDay}</p>}
-                    </div>
-                    <div className="block">
+                    </label>
+                    <label className="block">
                         <span className="text-sm font-medium mb-1 block">روزهای ورزش در هفته</span>
                         <input
                             type="number"
@@ -592,7 +667,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                             max="7"
                         />
                         {errors?.exerciseDaysPerWeek && <p className="text-red-500 text-xs mt-1 error-message">{errors.exerciseDaysPerWeek}</p>}
-                    </div>
+                    </label>
                 </div>
             </div>
         </motion.div>

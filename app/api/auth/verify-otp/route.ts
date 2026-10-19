@@ -3,17 +3,36 @@ import prisma from '@/lib/prisma';
 import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 import { getEncodedSecret } from '@/lib/auth';
-
+import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from '@/lib/session';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { codesMatch, isValidOtpFormat, OTP_MAX_VERIFY_ATTEMPTS } from '@/lib/otp';
 
 export async function POST(request: Request) {
   try {
-    const encodedSecret = getEncodedSecret();
     const { phoneNumber, code } = await request.json();
 
     if (!phoneNumber || !code) {
       return NextResponse.json(
         { error: 'شماره موبایل و کد تایید الزامی است' },
         { status: 400 }
+      );
+    }
+
+    // Validate the request before touching the signing secret or the database.
+    if (!isValidOtpFormat(code)) {
+      return NextResponse.json(
+        { error: 'کد تایید نادرست است' },
+        { status: 401 }
+      );
+    }
+
+    // Per-source-IP limit on verification attempts. The authoritative per-code
+    // attempt counter lives on the OtpCode row below.
+    const ipLimit = rateLimit(`otp-verify:ip:${clientIp(request.headers)}`, 30, 10 * 60 * 1000);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        { error: 'تعداد تلاش‌ها زیاد است. لطفاً کمی بعد دوباره تلاش کنید' },
+        { status: 429, headers: { 'Retry-After': String(ipLimit.retryAfter) } }
       );
     }
 
@@ -35,16 +54,38 @@ export async function POST(request: Request) {
       );
     }
 
-    if (otpRecord.code !== code) {
+    // Too many wrong guesses against this code: burn it so the remaining
+    // lifetime of the code cannot be used for a brute-force sweep.
+    if (otpRecord.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+      await prisma.otpCode.update({
+        where: { id: otpRecord.id },
+        data: { consumed: true },
+      });
       return NextResponse.json(
-        { error: 'کد تایید نادرست است' },
-        { status: 401 }
+        { error: 'تعداد تلاش‌های ناموفق بیش از حد مجاز است. کد جدید دریافت کنید' },
+        { status: 429 }
       );
     }
 
     if (otpRecord.expiresAt < new Date()) {
       return NextResponse.json(
         { error: 'کد تایید منقضی شده است' },
+        { status: 401 }
+      );
+    }
+
+    if (!codesMatch(otpRecord.code, code)) {
+      // Count the failed guess and burn the code once the budget is spent.
+      const attempts = otpRecord.attempts + 1;
+      await prisma.otpCode.update({
+        where: { id: otpRecord.id },
+        data: {
+          attempts,
+          consumed: attempts >= OTP_MAX_VERIFY_ATTEMPTS ? true : otpRecord.consumed,
+        },
+      });
+      return NextResponse.json(
+        { error: 'کد تایید نادرست است' },
         { status: 401 }
       );
     }
@@ -63,6 +104,7 @@ export async function POST(request: Request) {
     });
 
     // Generate JWT token
+    const encodedSecret = getEncodedSecret();
     const token = await new SignJWT({ userId: user.id, phoneNumber: user.phoneNumber })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -71,11 +113,11 @@ export async function POST(request: Request) {
 
     // Set JWT in HTTP-only cookie
     const cookieStore = await cookies();
-    cookieStore.set('session', token, {
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      maxAge: SESSION_MAX_AGE_SECONDS,
       path: '/',
     });
 

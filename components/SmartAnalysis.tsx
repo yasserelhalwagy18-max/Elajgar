@@ -3,9 +3,10 @@
 import * as React from 'react';
 import { useStore } from '@/lib/store';
 import { AlertCircle, AlertTriangle, ShieldAlert, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 
 export function SmartAnalysis() {
-  const { userProfile } = useStore();
+  const userProfile = useStore((state) => state.userProfile);
 
   const hasData = userProfile?.painZones && userProfile.painZones.length > 0;
 
@@ -19,9 +20,12 @@ export function SmartAnalysis() {
         <p className="text-sm text-on-surface-variant mb-4">
           برای دریافت تحلیل هوشمند و هشدارهای پزشکی اختصاصی، لطفا پروفایل و پرسشنامه خود را تکمیل کنید.
         </p>
-        <button className="btn-primary-glass px-6 py-2 rounded-full font-bold text-sm">
+        <Link
+          href="/wizard"
+          className="btn-primary-glass px-6 py-2 rounded-full font-bold text-sm inline-block"
+        >
           تکمیل اطلاعات
-        </button>
+        </Link>
       </div>
     );
   }
@@ -94,8 +98,8 @@ export function SmartAnalysis() {
               <span>دلایل احتمالی:</span>
             </div>
             <ul className="list-disc list-inside space-y-2 text-sm text-on-surface">
-              {probableCauses.map((cause, index) => (
-                <li key={index} className="leading-relaxed">{cause}</li>
+              {probableCauses.map((cause) => (
+                <li key={cause} className="leading-relaxed">{cause}</li>
               ))}
             </ul>
           </div>
@@ -107,8 +111,8 @@ export function SmartAnalysis() {
              توصیه‌های مراقبتی اختصاصی:
           </h4>
           <ul className="list-disc list-inside space-y-2 text-sm text-on-surface">
-            {warnings.map((warning, index) => (
-              <li key={index} className="leading-relaxed">{warning}</li>
+            {warnings.map((warning) => (
+              <li key={warning} className="leading-relaxed">{warning}</li>
             ))}
           </ul>
         </div>

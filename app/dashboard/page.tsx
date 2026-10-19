@@ -4,7 +4,8 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'motion/react';
 import { Plus, X, Droplet, Activity, Scale, Activity as Pulse, Moon, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toDateKey } from '@/lib/utils';
+import { useMounted } from '@/hooks/use-mounted';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { calculateHealthScore, DailyHealthData } from '@/lib/healthScore';
@@ -16,7 +17,13 @@ const HydrationChart = dynamic(() => import('@/components/HydrationChart'), { ss
 
 export default function DashboardIndex() {
   const router = useRouter();
-  const { isAuthenticated, userProfile, addWater, logDailyMetrics, logFood } = useStore();
+  // Subscribe to individual slices so an unrelated store update (e.g. adding
+  // water) does not re-render the whole dashboard.
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const userProfile = useStore((state) => state.userProfile);
+  const addWater = useStore((state) => state.addWater);
+  const logDailyMetrics = useStore((state) => state.logDailyMetrics);
+  const logFood = useStore((state) => state.logFood);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,10 +31,7 @@ export default function DashboardIndex() {
     }
   }, [isAuthenticated, router]);
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setTimeout(() => setMounted(true), 0);
-  }, []);
+  const mounted = useMounted();
 
   // States
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -40,11 +44,69 @@ export default function DashboardIndex() {
   const [sleepHours, setSleepHours] = useState<number>(7);
   const [sleepQuality, setSleepQuality] = useState<'poor' | 'fair' | 'good'>('fair');
   const [activityMinutes, setActivityMinutes] = useState<number>(0);
-  const [sleepError, setSleepError] = useState<string | null>(null);
-  const [activityError, setActivityError] = useState<string | null>(null);
+  const [dailyWeight, setDailyWeight] = useState<string>('');
+  const [dailyPain, setDailyPain] = useState<string>('');
+
+  // Timers that must be cancelled on unmount.
+  const waterConfTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notificationTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const disclaimerTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (waterConfTimerRef.current) clearTimeout(waterConfTimerRef.current);
+      if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+      if (disclaimerTimerRef.current) clearTimeout(disclaimerTimerRef.current);
+    };
+  }, []);
+
+  // Close any open dialog with the Escape key, and lock background scrolling
+  // while one is open.
+  const anyModalOpen = isLogModalOpen || isSleepModalOpen || showDisclaimer;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setIsLogModalOpen(false);
+      setIsSleepModalOpen(false);
+      setShowDisclaimer(false);
+    };
+
+    if (!anyModalOpen) return;
+
+    document.addEventListener('keydown', onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [anyModalOpen]);
+
+  // Validation messages are pure derived state - compute them during render
+  // instead of driving them from an effect that queues timers.
+  const sleepError =
+    sleepHours < 0 || sleepHours > 24 ? 'مقدار خواب باید بین ۰ تا ۲۴ باشد' : null;
+  const activityError =
+    activityMinutes < 0 || activityMinutes > 1440
+      ? 'مقدار فعالیت باید بین ۰ تا ۱۴۴۰ باشد'
+      : null;
+  const weightError =
+    dailyWeight.trim() !== '' &&
+    (!Number.isFinite(Number(dailyWeight)) || Number(dailyWeight) < 20 || Number(dailyWeight) > 300)
+      ? 'وزن باید بین ۲۰ تا ۳۰۰ کیلوگرم باشد'
+      : null;
+  const painError =
+    dailyPain.trim() !== '' &&
+    (!Number.isFinite(Number(dailyPain)) || Number(dailyPain) < 0 || Number(dailyPain) > 10)
+      ? 'شدت درد باید بین ۰ تا ۱۰ باشد'
+      : null;
+
+  const hasValidationError = !!(sleepError || activityError || weightError || painError);
 
   // Date and logs
-  const todayDate = new Date().toISOString().split('T')[0];
+  const todayDate = toDateKey();
   const todayLog = userProfile?.dailyLogs?.find(l => l.date === todayDate) || { foods: [], waterIntake: 0, activityMinutes: 0, sleepHours: 0, sleepQuality: 'fair' as const };
 
   // Calculations
@@ -95,9 +157,14 @@ export default function DashboardIndex() {
     calories: consumedCalories,
     water: waterAmountMl / 1000,
     sleepHours: todayLog.sleepHours || 0,
-    sleepQuality: todayLog.sleepQuality || 'fair' as const,
+    sleepQuality: todayLog.sleepQuality || ('fair' as const),
   };
-  const targetScore = calculateHealthScore(healthData);
+  // Score against the user's own targets so the score agrees with the goal
+  // shown right next to it.
+  const targetScore = calculateHealthScore({
+    ...healthData,
+    targets: { calories: targetCalories, water: waterTarget / 1000 },
+  });
   const count = useMotionValue(0);
   const roundedCount = useTransform(count, (latest) => Math.round(latest));
 
@@ -116,27 +183,10 @@ export default function DashboardIndex() {
     if (mounted && typeof window !== 'undefined') {
       const seen = localStorage.getItem('elajgar-disclaimer-seen');
       if (!seen) {
-        setTimeout(() => setShowDisclaimer(true), 0);
+        disclaimerTimerRef.current = setTimeout(() => setShowDisclaimer(true), 0);
       }
     }
   }, [mounted]);
-
-  // Real-time validation update
-  useEffect(() => {
-    if (sleepError && sleepHours >= 0 && sleepHours <= 24) {
-        setTimeout(() => setSleepError(null), 0);
-    }
-    if (sleepHours < 0 || sleepHours > 24) {
-        setTimeout(() => setSleepError('مقدار خواب باید بین ۰ تا ۲۴ باشد'), 0);
-    }
-
-    if (activityError && activityMinutes >= 0 && activityMinutes <= 1440) {
-        setTimeout(() => setActivityError(null), 0);
-    }
-    if (activityMinutes < 0 || activityMinutes > 1440) {
-        setTimeout(() => setActivityError('مقدار فعالیت باید بین ۰ تا ۱۴۴۰ باشد'), 0);
-    }
-  }, [sleepHours, activityMinutes, sleepError, activityError]);
 
   if (!isAuthenticated) return null;
   if (!mounted) return null;
@@ -148,10 +198,10 @@ export default function DashboardIndex() {
     }
   };
 
-  const handleQuickLog = (amount: number) => {
+  const handleQuickLog = (label: string, amount: number) => {
     logFood(todayDate, {
-        id: Date.now().toString(),
-        name: 'وعده سریع',
+        id: crypto.randomUUID(),
+        name: label,
         calories: amount,
         protein: 0,
         carbs: 0,
@@ -162,40 +212,67 @@ export default function DashboardIndex() {
 
   const handleDrinkWater = () => {
     addWater(todayDate, 250);
-    
+
     // Show confirmation animation
     setShowWaterConf(true);
-    setTimeout(() => setShowWaterConf(false), 2000);
+    if (waterConfTimerRef.current) clearTimeout(waterConfTimerRef.current);
+    waterConfTimerRef.current = setTimeout(() => setShowWaterConf(false), 2000);
 
-    // Schedule notification (Simulated with setTimeout for 2 hours, using 2 secs for demo here)
+    // Hydration reminder. Notification.requestPermission() is async, so the
+    // permission must be awaited before checking it - reading it synchronously
+    // right after the call always returned 'default' and the first click never
+    // notified.
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-      if (Notification.permission === 'granted') {
-      // For real app: 2 * 60 * 60 * 1000
-      // We will trigger a notification immediately to demonstrate, and set a "simulated" timer
-      setTimeout(() => {
-        if('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          // If in PWA context
-        } else {
-            // Standard browser notification
-            new Notification("وقت آب خوردنه!", {
-              body: "شما ۲ ساعت پیش آب نوشیدید. برای حفظ سلامتی یک لیوان دیگر بنوشید.",
-              icon: "/icon.svg" // placeholder
+      const scheduleReminder = () => {
+        if (Notification.permission !== 'granted') return;
+        if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+        notificationTimerRef.current = setTimeout(async () => {
+          // The Notification constructor is desktop-only; mobile browsers
+          // require a service worker registration to show one.
+          const registration =
+            'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+
+          if (registration) {
+            await registration.showNotification('وقت آب خوردنه!', {
+              body: 'شما ۲ ساعت پیش آب نوشیدید. برای حفظ سلامتی یک لیوان دیگر بنوشید.',
+              icon: '/icon.svg',
             });
-        }
-      }, 5000); // Demo: 5 seconds instead of 2 hours
+          } else {
+            new Notification('وقت آب خوردنه!', {
+              body: 'شما ۲ ساعت پیش آب نوشیدید. برای حفظ سلامتی یک لیوان دیگر بنوشید.',
+              icon: '/icon.svg',
+            });
+          }
+        }, 5000);
+      };
+
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') scheduleReminder();
+        });
+      } else {
+        scheduleReminder();
       }
     }
   };
 
   const handleSaveSleepActivity = () => {
-    logDailyMetrics(todayDate, { sleepHours, sleepQuality, activityMinutes });
+    const parsedWeight = dailyWeight.trim() === '' ? undefined : Number(dailyWeight);
+    const parsedPain = dailyPain.trim() === '' ? undefined : Number(dailyPain);
+
+    logDailyMetrics(todayDate, {
+      sleepHours,
+      sleepQuality,
+      activityMinutes,
+      ...(parsedWeight !== undefined && Number.isFinite(parsedWeight)
+        ? { weight: parsedWeight }
+        : {}),
+      ...(parsedPain !== undefined && Number.isFinite(parsedPain)
+        ? { painIntensity: parsedPain }
+        : {}),
+    });
     setIsSleepModalOpen(false);
   };
-
-  const hasValidationError = sleepHours < 0 || sleepHours > 24 || activityMinutes < 0 || activityMinutes > 1440;
 
   // Determine status text based on health score
   const getStatusText = (score: number) => {
@@ -364,7 +441,7 @@ export default function DashboardIndex() {
                     </div>
                 ) : (
                     <>
-                        <div className="w-full dir-ltr z-10" dir="ltr">
+                        <div className="w-full z-10" dir="ltr">
                             <HydrationChart />
                         </div>
                         <button
@@ -426,23 +503,42 @@ export default function DashboardIndex() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col">
-                        <label className="block text-xs font-bold mb-1 text-on-surface-variant">ساعت خواب</label>
-                        <input type="number" step="0.5" min="0" max="24" value={sleepHours} onChange={e => setSleepHours(parseFloat(e.target.value) || 0)} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
+                        <label htmlFor="daily-sleep-hours" className="block text-xs font-bold mb-1 text-on-surface-variant">ساعت خواب</label>
+                        <input id="daily-sleep-hours" type="number" step="0.5" min="0" max="24" value={sleepHours} onChange={e => setSleepHours(parseFloat(e.target.value) || 0)} aria-invalid={!!sleepError} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
                         {sleepError && <span className="text-xs text-error mt-1">{sleepError}</span>}
                     </div>
                     <div className="flex flex-col">
-                        <label className="block text-xs font-bold mb-1 text-on-surface-variant">فعالیت (دقیقه)</label>
-                        <input type="number" min="0" max="1440" value={activityMinutes} onChange={e => setActivityMinutes(parseInt(e.target.value) || 0)} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${activityError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
+                        <label htmlFor="daily-activity-minutes" className="block text-xs font-bold mb-1 text-on-surface-variant">فعالیت (دقیقه)</label>
+                        <input id="daily-activity-minutes" type="number" min="0" max="1440" value={activityMinutes} onChange={e => setActivityMinutes(parseFloat(e.target.value) || 0)} aria-invalid={!!activityError} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${activityError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
                         {activityError && <span className="text-xs text-error mt-1">{activityError}</span>}
+                    </div>
+                    <div className="flex flex-col">
+                        <label htmlFor="daily-weight" className="block text-xs font-bold mb-1 text-on-surface-variant">وزن امروز (کیلوگرم)</label>
+                        <input id="daily-weight" type="number" step="0.1" min="20" max="300" inputMode="decimal" value={dailyWeight} onChange={e => setDailyWeight(e.target.value)} placeholder={userProfile?.weight ? String(userProfile.weight) : '—'} aria-invalid={!!weightError} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${weightError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
+                        {weightError && <span className="text-xs text-error mt-1">{weightError}</span>}
+                    </div>
+                    <div className="flex flex-col">
+                        <label htmlFor="daily-pain" className="block text-xs font-bold mb-1 text-on-surface-variant">شدت درد امروز (۰-۱۰)</label>
+                        <input id="daily-pain" type="number" step="1" min="0" max="10" inputMode="numeric" value={dailyPain} onChange={e => setDailyPain(e.target.value)} placeholder="—" aria-invalid={!!painError} className={`w-full bg-white/50 border-none rounded-xl py-2 px-3 text-center outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm ${painError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
+                        {painError && <span className="text-xs text-error mt-1">{painError}</span>}
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold mb-1 text-on-surface-variant text-center">کیفیت خواب</label>
-                    <div className="flex justify-center gap-2">
-                        <button onClick={() => setSleepQuality('good')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sleepQuality === 'good' ? 'bg-primary text-white shadow-md' : 'bg-surface-variant/50 hover:bg-surface-variant text-on-surface'}`}>خوب</button>
-                        <button onClick={() => setSleepQuality('fair')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sleepQuality === 'fair' ? 'bg-primary text-white shadow-md' : 'bg-surface-variant/50 hover:bg-surface-variant text-on-surface'}`}>متوسط</button>
-                        <button onClick={() => setSleepQuality('poor')} className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sleepQuality === 'poor' ? 'bg-primary text-white shadow-md' : 'bg-surface-variant/50 hover:bg-surface-variant text-on-surface'}`}>بد</button>
+                    <span id="sleep-quality-label" className="block text-xs font-bold mb-1 text-on-surface-variant text-center">کیفیت خواب</span>
+                    <div role="radiogroup" aria-labelledby="sleep-quality-label" className="flex justify-center gap-2">
+                        {(['good', 'fair', 'poor'] as const).map((quality) => (
+                            <button
+                                key={quality}
+                                type="button"
+                                role="radio"
+                                aria-checked={sleepQuality === quality}
+                                onClick={() => setSleepQuality(quality)}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${sleepQuality === quality ? 'bg-primary text-white shadow-md' : 'bg-surface-variant/50 hover:bg-surface-variant text-on-surface'}`}
+                            >
+                                {quality === 'good' ? 'خوب' : quality === 'fair' ? 'متوسط' : 'بد'}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
@@ -474,9 +570,12 @@ export default function DashboardIndex() {
                         initial={{ opacity: 0, y: 100 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 100 }}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="disclaimer-title"
                         className="relative z-10 w-full max-w-sm bg-white rounded-[2rem] p-6 shadow-2xl border"
                     >
-                        <h3 className="text-xl font-bold text-on-surface mb-4">توجه مهم</h3>
+                        <h3 id="disclaimer-title" className="text-xl font-bold text-on-surface mb-4">توجه مهم</h3>
                         <p className="text-on-surface-variant mb-6 leading-relaxed">
                             این اپلیکیشن جایگزین پزشک نیست و تشخیص قطعی ارائه نمی‌دهد.
                         </p>
@@ -510,22 +609,25 @@ export default function DashboardIndex() {
         <AnimatePresence>
             {isLogModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pb-4 sm:pb-0">
-                    <motion.div 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }} 
-                        className="absolute inset-0 bg-on-surface/20 backdrop-blur-md"
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         onClick={() => setIsLogModalOpen(false)}
+                        className="absolute inset-0 bg-on-surface/20 backdrop-blur-md"
                     ></motion.div>
                     
-                    <motion.div 
-                        initial={{ opacity: 0, y: 100 }} 
-                        animate={{ opacity: 1, y: 0 }} 
+                    <motion.div
+                        initial={{ opacity: 0, y: 100 }}
+                        animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 100 }}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="quick-log-title"
                         className="relative z-10 w-full max-w-sm glass-popover bg-white/80 rounded-[2rem] p-6 shadow-2xl border "
                     >
                         <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-xl font-bold text-on-surface">ثبت سریع وعده</h3>
+                            <h3 id="quick-log-title" className="text-xl font-bold text-on-surface">ثبت سریع وعده</h3>
                             <button 
                                 onClick={() => setIsLogModalOpen(false)}
                                 aria-label="بستن"
@@ -536,10 +638,10 @@ export default function DashboardIndex() {
                         </div>
 
                         <div className="flex flex-col gap-3">
-                            <MealLogButton label="صبحانه" calories={350} onClick={() => handleQuickLog(350)} icon="🍳" />
-                            <MealLogButton label="ناهار" calories={600} onClick={() => handleQuickLog(600)} icon="🥗" />
-                            <MealLogButton label="شام" calories={450} onClick={() => handleQuickLog(450)} icon="🍲" />
-                            <MealLogButton label="میان‌وعده" calories={150} onClick={() => handleQuickLog(150)} icon="🍎" />
+                            <MealLogButton label="صبحانه" calories={350} onClick={() => handleQuickLog('صبحانه', 350)} icon="🍳" />
+                            <MealLogButton label="ناهار" calories={600} onClick={() => handleQuickLog('ناهار', 600)} icon="🥗" />
+                            <MealLogButton label="شام" calories={450} onClick={() => handleQuickLog('شام', 450)} icon="🍲" />
+                            <MealLogButton label="میان‌وعده" calories={150} onClick={() => handleQuickLog('میان‌وعده', 150)} icon="🍎" />
                         </div>
                     </motion.div>
                 </div>

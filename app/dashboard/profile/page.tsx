@@ -3,10 +3,11 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Bell, Droplet, Activity, ChevronLeft, User, Shield, LogOut, Database } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toDateKey } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { useStore } from '../../../lib/store';
 import { useRouter } from 'next/navigation';
+import { useMounted } from '@/hooks/use-mounted';
 
 export default function ProfilePage() {
     const [hydrationReminders, setHydrationReminders] = useState(true);
@@ -14,6 +15,17 @@ export default function ProfilePage() {
     const { isAuthenticated, userProfile, logout, updateUserProfile } = useStore();
     const router = useRouter();
     const [showToast, setShowToast] = useState(false);
+    const toastTimerRef = React.useRef<number | null>(null);
+    const mounted = useMounted();
+
+    // Clear the pending toast timer if the component unmounts first.
+    useEffect(() => {
+        return () => {
+            if (toastTimerRef.current !== null) {
+                window.clearTimeout(toastTimerRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -21,12 +33,25 @@ export default function ProfilePage() {
         }
     }, [isAuthenticated, router]);
 
+    // The persisted store hydrates on the client only, so the server renders
+    // nothing. Wait for mount before rendering to avoid a hydration mismatch.
+    if (!mounted) return null;
     if (!isAuthenticated) return null;
 
-    const requestNotificationPermission = async (type: 'hydration' | 'activity', setter: (v: boolean) => void, currentValue: boolean) => {
+    const requestNotificationPermission = async (
+        setter: (v: boolean) => void,
+        currentValue: boolean
+    ) => {
         if (!currentValue) {
             if (typeof window !== 'undefined' && 'Notification' in window) {
-                const permission = await Notification.requestPermission();
+                // Only ask when the browser has not been asked yet - calling
+                // requestPermission() again on an already-decided permission is
+                // a no-op and the old code re-prompted every time.
+                const permission =
+                    Notification.permission === 'default'
+                        ? await Notification.requestPermission()
+                        : Notification.permission;
+
                 if (permission === 'granted') {
                     setter(true);
                 } else {
@@ -65,9 +90,10 @@ export default function ProfilePage() {
                                 <p className="text-xs text-on-surface-variant">هر ۲ ساعت</p>
                             </div>
                         </div>
-                        <Switch 
-                            checked={hydrationReminders} 
-                            onChange={() => requestNotificationPermission('hydration', setHydrationReminders, hydrationReminders)} 
+                        <Switch
+                            label="یادآور نوشیدن آب"
+                            checked={hydrationReminders}
+                            onChange={() => requestNotificationPermission(setHydrationReminders, hydrationReminders)}
                         />
                     </div>
                     <div className="bg-white/80 backdrop-blur-md p-4 flex items-center justify-between">
@@ -80,9 +106,10 @@ export default function ProfilePage() {
                                 <p className="text-xs text-on-surface-variant">یادآوری برای تحرک</p>
                             </div>
                         </div>
-                        <Switch 
-                            checked={activityReminders} 
-                            onChange={() => requestNotificationPermission('activity', setActivityReminders, activityReminders)} 
+                        <Switch
+                            label="یادآور فعالیت"
+                            checked={activityReminders}
+                            onChange={() => requestNotificationPermission(setActivityReminders, activityReminders)}
                         />
                     </div>
                 </div>
@@ -100,20 +127,33 @@ export default function ProfilePage() {
             <section className="mb-8">
                 <button
                     onClick={() => {
-                        const newLogs = [];
+                        const confirmed = window.confirm(
+                            'داده نمونه برای ۷ روز گذشته ساخته می‌شود. روزهایی که داده واقعی دارند دست‌نخورده می‌مانند. ادامه می‌دهید؟'
+                        );
+                        if (!confirmed) return;
+
                         const today = new Date();
                         const mealNames = ['صبحانه', 'ناهار', 'شام', 'میان‌وعده'];
 
+                        // Only fill in days that have no real log, so loading
+                        // sample data can never destroy what the user recorded.
+                        const existing = new Map(
+                            (userProfile?.dailyLogs ?? []).map((log) => [log.date, log])
+                        );
+
+                        const sampleLogs = [];
                         for (let i = 0; i < 7; i++) {
                             const d = new Date(today);
                             d.setDate(today.getDate() - i);
-                            const dateStr = d.toISOString().split('T')[0];
+                            const dateStr = toDateKey(d);
+
+                            if (existing.has(dateStr)) continue;
 
                             const numMeals = Math.floor(Math.random() * 3) + 3; // 3 to 5 meals
                             const foods = [];
                             for (let j = 0; j < numMeals; j++) {
                                 foods.push({
-                                    id: Math.random().toString(36).substring(7),
+                                    id: crypto.randomUUID(),
                                     name: mealNames[Math.floor(Math.random() * mealNames.length)],
                                     calories: Math.floor(Math.random() * 601) + 200, // 200 to 800
                                     protein: Math.floor(Math.random() * 31) + 10,   // 10 to 40
@@ -124,19 +164,21 @@ export default function ProfilePage() {
 
                             const waterIntake = (Math.floor(Math.random() * 7) + 4) * 250; // 4 to 10 * 250
 
-                            newLogs.push({
+                            sampleLogs.push({
                                 date: dateStr,
                                 foods,
                                 waterIntake,
                                 sleepHours: Math.floor(Math.random() * 5) + 5, // 5 to 9
-                                sleepQuality: ['poor', 'fair', 'good'][Math.floor(Math.random() * 3)] as any,
+                                sleepQuality: ['poor', 'fair', 'good'][Math.floor(Math.random() * 3)] as 'poor' | 'fair' | 'good',
                                 activityMinutes: Math.floor(Math.random() * 76) + 15 // 15 to 90
                             });
                         }
 
-                        updateUserProfile({ dailyLogs: newLogs });
+                        updateUserProfile({
+                            dailyLogs: [...(userProfile?.dailyLogs ?? []), ...sampleLogs],
+                        });
                         setShowToast(true);
-                        setTimeout(() => setShowToast(false), 3000);
+                        toastTimerRef.current = window.setTimeout(() => setShowToast(false), 3000);
                     }}
                     className="w-full border border-primary text-primary bg-transparent rounded-2xl py-3 font-bold flex items-center justify-center gap-2"
                 >
@@ -165,24 +207,29 @@ export default function ProfilePage() {
     );
 }
 
-function SettingItem({ icon: Icon, label }: any) {
+function SettingItem({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
+    // These rows are not clickable yet, so they are rendered as a static list
+    // row rather than a button that does nothing.
     return (
-        <button className="w-full bg-white/80 backdrop-blur-md p-4 flex items-center justify-between hover:bg-white transition-colors active:bg-surface-variant">
+        <div className="w-full bg-white/80 backdrop-blur-md p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
                 <Icon className="w-5 h-5 text-on-surface-variant" />
                 <span className="font-bold text-on-surface text-sm">{label}</span>
             </div>
-            <ChevronLeft className="w-5 h-5 text-outline" />
-        </button>
+        </div>
     );
 }
 
-function Switch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function Switch({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {
     return (
-        <button 
+        <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            aria-label={label}
             onClick={onChange}
             className={cn(
-                "w-12 h-6 rounded-full transition-colors relative",
+                "w-12 h-6 rounded-full transition-colors relative shrink-0",
                 checked ? "bg-primary" : "bg-outline-variant"
             )}
         >

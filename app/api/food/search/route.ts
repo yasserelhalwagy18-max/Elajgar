@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getSessionUserId } from '@/lib/session';
 
 export async function GET(request: Request) {
   try {
-    const userId = request.headers.get('x-user-id');
+    // Derive the caller from the session cookie rather than trusting a header:
+    // a client-supplied header could otherwise be forged to impersonate a user.
+    const userId = await getSessionUserId();
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -14,7 +17,10 @@ export async function GET(request: Request) {
     const all = searchParams.get('all');
 
     if (all === 'true') {
-      const allFoods = await prisma.food.findMany();
+      const allFoods = await prisma.food.findMany({
+        take: 500,
+        orderBy: { name: 'asc' },
+      });
       return NextResponse.json(allFoods);
     }
 

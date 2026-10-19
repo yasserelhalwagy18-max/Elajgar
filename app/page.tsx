@@ -16,25 +16,29 @@ export default function LandingPage() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
+            id="mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="منوی اصلی"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex flex-col items-center justify-center"
           >
             <button
+            type="button"
             onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="بستن منو"
             className="absolute top-6 end-6 p-2 text-on-surface hover:text-primary transition-colors"
             >
               <X className="w-8 h-8" />
             </button>
             <div className="flex flex-col gap-8 text-2xl font-bold text-center">
               <Link href="#services" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">اکوسیستم</Link>
-              <Link href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">خدمات</Link>
+              <Link href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">چگونه کار می‌کند؟</Link>
               <Link href="#gyms" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">شبکه</Link>
               <Link href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">تماس</Link>
-              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="mt-4">
-                <button className="btn-primary-glass px-10 py-4 rounded-full text-xl font-bold w-full">ورود / ثبت‌نام</button>
-              </Link>
+              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="btn-primary-glass px-10 py-4 rounded-full text-xl font-bold w-full text-center">ورود / ثبت‌نام</Link>
             </div>
           </motion.div>
         )}
@@ -47,19 +51,21 @@ export default function LandingPage() {
         {/* Desktop Nav Links */}
         <div className="hidden md:flex flex-row gap-8 text-sm font-medium">
           <Link href="#services" className="text-on-surface-variant hover:text-primary transition-colors">اکوسیستم</Link>
-          <Link href="#how-it-works" className="text-on-surface-variant hover:text-primary transition-colors">خدمات</Link>
+          <Link href="#how-it-works" className="text-on-surface-variant hover:text-primary transition-colors">چگونه کار می‌کند؟</Link>
           <Link href="#gyms" className="text-on-surface-variant hover:text-primary transition-colors">شبکه</Link>
           <Link href="#contact" className="text-on-surface-variant hover:text-primary transition-colors">تماس</Link>
         </div>
 
         {/* Desktop Nav CTA */}
-        <Link href="/login" className="hidden md:block">
-          <button className="btn-primary-glass px-8 py-2.5 rounded-full text-sm font-bold">ورود / ثبت‌نام</button>
-        </Link>
+        <Link href="/login" className="hidden md:block btn-primary-glass px-8 py-2.5 rounded-full text-sm font-bold text-center">ورود / ثبت‌نام</Link>
 
         {/* Mobile Hamburger */}
         <button
+          type="button"
           onClick={() => setIsMobileMenuOpen(true)}
+          aria-label="باز کردن منو"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-menu"
           className="md:hidden p-2 text-on-surface hover:text-primary transition-colors"
         >
           <Menu className="w-6 h-6" />
@@ -81,11 +87,9 @@ export default function LandingPage() {
             با ترکیب دانش پزشکی و فناوری پیشرفته، مسیر بهبودی خود را هوشمندانه و دقیق طی کنید.
           </p>
           <div className="flex mt-8 gap-4">
-             <Link href="/login">
-                <button className="btn-primary-glass px-8 py-4 rounded-full text-lg font-bold flex items-center justify-center gap-2 group">
+             <Link href="/login" className="btn-primary-glass px-8 py-4 rounded-full text-lg font-bold flex items-center justify-center gap-2 group">
                 <span>شروع ارزیابی هوشمند و سنجش درد</span>
                 <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                </button>
              </Link>
           </div>
 
@@ -178,9 +182,10 @@ export default function LandingPage() {
           <p className="text-on-surface-variant mt-2">یکپارچگی در مسیر درمان</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <HubCard 
-                active 
-                title="علاج‌گر" 
+            <HubCard
+                active
+                href="/login"
+                title="علاج‌گر"
                 desc="ارزیابی هوشمند و سنجش دقیق درد با استفاده از الگوریتم‌های پیشرفته."
                 icon={HeartPulse}
             />
@@ -233,8 +238,8 @@ export default function LandingPage() {
            <div className="relative z-10 flex flex-col items-center justify-center bg-white/20 backdrop-blur-md p-8 rounded-3xl border border-white/30 shadow-inner">
               <span className="text-sm text-primary-fixed mb-1 tracking-widest font-bold">تخفیف ویژه</span>
               <span className="text-6xl font-black drop-shadow-md">۴۰٪</span>
-              <Link href="/login">
-                <button className="mt-6 bg-white text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl">دریافت پیشنهاد</button>
+              <Link href="/login" className="mt-6 bg-white text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl text-center">
+                دریافت پیشنهاد
               </Link>
            </div>
         </div>
@@ -280,12 +285,21 @@ export default function LandingPage() {
   );
 }
 
-function HubCard({ active = false, title, desc, icon: Icon }: { active?: boolean, title: string, desc: string, icon: any }) {
-    return (
-        <div className={cn(
-            "bg-white border border-outline-variant/20 shadow-sm p-8 rounded-[2rem] relative overflow-hidden group transition-all duration-300",
-            active ? "border-2  shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer bg-white/60" : "opacity-75 grayscale-[30%] cursor-not-allowed"
-        )}>
+function HubCard({
+  active = false,
+  title,
+  desc,
+  icon: Icon,
+  href,
+}: {
+  active?: boolean;
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href?: string;
+}) {
+    const content = (
+        <>
             {!active && (
                 <div className="absolute inset-0 bg-surface/30 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center">
                     <div className="bg-white/80 p-3 rounded-full shadow-lg mb-2"><Icon className="w-6 h-6 text-outline" /></div>
@@ -293,23 +307,41 @@ function HubCard({ active = false, title, desc, icon: Icon }: { active?: boolean
                 </div>
             )}
             {active && <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>}
-            
+
             <div className="flex justify-between items-start mb-6">
                 <div className={cn("p-4 rounded-2xl", active ? "bg-primary/10" : "bg-surface-variant")}>
                     <Icon className={cn("w-8 h-8", active ? "text-primary" : "text-on-surface-variant")} />
                 </div>
                 {active && <span className="bg-primary text-white text-xs px-4 py-1.5 rounded-full font-bold shadow-md">فعال</span>}
             </div>
-            
+
             <h3 className="text-xl font-bold text-on-surface mb-3">{title}</h3>
             <p className="text-on-surface-variant text-base leading-relaxed mb-6">{desc}</p>
-            
+
             {active && (
                 <div className="flex items-center text-primary font-bold text-sm group-hover:gap-3 gap-2 transition-all">
                     <span>ورود به سامانه</span>
                     <ArrowLeft className="w-4 h-4" />
                 </div>
             )}
-        </div>
+        </>
+    );
+
+    const cardClass = cn(
+        "bg-white border border-outline-variant/20 shadow-sm p-8 rounded-[2rem] relative overflow-hidden group transition-all duration-300",
+        active
+            ? "border-2 shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer bg-white/60"
+            : "opacity-75 grayscale-[30%] cursor-not-allowed"
+    );
+
+    if (!active || !href) {
+        return <div className={cardClass}>{content}</div>;
+    }
+
+    return (
+        <Link href={href} className={cardClass}>
+            {content}
+        </Link>
     );
 }
+

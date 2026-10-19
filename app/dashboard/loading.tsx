@@ -1,6 +1,6 @@
 export default function DashboardLoading() {
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div role="status" aria-live="polite" aria-label="در حال بارگذاری" className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <div className="h-8 w-48 bg-outline-variant/30 rounded-lg animate-pulse mb-2"></div>
         <div className="h-4 w-64 bg-outline-variant/20 rounded-lg animate-pulse"></div>

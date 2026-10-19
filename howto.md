@@ -5,7 +5,7 @@ This guide walks you through uploading this Next.js application to a webhost and
 ## 1. What You Need Before Starting
 
 - A webhosting account that supports Node.js (cPanel with "Setup Node.js App", VPS, or any Node.js-capable host).
-- A database (PostgreSQL or MySQL, depending on your `prisma/schema.prisma` provider).
+- A MySQL database (`prisma/schema.prisma` uses `provider = "mysql"`).
 - Node.js installed on your computer (to build locally).
 - Your domain pointing to the host.
 
@@ -34,7 +34,7 @@ Zip (do not include `node_modules`):
 - `package-lock.json`
 - `server.js`
 - `next.config.ts`
-- `.env.example` (rename to `.env` after upload and fill in values)
+- `.env.exsample` (rename to `.env` after upload and fill in values)
 
 Upload the zip to your host's application root folder and extract it.
 
@@ -47,13 +47,23 @@ On your host, set these environment variables (via cPanel "Setup Node.js App" en
 - `DATABASE_URL=<your database connection string>`
 - `JWT_SECRET=<a long random string>`
 
-If using cPanel MySQL, the `DATABASE_URL` format is:
+The `DATABASE_URL` format is:
 
 ```
 mysql://USERNAME:PASSWORD@localhost:3306/DATABASENAME
 ```
 
-If using PostgreSQL (e.g. Supabase, Neon), keep the provider as `postgresql` in `prisma/schema.prisma` and use the PostgreSQL connection string instead.
+If you want to use PostgreSQL (e.g. Supabase, Neon) you must change
+`provider` in `prisma/schema.prisma` to `postgresql` **and** use a PostgreSQL
+connection string. The two must match.
+
+For the OTP login you also need (see `.env.exsample`):
+
+```
+SMSIR_API_KEY=...
+SMSIR_TEMPLATE_ID=...
+SMSIR_CODE_PARAM=CODE
+```
 
 ## 5. Database Setup
 
@@ -65,7 +75,17 @@ npx prisma generate
 npx prisma db push
 ```
 
-`prisma db push` creates the database tables from your schema. Run this once when you first deploy.
+`prisma db push` creates the database tables from your schema. Run it again
+after any change to `prisma/schema.prisma` — it only applies the difference
+and never drops data.
+
+### Seed the food database (optional but recommended)
+
+The food search needs rows in the `Food` table:
+
+```bash
+npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
+```
 
 ## 6. Start the Application
 

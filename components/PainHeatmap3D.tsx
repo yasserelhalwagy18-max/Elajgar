@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState, useMemo } from 'react';
+import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useFrame } from '@react-three/fiber';
 import { Html, Center, OrbitControls } from '@react-three/drei';
@@ -78,12 +78,25 @@ function getHeatColor(frequency: number): THREE.Color {
 }
 
 function PlaceholderHumanoid() {
-    // Basic standard material for the body
-    const bodyMaterial = new THREE.MeshStandardMaterial({
-        color: 0xe0e0e0,
-        roughness: 0.4,
-        metalness: 0.1,
-    });
+    // Basic standard material for the body.
+    // Memoised and disposed explicitly: a material passed via the `material`
+    // prop is NOT auto-disposed by react-three-fiber, so creating it during
+    // render would leak GPU resources on every re-render.
+    const bodyMaterial = useMemo(
+        () =>
+            new THREE.MeshStandardMaterial({
+                color: 0xe0e0e0,
+                roughness: 0.4,
+                metalness: 0.1,
+            }),
+        []
+    );
+
+    useEffect(() => {
+        return () => {
+            bodyMaterial.dispose();
+        };
+    }, [bodyMaterial]);
 
     return (
         <group castShadow receiveShadow>
@@ -139,6 +152,13 @@ function Marker({ data }: { data: PainData }) {
     // Scale intensity and size slightly on hover
     const targetIntensity = hovered ? (data.frequency / 100) * 3 + 1 : (data.frequency / 100) * 2;
     const targetScale = hovered ? 1.3 : 1;
+
+    // Restore the cursor if the component unmounts while the marker is hovered.
+    useEffect(() => {
+        return () => {
+            if (hovered) document.body.style.cursor = 'auto';
+        };
+    }, [hovered]);
 
     return (
         <group position={data.position}>
