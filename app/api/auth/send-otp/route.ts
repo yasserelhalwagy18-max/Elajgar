@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { randomInt } from 'crypto';
 import prisma from '@/lib/prisma';
+import { sendOtpSms } from '@/lib/sms';
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     // Generate a 6-digit random code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = randomInt(100000, 1000000).toString();
 
     // Invalidate previous unconsumed codes for this phone number
     await prisma.otpCode.updateMany({
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
     // Create a new OTP code with a 5-minute expiry
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
 
-    await prisma.otpCode.create({
+    const otpRecord = await prisma.otpCode.create({
       data: {
         phoneNumber,
         code,
@@ -37,9 +39,20 @@ export async function POST(request: Request) {
       },
     });
 
-    // Mock SMS provider call
-    console.log(`[MOCK SMS] Sending OTP code ${code} to ${phoneNumber}`);
-    // TODO: Add real SMS provider API call here once credentials are available
+    try {
+      await sendOtpSms(phoneNumber, code);
+    } catch (smsError) {
+      console.error('Error sending OTP SMS:', smsError);
+      // Don't leave a usable code behind if the SMS never went out
+      await prisma.otpCode.update({
+        where: { id: otpRecord.id },
+        data: { consumed: true },
+      });
+      return NextResponse.json(
+        { error: 'ارسال پیامک با خطا مواجه شد. لطفاً دوباره تلاش کنید' },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,0 +1,118 @@
+diff --git a/.env.example b/.env.example
+index 5c8035a..e3d71b9 100644
+--- a/.env.example
++++ b/.env.example
+@@ -1,3 +1,9 @@
+ DATABASE_URL=
+ JWT_SECRET=
+ NEXT_PUBLIC_SENTRY_DSN=
++
++# sms.ir (OTP login SMS) - create a Verify template in the sms.ir panel first
++SMSIR_API_KEY=
++SMSIR_TEMPLATE_ID=
++# Parameter name used in the template text, e.g. "کد تایید شما: #CODE#" -> CODE
++SMSIR_CODE_PARAM=CODE
+diff --git a/app/api/auth/send-otp/route.ts b/app/api/auth/send-otp/route.ts
+index 10c969e..acc6201 100644
+--- a/app/api/auth/send-otp/route.ts
++++ b/app/api/auth/send-otp/route.ts
+@@ -1,5 +1,7 @@
+ import { NextResponse } from 'next/server';
++import { randomInt } from 'crypto';
+ import prisma from '@/lib/prisma';
++import { sendOtpSms } from '@/lib/sms';
+ 
+ export async function POST(request: Request) {
+   try {
+@@ -13,7 +15,7 @@ export async function POST(request: Request) {
+     }
+ 
+     // Generate a 6-digit random code
+-    const code = Math.floor(100000 + Math.random() * 900000).toString();
++    const code = randomInt(100000, 1000000).toString();
+ 
+     // Invalidate previous unconsumed codes for this phone number
+     await prisma.otpCode.updateMany({
+@@ -29,7 +31,7 @@ export async function POST(request: Request) {
+     // Create a new OTP code with a 5-minute expiry
+     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+ 
+-    await prisma.otpCode.create({
++    const otpRecord = await prisma.otpCode.create({
+       data: {
+         phoneNumber,
+         code,
+@@ -37,9 +39,20 @@ export async function POST(request: Request) {
+       },
+     });
+ 
+-    // Mock SMS provider call
+-    console.log(`[MOCK SMS] Sending OTP code ${code} to ${phoneNumber}`);
+-    // TODO: Add real SMS provider API call here once credentials are available
++    try {
++      await sendOtpSms(phoneNumber, code);
++    } catch (smsError) {
++      console.error('Error sending OTP SMS:', smsError);
++      // Don't leave a usable code behind if the SMS never went out
++      await prisma.otpCode.update({
++        where: { id: otpRecord.id },
++        data: { consumed: true },
++      });
++      return NextResponse.json(
++        { error: 'ارسال پیامک با خطا مواجه شد. لطفاً دوباره تلاش کنید' },
++        { status: 502 }
++      );
++    }
+ 
+     return NextResponse.json({ success: true });
+   } catch (error) {
+diff --git a/lib/sms.ts b/lib/sms.ts
+new file mode 100644
+index 0000000..32b8a9c
+--- /dev/null
++++ b/lib/sms.ts
+@@ -0,0 +1,44 @@
++// SMS delivery via sms.ir "Verify" (ارسال سریع) API.
++// Docs: https://sms.ir/rest-api/
++
++const SMSIR_VERIFY_URL = 'https://api.sms.ir/v1/send/verify';
++
++export async function sendOtpSms(phoneNumber: string, code: string): Promise<void> {
++  const apiKey = process.env.SMSIR_API_KEY;
++  const templateId = Number(process.env.SMSIR_TEMPLATE_ID);
++  const codeParam = process.env.SMSIR_CODE_PARAM || 'CODE';
++
++  // Local development without credentials: log the code instead of sending.
++  if (!apiKey || !templateId) {
++    if (process.env.NODE_ENV === 'production') {
++      throw new Error('SMSIR_API_KEY / SMSIR_TEMPLATE_ID are not configured');
++    }
++    console.log(`[DEV SMS] OTP ${code} for ${phoneNumber}`);
++    return;
++  }
++
++  const res = await fetch(SMSIR_VERIFY_URL, {
++    method: 'POST',
++    headers: {
++      'Content-Type': 'application/json',
++      Accept: 'application/json',
++      'x-api-key': apiKey,
++    },
++    body: JSON.stringify({
++      mobile: phoneNumber,
++      templateId,
++      parameters: [{ name: codeParam, value: code }],
++    }),
++    signal: AbortSignal.timeout(10_000),
++  });
++
++  const data = await res.json().catch(() => null);
++
++  // sms.ir returns { status: 1, message, data } on success.
++  if (!res.ok || !data || data.status !== 1) {
++    // Never log the code or API key.
++    throw new Error(
++      `sms.ir send failed: HTTP ${res.status}, status=${data?.status}, message=${data?.message}`
++    );
++  }
++}
