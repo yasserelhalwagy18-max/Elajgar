@@ -53,14 +53,15 @@ export default function LoginPage() {
     }
   };
 
-  const submitOtp = async () => {
+  const submitOtp = async (codeOverride?: string) => {
+    const code = codeOverride ?? otp;
     setOtpError('');
     setIsLoading(true);
     try {
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, code: otp }),
+        body: JSON.stringify({ phoneNumber, code }),
       });
 
       const data = await res.json();
@@ -167,7 +168,7 @@ export default function LoginPage() {
               <label className="block text-sm font-medium mb-1" htmlFor="otp">
                 کد تایید
               </label>
-              <div className="dir-ltr text-sm text-on-surface-variant mb-2">{phoneNumber}</div>
+              <div className="dir-ltr text-sm text-on-surface-variant mb-2" dir="ltr">{phoneNumber}</div>
               <input
                 id="otp"
                 type="text"
@@ -181,7 +182,7 @@ export default function LoginPage() {
                   setOtp(value);
                   setOtpError('');
                   if (value.length === 6 && !isLoading) {
-                    submitOtp();
+                    submitOtp(value);
                   }
                 }}
                 placeholder="123456"
