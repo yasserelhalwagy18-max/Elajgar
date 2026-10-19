@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../../lib/store';
 import { Info } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { normalizeDigits } from '../../lib/utils';
 
 export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [otpError, setOtpError] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [isLoading, setIsLoading] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
   const router = useRouter();
   const { setAuthenticated, updateUserProfile, fetchUserFromServer } = useStore();
 
@@ -20,18 +22,22 @@ export default function LoginPage() {
     e.preventDefault();
     setPhoneError('');
 
-    if (/^09[0-9]{9}$/.test(phoneNumber)) {
+    const normalized = normalizeDigits(phoneNumber);
+    setPhoneNumber(normalized);
+
+    if (/^09[0-9]{9}$/.test(normalized)) {
       setIsLoading(true);
       try {
         const res = await fetch('/api/auth/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phoneNumber }),
+          body: JSON.stringify({ phoneNumber: normalized }),
         });
 
         const data = await res.json();
 
         if (res.ok) {
+          setResendSeconds(60);
           setStep('otp');
           toast.success('کد تایید ارسال شد');
         } else {
@@ -47,10 +53,8 @@ export default function LoginPage() {
     }
   };
 
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitOtp = async () => {
     setOtpError('');
-
     setIsLoading(true);
     try {
       const res = await fetch('/api/auth/verify-otp', {
@@ -82,6 +86,44 @@ export default function LoginPage() {
     }
   };
 
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    submitOtp();
+  };
+
+  useEffect(() => {
+    if (step === 'otp') {
+      const interval = setInterval(() => {
+        setResendSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [step]);
+
+  const handleResend = async () => {
+    if (resendSeconds > 0 || isLoading) return;
+    setIsLoading(true);
+    try {
+      const normalized = normalizeDigits(phoneNumber);
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: normalized }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('کد تایید ارسال شد');
+        setResendSeconds(60);
+      } else {
+        setPhoneError(data.error || 'خطا در ارسال کد تایید');
+      }
+    } catch (error) {
+      setPhoneError('ارتباط با سرور برقرار نشد');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant glass-panel">
@@ -98,8 +140,9 @@ export default function LoginPage() {
               <input
                 id="phone"
                 type="tel"
+                inputMode="numeric"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => setPhoneNumber(normalizeDigits(e.target.value))}
                 placeholder="09123456789"
                 className={`w-full px-4 py-2 rounded-lg bg-surface border ${phoneError ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2 text-left`}
                 dir="ltr"
@@ -124,11 +167,23 @@ export default function LoginPage() {
               <label className="block text-sm font-medium mb-1" htmlFor="otp">
                 کد تایید
               </label>
+              <div className="dir-ltr text-sm text-on-surface-variant mb-2">{phoneNumber}</div>
               <input
                 id="otp"
                 type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                pattern="[0-9]*"
                 value={otp}
-                onChange={(e) => { setOtp(e.target.value); setOtpError(''); }}
+                onChange={(e) => {
+                  const value = normalizeDigits(e.target.value);
+                  setOtp(value);
+                  setOtpError('');
+                  if (value.length === 6 && !isLoading) {
+                    submitOtp();
+                  }
+                }}
                 placeholder="123456"
                 className={`w-full px-4 py-2 rounded-lg bg-surface border ${otpError ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2 text-center tracking-widest`}
                 dir="ltr"
@@ -146,6 +201,24 @@ export default function LoginPage() {
             >
               {isLoading ? 'در حال بررسی...' : 'تایید'}
             </button>
+            {resendSeconds > 0 ? (
+              <button
+                type="button"
+                disabled
+                className="w-full py-2 px-4 text-primary/50 hover:bg-primary-container rounded-full transition-colors text-sm"
+              >
+                ارسال مجدد کد تا {resendSeconds} ثانیه
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isLoading}
+                className="w-full py-2 px-4 text-primary hover:bg-primary-container rounded-full transition-colors text-sm"
+              >
+                ارسال مجدد کد
+              </button>
+            )}
             <button
               type="button"
               onClick={() => { setStep('phone'); setOtpError(''); setOtp(''); }}

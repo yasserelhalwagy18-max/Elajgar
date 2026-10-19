@@ -49,11 +49,11 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                       <div className={`p-1 ${article.bg} rounded-md`}>
                         <Icon className={`w-3 h-3 ${article.color}`} />
                       </div>
-                      <span className="text-[10px] font-bold text-on-surface-variant uppercase">{article.category}</span>
+                      <span className="text-xs font-bold text-on-surface-variant uppercase">{article.category}</span>
                     </div>
                     <h3 className="font-bold text-sm text-on-surface leading-tight mb-2">{article.title}</h3>
                 </div>
-                <div className="flex items-center text-[10px] text-on-surface-variant font-medium">
+                <div className="flex items-center text-xs text-on-surface-variant font-medium">
                   <span>زمان مطالعه: {article.readTime}</span>
                 </div>
               </div>

@@ -15,6 +15,9 @@
   --color-error: #ef4444;
   --color-tertiary: #ea580c;
   --color-tertiary-container: #ffedd5;
+  --color-on-primary: #ffffff;
+  --color-on-secondary: #ffffff;
+  --color-surface-container: #ffffff;
   
   --font-sans: "Vazirmatn", sans-serif;
 }

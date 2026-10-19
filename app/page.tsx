@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, HeartPulse, Lock, Waves, Percent, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle, Star } from 'lucide-react';
+import { ArrowLeft, HeartPulse, Lock, Waves, Percent, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function LandingPage() {
@@ -22,8 +22,8 @@ export default function LandingPage() {
             className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex flex-col items-center justify-center"
           >
             <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="absolute top-6 right-6 p-2 text-on-surface hover:text-primary transition-colors"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="absolute top-6 end-6 p-2 text-on-surface hover:text-primary transition-colors"
             >
               <X className="w-8 h-8" />
             </button>
@@ -41,11 +41,11 @@ export default function LandingPage() {
       </AnimatePresence>
 
       {/* Top Nav */}
-      <nav className="flex flex-row-reverse justify-between items-center w-full py-4 bg-white border border-outline-variant/20 shadow-sm rounded-full px-6 md:px-8 mb-16 sticky top-4 z-50">
+      <nav className="flex flex-row justify-between items-center w-full py-4 bg-white border border-outline-variant/20 shadow-sm rounded-full px-6 md:px-8 mb-16 sticky top-4 z-50">
         <div className="text-2xl font-black text-primary tracking-tight">Elajgar</div>
 
         {/* Desktop Nav Links */}
-        <div className="hidden md:flex flex-row-reverse gap-8 text-sm font-medium">
+        <div className="hidden md:flex flex-row gap-8 text-sm font-medium">
           <Link href="#services" className="text-on-surface-variant hover:text-primary transition-colors">اکوسیستم</Link>
           <Link href="#how-it-works" className="text-on-surface-variant hover:text-primary transition-colors">خدمات</Link>
           <Link href="#gyms" className="text-on-surface-variant hover:text-primary transition-colors">شبکه</Link>
@@ -67,14 +67,14 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative w-full flex flex-col md:flex-row-reverse items-center justify-between gap-12 mb-24 md:min-h-[70vh]">
-        <div className="flex-1 text-right z-10 flex flex-col gap-6 items-end">
+      <section className="relative w-full flex flex-col md:flex-row items-center justify-between gap-12 mb-24 md:min-h-[70vh]">
+        <div className="flex-1 text-start z-10 flex flex-col gap-6 items-start">
           <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium border border-primary/20 backdrop-blur-md">
             پیشگام در سلامت دیجیتال
           </div>
           <h1 className="text-4xl md:text-6xl text-on-surface leading-tight font-extrabold">
             علاج‌گر:<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-l from-primary to-secondary-container">هوش مصنوعی</span><br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-l from-primary to-secondary">هوش مصنوعی</span><br />
             برای سلامت مفاصل و عضلات شما
           </h1>
           <p className="text-lg text-on-surface-variant max-w-xl">
@@ -114,14 +114,14 @@ export default function LandingPage() {
             className="absolute inset-0 bg-gradient-to-tr from-surface-variant to-surface rounded-[2.5rem] overflow-hidden bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-2xl shadow-primary/10 p-8"
           >
              <div className="relative w-full h-full">
-                <Image 
-                    src="https://picsum.photos/seed/elajgar/800/800" 
-                    alt="3D Medical Illustration"
-                    fill
-                    className="object-contain opacity-90 drop-shadow-2xl mix-blend-multiply"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority
-                />
+                 <Image 
+                     src="/body-front.png" 
+                     alt="نقشه بدن برای ثبت نقاط درد"
+                     fill
+                     className="object-contain"
+                     sizes="(max-width: 768px) 100vw, 50vw"
+                     priority
+                 />
              </div>
           </motion.div>
         </div>
@@ -225,8 +225,8 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-on-surface">شبکه شرکای ما</h2>
           <p className="text-on-surface-variant mt-2">علاج‌گر در بهترین باشگاه‌های سلامت</p>
         </div>
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-outline-variant/20 shadow-sm bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row-reverse items-center justify-between gap-8 shadow-2xl">
-           <div className="relative z-10 text-right flex-1">
+         <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-outline-variant/20 shadow-sm bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+           <div className="relative z-10 text-start flex-1">
               <h3 className="text-3xl font-bold mb-4">بسته جامع سلامت مفاصل</h3>
               <p className="text-lg text-primary-fixed opacity-90">با تهیه اشتراک ویژه، به تمامی امکانات اکوسیستم با تخفیف ویژه دسترسی پیدا کنید و از خدمات حضوری باشگاه‌های شریک بهره‌مند شوید.</p>
            </div>
@@ -240,65 +240,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="mb-24 px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-on-surface">نظرات کاربران</h2>
-          <p className="text-on-surface-variant mt-2">داستان موفقیت و بهبودی همراهان علاج‌گر</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-8 rounded-3xl border border-outline-variant/20 shadow-sm flex flex-col">
-            <div className="flex gap-1 mb-4 text-amber-400">
-              <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" />
-            </div>
-            <p className="text-on-surface-variant leading-relaxed mb-6 flex-1">
-              &quot;کمردرد مزمن من با استفاده از برنامه‌های اصلاحی علاج‌گر در کمتر از دو ماه به شدت کاهش یافت. واقعاً سیستم هوشمند و دقیقی دارد!&quot;
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary-container text-primary rounded-full flex items-center justify-center font-bold text-lg">س</div>
-              <div>
-                <h4 className="font-bold text-on-surface">سارا محمدی</h4>
-                <span className="text-xs text-on-surface-variant">کاربر اشتراک ویژه</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-8 rounded-3xl border border-outline-variant/20 shadow-sm flex flex-col">
-            <div className="flex gap-1 mb-4 text-amber-400">
-              <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" />
-            </div>
-            <p className="text-on-surface-variant leading-relaxed mb-6 flex-1">
-              &quot;ارزیابی اولیه بسیار دقیق بود و تمریناتی که به من پیشنهاد شد، کاملاً با شرایط بدنی‌ام همخوانی داشت. رابط کاربری هم بسیار ساده است.&quot;
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-secondary-container text-secondary rounded-full flex items-center justify-center font-bold text-lg">ع</div>
-              <div>
-                <h4 className="font-bold text-on-surface">علی رضایی</h4>
-                <span className="text-xs text-on-surface-variant">ورزشکار آسیب‌دیده</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-8 rounded-3xl border border-outline-variant/20 shadow-sm flex flex-col">
-            <div className="flex gap-1 mb-4 text-amber-400">
-              <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5" />
-            </div>
-            <p className="text-on-surface-variant leading-relaxed mb-6 flex-1">
-              &quot;پشتیبانی عالی و تمرینات آب‌درمانی که پیشنهاد دادند، باعث شد خیلی سریع‌تر از چیزی که فکر می‌کردم به فعالیت‌های روزمره‌ام برگردم.&quot;
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-tertiary-container text-tertiary rounded-full flex items-center justify-center font-bold text-lg">م</div>
-              <div>
-                <h4 className="font-bold text-on-surface">مریم کریمی</h4>
-                <span className="text-xs text-on-surface-variant">کاربر علاج‌گر</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Footer */}
-      <footer id="contact" className="border-t border-outline-variant/30 pt-12 pb-8 px-4 text-center md:text-right">
+        {/* Footer */}
+      <footer id="contact" className="border-t border-outline-variant/30 pt-12 pb-8 px-4 text-center md:text-start">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-1 md:col-span-2">
             <h3 className="text-2xl font-black text-primary tracking-tight mb-4">Elajgar</h3>

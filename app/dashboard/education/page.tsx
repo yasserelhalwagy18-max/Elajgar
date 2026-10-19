@@ -130,7 +130,7 @@ export default function EducationPage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {/* Base Tier */}
                                 <div className="glass-card border-2 border-white/40 rounded-2xl p-6 relative overflow-hidden flex flex-col">
-                                    <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-[10px] font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
+                                    <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
                                     <h3 className="text-lg font-bold text-on-surface mb-2">پایه</h3>
                                     <p className="text-sm text-on-surface-variant mb-4">دسترسی محدود به ویدیوها</p>
                                     <div className="text-xl font-bold text-primary mb-6 mt-auto">۹۹,۰۰۰ <span className="text-sm font-normal text-on-surface-variant">تومان / ماه</span></div>
@@ -139,7 +139,7 @@ export default function EducationPage() {
 
                                 {/* Pro Tier */}
                                 <div className="glass-card border-2 border-primary rounded-2xl p-6 relative overflow-hidden flex flex-col shadow-[0_0_15px_rgba(37,99,235,0.2)]">
-                                    <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-[10px] font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
+                                    <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
                                     <h3 className="text-lg font-bold text-on-surface mb-2 flex items-center gap-2">حرفه‌ای <Verified className="w-4 h-4 text-primary" /></h3>
                                     <p className="text-sm text-on-surface-variant mb-4">دسترسی کامل + تمرینات اختصاصی</p>
                                     <div className="text-xl font-bold text-primary mb-6 mt-auto">۱۹۹,۰۰۰ <span className="text-sm font-normal text-on-surface-variant">تومان / ماه</span></div>
@@ -148,7 +148,7 @@ export default function EducationPage() {
 
                                 {/* Org Tier */}
                                 <div className="glass-card border-2 border-white/40 rounded-2xl p-6 relative overflow-hidden flex flex-col">
-                                    <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-[10px] font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
+                                    <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
                                     <h3 className="text-lg font-bold text-on-surface mb-2">سازمانی</h3>
                                     <p className="text-sm text-on-surface-variant mb-4">پشتیبانی اختصاصی و مشاوره</p>
                                     <div className="text-xl font-bold text-primary mb-6 mt-auto">۴۹۹,۰۰۰ <span className="text-sm font-normal text-on-surface-variant">تومان / ماه</span></div>
