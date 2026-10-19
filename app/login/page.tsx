@@ -53,12 +53,8 @@ export default function LoginPage() {
     }
   };
 
-<<<<<<< HEAD
   const submitOtp = async (codeOverride?: string) => {
     const code = codeOverride ?? otp;
-=======
-  const submitOtp = async () => {
->>>>>>> 084dfe9878c489c8fda4d7c4713596d72f8610a4
     setOtpError('');
     setIsLoading(true);
     try {
@@ -172,11 +168,7 @@ export default function LoginPage() {
               <label className="block text-sm font-medium mb-1" htmlFor="otp">
                 کد تایید
               </label>
-<<<<<<< HEAD
-              <div className="dir-ltr text-sm text-on-surface-variant mb-2" dir="ltr">{phoneNumber}</div>
-=======
-              <div className="dir-ltr text-sm text-on-surface-variant mb-2">{phoneNumber}</div>
->>>>>>> 084dfe9878c489c8fda4d7c4713596d72f8610a4
+              <div className="text-sm text-on-surface-variant mb-2" dir="ltr">{phoneNumber}</div>
               <input
                 id="otp"
                 type="text"
@@ -190,11 +182,7 @@ export default function LoginPage() {
                   setOtp(value);
                   setOtpError('');
                   if (value.length === 6 && !isLoading) {
-<<<<<<< HEAD
                     submitOtp(value);
-=======
-                    submitOtp();
->>>>>>> 084dfe9878c489c8fda4d7c4713596d72f8610a4
                   }
                 }}
                 placeholder="123456"

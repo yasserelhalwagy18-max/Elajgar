@@ -210,7 +210,6 @@ export default function DashboardIndex() {
         <header className="flex justify-between items-center mb-8 sticky top-0 pt-4 z-40 bg-surface/80 backdrop-blur-md">
             <div>
                 <h1 className="text-2xl font-bold text-primary tracking-tight">Elajgar</h1>
-<<<<<<< HEAD
                 <p className="text-sm text-on-surface-variant">سلام، {userProfile?.fullName?.trim().split(/\s+/)[0] || 'کاربر عزیز'}</p>
             </div>
             <Link href="/dashboard/profile" className="w-12 h-12 rounded-full bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-lg relative border-white transition-transform hover:scale-105">
@@ -219,12 +218,6 @@ export default function DashboardIndex() {
                 ) : (
                     <User className="w-6 h-6 text-primary" />
                 )}
-=======
-                <p className="text-sm text-on-surface-variant">سلام، {userProfile?.fullName || 'کاربر عزیز'}</p>
-            </div>
-            <Link href="/dashboard/profile" className="w-12 h-12 rounded-full bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-lg relative border-white transition-transform hover:scale-105">
-                <span className="text-xl font-bold text-primary">{userProfile?.fullName ? userProfile.fullName.charAt(0) : 'A'}</span>
->>>>>>> 084dfe9878c489c8fda4d7c4713596d72f8610a4
             </Link>
         </header>
 
@@ -326,11 +319,7 @@ export default function DashboardIndex() {
                                     return <div className="h-3 w-full rounded-full bg-surface-variant" />;
                                 }
                                 return (
-<<<<<<< HEAD
                                     <div className="flex h-3 w-full rounded-full overflow-hidden">
-=======
-                                    <div className="h-3 w-full rounded-full overflow-hidden">
->>>>>>> 084dfe9878c489c8fda4d7c4713596d72f8610a4
                                         <div className="h-full bg-primary" style={{ width: `${(proteinCals / total) * 100}%` }} />
                                         <div className="h-full bg-secondary" style={{ width: `${(carbsCals / total) * 100}%` }} />
                                         <div className="h-full bg-tertiary" style={{ width: `${(fatCals / total) * 100}%` }} />
