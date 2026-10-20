@@ -4,11 +4,23 @@ import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, HeartPulse, Lock, Waves, Percent, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowLeft, HeartPulse, Lock, Waves, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const BRAND = 'علاج‌گر';
 
 export default function LandingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  // Close the mobile menu with Escape.
+  React.useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isMobileMenuOpen]);
 
   return (
     <div className="max-w-[1280px] mx-auto px-6 py-8 md:px-16 pb-24 md:pb-8 relative">
@@ -23,13 +35,13 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[100] bg-surface/90 backdrop-blur-md flex flex-col items-center justify-center"
           >
             <button
-            type="button"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="بستن منو"
-            className="absolute top-6 end-6 p-2 text-on-surface hover:text-primary transition-colors"
+              type="button"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="بستن منو"
+              className="absolute top-6 end-6 icon-btn"
             >
               <X className="w-8 h-8" />
             </button>
@@ -38,26 +50,27 @@ export default function LandingPage() {
               <Link href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">چگونه کار می‌کند؟</Link>
               <Link href="#gyms" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">شبکه</Link>
               <Link href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">تماس</Link>
-              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="btn-primary-glass px-10 py-4 rounded-full text-xl font-bold w-full text-center">ورود / ثبت‌نام</Link>
+              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="btn btn-primary px-10 py-4 text-xl font-bold w-full text-center">ورود / ثبت‌نام</Link>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Top Nav */}
-      <nav className="flex flex-row justify-between items-center w-full py-4 bg-white border border-outline-variant/20 shadow-sm rounded-full px-6 md:px-8 mb-16 sticky top-4 z-50">
-        <div className="text-2xl font-black text-primary tracking-tight">Elajgar</div>
+      <nav className="flex flex-row justify-between items-center w-full py-4 bg-surface-container border border-outline-variant card rounded-full px-6 md:px-8 mb-16 sticky top-4 z-50">
+        <div className="text-2xl font-black text-primary tracking-tight">{BRAND}</div>
 
-        {/* Desktop Nav Links */}
-        <div className="hidden md:flex flex-row gap-8 text-sm font-medium">
-          <Link href="#services" className="text-on-surface-variant hover:text-primary transition-colors">اکوسیستم</Link>
-          <Link href="#how-it-works" className="text-on-surface-variant hover:text-primary transition-colors">چگونه کار می‌کند؟</Link>
-          <Link href="#gyms" className="text-on-surface-variant hover:text-primary transition-colors">شبکه</Link>
-          <Link href="#contact" className="text-on-surface-variant hover:text-primary transition-colors">تماس</Link>
+        {/* Desktop Nav Links - `py-2` gives them a 33px tap target instead of
+            a 17px line of text. */}
+        <div className="hidden md:flex flex-row gap-2 text-sm font-medium">
+          <Link href="#services" className="inline-flex items-center py-2 px-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-container transition-colors">اکوسیستم</Link>
+          <Link href="#how-it-works" className="inline-flex items-center py-2 px-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-container transition-colors">چگونه کار می‌کند؟</Link>
+          <Link href="#gyms" className="inline-flex items-center py-2 px-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-container transition-colors">شبکه</Link>
+          <Link href="#contact" className="inline-flex items-center py-2 px-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-container transition-colors">تماس</Link>
         </div>
 
         {/* Desktop Nav CTA */}
-        <Link href="/login" className="hidden md:block btn-primary-glass px-8 py-2.5 rounded-full text-sm font-bold text-center">ورود / ثبت‌نام</Link>
+        <Link href="/login" className="hidden md:block btn btn-primary btn-md font-bold text-center">ورود / ثبت‌نام</Link>
 
         {/* Mobile Hamburger */}
         <button
@@ -66,7 +79,7 @@ export default function LandingPage() {
           aria-label="باز کردن منو"
           aria-expanded={isMobileMenuOpen}
           aria-controls="mobile-menu"
-          className="md:hidden p-2 text-on-surface hover:text-primary transition-colors"
+          className="md:hidden icon-btn"
         >
           <Menu className="w-6 h-6" />
         </button>
@@ -75,19 +88,19 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative w-full flex flex-col md:flex-row items-center justify-between gap-12 mb-24 md:min-h-[70vh]">
         <div className="flex-1 text-start z-10 flex flex-col gap-6 items-start">
-          <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium border border-primary/20 backdrop-blur-md">
+          <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium border border-primary/20">
             پیشگام در سلامت دیجیتال
           </div>
           <h1 className="text-4xl md:text-6xl text-on-surface leading-tight font-extrabold">
-            علاج‌گر:<br />
+            {BRAND}:<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-l from-primary to-secondary">هوش مصنوعی</span><br />
             برای سلامت مفاصل و عضلات شما
           </h1>
           <p className="text-lg text-on-surface-variant max-w-xl">
             با ترکیب دانش پزشکی و فناوری پیشرفته، مسیر بهبودی خود را هوشمندانه و دقیق طی کنید.
           </p>
-          <div className="flex mt-8 gap-4">
-             <Link href="/login" className="btn-primary-glass px-8 py-4 rounded-full text-lg font-bold flex items-center justify-center gap-2 group">
+          <div className="flex mt-8 w-full sm:w-auto">
+             <Link href="/login" className="btn btn-primary px-8 py-4 text-lg font-bold w-full sm:w-auto group">
                 <span>شروع ارزیابی هوشمند و سنجش درد</span>
                 <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
              </Link>
@@ -109,17 +122,17 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex-1 relative z-10 w-full aspect-square md:aspect-auto md:h-[500px]">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="absolute inset-0 bg-gradient-to-tr from-surface-variant to-surface rounded-[2.5rem] overflow-hidden bg-white border border-outline-variant/20 shadow-sm flex items-center justify-center shadow-2xl shadow-primary/10 p-8"
+            className="absolute inset-0 rounded-4xl overflow-hidden bg-surface-container border border-outline-variant card flex items-center justify-center p-8"
           >
              <div className="relative w-full h-full">
-                 <Image 
-                     src="/body-front.png" 
+                 <Image
+                     src="/body-front.png"
                      alt="نقشه بدن برای ثبت نقاط درد"
                      fill
                      className="object-contain"
@@ -139,63 +152,46 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
           {/* Connecting line for desktop */}
-          <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-outline-variant/30 -translate-y-1/2 z-0"></div>
+          <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-outline-variant/30 -translate-y-1/2 z-0" aria-hidden="true"></div>
 
-          <div className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-sm">
-            <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
-              <UserPlus className="w-8 h-8" />
+          {[
+            { icon: UserPlus, title: '۱. ثبت‌نام', body: 'اطلاعات اولیه و پروفایل خود را تکمیل کنید.' },
+            { icon: Scan, title: '۲. ارزیابی درد', body: 'آزمون‌های هوشمند برای شناسایی دقیق مشکلات.' },
+            { icon: ClipboardList, title: '۳. برنامه اختصاصی', body: 'دریافت تمرینات اصلاحی متناسب با شرایط شما.' },
+            { icon: TrendingUp, title: '۴. پیشرفت', body: 'پیگیری روند بهبود و تنظیم مجدد برنامه‌ها.' },
+          ].map((step) => (
+            <div key={step.title} className="relative z-10 flex flex-col items-center text-center card p-6 rounded-3xl">
+              <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4">
+                <step.icon className="w-8 h-8" />
+              </div>
+              <h3 className="text-lg font-bold text-on-surface mb-2">{step.title}</h3>
+              <p className="text-sm text-on-surface-variant">{step.body}</p>
             </div>
-            <h3 className="text-lg font-bold text-on-surface mb-2">۱. ثبت‌نام</h3>
-            <p className="text-sm text-on-surface-variant">اطلاعات اولیه و پروفایل خود را تکمیل کنید.</p>
-          </div>
-
-          <div className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-sm">
-            <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
-              <Scan className="w-8 h-8" />
-            </div>
-            <h3 className="text-lg font-bold text-on-surface mb-2">۲. ارزیابی درد</h3>
-            <p className="text-sm text-on-surface-variant">آزمون‌های هوشمند برای شناسایی دقیق مشکلات.</p>
-          </div>
-
-          <div className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-sm">
-            <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
-              <ClipboardList className="w-8 h-8" />
-            </div>
-            <h3 className="text-lg font-bold text-on-surface mb-2">۳. برنامه اختصاصی</h3>
-            <p className="text-sm text-on-surface-variant">دریافت تمرینات اصلاحی متناسب با شرایط شما.</p>
-          </div>
-
-          <div className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-sm">
-            <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4 shadow-inner">
-              <TrendingUp className="w-8 h-8" />
-            </div>
-            <h3 className="text-lg font-bold text-on-surface mb-2">۴. پیشرفت</h3>
-            <p className="text-sm text-on-surface-variant">پیگیری روند بهبود و تنظیم مجدد برنامه‌ها.</p>
-          </div>
+          ))}
         </div>
       </section>
 
       {/* 3-App Hub */}
       <section id="services" className="mb-24 px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-on-surface">اکوسیستم سلامت علاج‌گر</h2>
+          <h2 className="text-3xl font-bold text-on-surface">اکوسیستم سلامت {BRAND}</h2>
           <p className="text-on-surface-variant mt-2">یکپارچگی در مسیر درمان</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <HubCard
                 active
                 href="/login"
-                title="علاج‌گر"
+                title={BRAND}
                 desc="ارزیابی هوشمند و سنجش دقیق درد با استفاده از الگوریتم‌های پیشرفته."
                 icon={HeartPulse}
             />
-            <HubCard 
-                title="برنامه تمرینات اصلاحی" 
+            <HubCard
+                title="برنامه تمرینات اصلاحی"
                 desc="برنامه‌های تمرینی شخصی‌سازی شده بر اساس ارزیابی‌های اولیه."
                 icon={Lock}
             />
-            <HubCard 
-                title="آب‌درمانی تخصصی" 
+            <HubCard
+                title="آب‌درمانی تخصصی"
                 desc="پروتکل‌های درمانی در آب برای تسریع روند بهبودی مفاصل."
                 icon={Waves}
             />
@@ -205,22 +201,17 @@ export default function LandingPage() {
       {/* Stats Section */}
       <section id="stats" className="mb-24 px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <div className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
-            <span className="text-4xl font-black text-primary mb-2">۱۲</span>
-            <span className="text-sm font-medium text-on-surface-variant">مرحله ارزیابی</span>
-          </div>
-          <div className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
-            <span className="text-4xl font-black text-primary mb-2">۲۴</span>
-            <span className="text-sm font-medium text-on-surface-variant">نوع غذا</span>
-          </div>
-          <div className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
-            <span className="text-4xl font-black text-primary mb-2" dir="ltr">۰–۱۰۰</span>
-            <span className="text-sm font-medium text-on-surface-variant">امتیاز سلامت</span>
-          </div>
-          <div className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
-            <span className="text-4xl font-black text-primary mb-2">۴</span>
-            <span className="text-sm font-medium text-on-surface-variant">باشگاه شریک</span>
-          </div>
+          {[
+            { value: '۱۲', label: 'مرحله ارزیابی' },
+            { value: '۲۴', label: 'نوع غذا' },
+            { value: '۰–۱۰۰', label: 'امتیاز سلامت' },
+            { value: '۴', label: 'باشگاه شریک' },
+          ].map((stat) => (
+            <div key={stat.label} className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
+              <span className="text-4xl font-black text-primary mb-2" dir="ltr">{stat.value}</span>
+              <span className="text-sm font-medium text-on-surface-variant">{stat.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -228,28 +219,30 @@ export default function LandingPage() {
       <section id="gyms" className="mb-24 px-4">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-on-surface">شبکه شرکای ما</h2>
-          <p className="text-on-surface-variant mt-2">علاج‌گر در بهترین باشگاه‌های سلامت</p>
+          <p className="text-on-surface-variant mt-2">{BRAND} در بهترین باشگاه‌های سلامت</p>
         </div>
-         <div className="relative overflow-hidden rounded-[2.5rem] bg-white border border-outline-variant/20 shadow-sm bg-gradient-to-r from-primary/90 to-secondary/90 p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+         <div className="relative overflow-hidden rounded-4xl bg-gradient-to-l from-primary to-secondary p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
            <div className="relative z-10 text-start flex-1">
               <h3 className="text-3xl font-bold mb-4">بسته جامع سلامت مفاصل</h3>
-              <p className="text-lg text-primary-fixed opacity-90">با تهیه اشتراک ویژه، به تمامی امکانات اکوسیستم با تخفیف ویژه دسترسی پیدا کنید و از خدمات حضوری باشگاه‌های شریک بهره‌مند شوید.</p>
+              <p className="text-lg text-white/90">
+                با تهیه اشتراک ویژه، به تمامی امکانات اکوسیستم با تخفیف ویژه دسترسی پیدا کنید و از خدمات حضوری باشگاه‌های شریک بهره‌مند شوید.
+              </p>
            </div>
-           <div className="relative z-10 flex flex-col items-center justify-center bg-white/20 backdrop-blur-md p-8 rounded-3xl border border-white/30 shadow-inner">
-              <span className="text-sm text-primary-fixed mb-1 tracking-widest font-bold">تخفیف ویژه</span>
+           <div className="relative z-10 flex flex-col items-center justify-center bg-white/15 backdrop-blur-md p-8 rounded-3xl border border-white/30">
+              <span className="text-sm text-white/90 mb-1 tracking-widest font-bold">تخفیف ویژه</span>
               <span className="text-6xl font-black drop-shadow-md">۴۰٪</span>
-              <Link href="/login" className="mt-6 bg-white text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl text-center">
+              <Link href="/login" className="btn mt-6 bg-surface-container text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl text-center">
                 دریافت پیشنهاد
               </Link>
            </div>
-        </div>
+         </div>
       </section>
 
         {/* Footer */}
       <footer id="contact" className="border-t border-outline-variant/30 pt-12 pb-8 px-4 text-center md:text-start">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-black text-primary tracking-tight mb-4">Elajgar</h3>
+            <h3 className="text-2xl font-black text-primary tracking-tight mb-4">{BRAND}</h3>
             <p className="text-sm text-on-surface-variant max-w-sm leading-relaxed mx-auto md:mx-0">
               پلتفرم جامع هوشمند برای سلامت مفاصل، ارزیابی درد و ارائه برنامه‌های تمرینی اختصاصی با بهره‌گیری از هوش مصنوعی.
             </p>
@@ -278,7 +271,7 @@ export default function LandingPage() {
             <Link href="/terms" className="hover:text-primary transition-colors">شرایط استفاده</Link>
             <Link href="/privacy" className="hover:text-primary transition-colors">حریم خصوصی</Link>
           </div>
-          <p>© {new Date().getFullYear()} علاج‌گر. تمامی حقوق محفوظ است.</p>
+          <p>© {new Date().getFullYear()} {BRAND}. تمامی حقوق محفوظ است.</p>
         </div>
       </footer>
     </div>
@@ -301,12 +294,17 @@ function HubCard({
     const content = (
         <>
             {!active && (
-                <div className="absolute inset-0 bg-surface/30 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center">
-                    <div className="bg-white/80 p-3 rounded-full shadow-lg mb-2"><Icon className="w-6 h-6 text-outline" /></div>
-                    <span className="text-sm font-bold text-outline bg-white/80 px-3 py-1 rounded-full">به زودی</span>
+                /* The old overlay blurred the whole card and repeated the icon,
+                   which made the locked cards look broken rather than
+                   deliberately unavailable. The badge sits in the corner so it
+                   never overlaps the card copy. */
+                <div className="absolute inset-0 bg-surface/35 backdrop-blur-[1px] z-20">
+                    <span className="absolute top-4 left-4 text-xs font-bold text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant shadow-sm">
+                        به زودی
+                    </span>
                 </div>
             )}
-            {active && <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>}
+            {active && <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" aria-hidden="true"></div>}
 
             <div className="flex justify-between items-start mb-6">
                 <div className={cn("p-4 rounded-2xl", active ? "bg-primary/10" : "bg-surface-variant")}>
@@ -319,7 +317,7 @@ function HubCard({
             <p className="text-on-surface-variant text-base leading-relaxed mb-6">{desc}</p>
 
             {active && (
-                <div className="flex items-center text-primary font-bold text-sm group-hover:gap-3 gap-2 transition-all">
+                <div className="flex items-center text-primary font-bold text-sm gap-2 transition-all group-hover:gap-3">
                     <span>ورود به سامانه</span>
                     <ArrowLeft className="w-4 h-4" />
                 </div>
@@ -328,10 +326,10 @@ function HubCard({
     );
 
     const cardClass = cn(
-        "bg-white border border-outline-variant/20 shadow-sm p-8 rounded-[2rem] relative overflow-hidden group transition-all duration-300",
+        "bg-surface-container border border-outline-variant card p-8 rounded-3xl relative overflow-hidden group transition-all duration-300",
         active
-            ? "border-2 shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer bg-white/60"
-            : "opacity-75 grayscale-[30%] cursor-not-allowed"
+            ? "border-2 border-primary shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer"
+            : "opacity-90 cursor-not-allowed"
     );
 
     if (!active || !href) {
@@ -344,4 +342,3 @@ function HubCard({
         </Link>
     );
 }
-

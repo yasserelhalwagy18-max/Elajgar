@@ -190,13 +190,13 @@ function Marker({ data }: { data: PainData }) {
                 <Html center distanceFactor={4} zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
                     <div
                         dir="rtl"
-                        className="bg-slate-900/90 backdrop-blur-md border border-white/10 text-white rounded-lg px-4 py-2 shadow-2xl min-w-max transform transition-all"
+                        className="bg-on-surface/90 backdrop-blur-md border border-white/10 text-white rounded-lg px-4 py-2 shadow-2xl min-w-max transform transition-all"
                         style={{ boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' }}
                     >
                         <div className="font-bold text-sm mb-1">{data.label}</div>
-                        <div className="text-xs text-slate-300 flex items-center gap-2">
+                        <div className="text-xs text-white/80 flex items-center gap-2">
                             <span>گزارش‌ها:</span>
-                            <span className="font-mono text-primary font-bold">%{data.frequency}</span>
+                            <span className="font-mono text-white font-bold">{data.frequency}٪</span>
                         </div>
                     </div>
                 </Html>
@@ -207,7 +207,7 @@ function Marker({ data }: { data: PainData }) {
 
 export default function PainHeatmap3D({ modelUrl }: { modelUrl?: string }) {
     return (
-        <div className="w-full h-[500px] relative rounded-xl overflow-hidden glass-card border border-white/20">
+        <div className="w-full h-[500px] relative rounded-3xl overflow-hidden card">
             <Canvas
                 shadows
                 camera={{ position: [0, 0, 4], fov: 45 }}
@@ -224,7 +224,7 @@ export default function PainHeatmap3D({ modelUrl }: { modelUrl?: string }) {
                     maxPolarAngle={Math.PI / 1.5}
                 />
 
-                <Suspense fallback={<Html center><div className="text-primary animate-pulse font-bold bg-white/50 px-4 py-2 rounded-full backdrop-blur-sm">در حال بارگذاری 3D...</div></Html>}>
+                <Suspense fallback={<Html center><div className="text-primary animate-pulse font-bold bg-surface-container/90 px-4 py-2 rounded-full backdrop-blur-sm">در حال بارگذاری 3D...</div></Html>}>
                     <Center>
                         <group position={[0, 0.2, 0]}>
                             {/* Base Model */}
@@ -246,7 +246,7 @@ export default function PainHeatmap3D({ modelUrl }: { modelUrl?: string }) {
             </Canvas>
 
             <div className="absolute bottom-4 right-4 pointer-events-none">
-                <div className="text-xs text-slate-400 bg-slate-900/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                <div className="text-xs text-white/80 bg-on-surface/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
                     برای چرخش مدل را بکشید
                 </div>
             </div>

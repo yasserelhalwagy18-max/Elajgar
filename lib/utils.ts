@@ -40,6 +40,40 @@ export function normalizeDigits(input: string): string {
 }
 
 /**
+ * Convert Latin digits in a string to Persian digits.
+ *
+ * The UI is Persian, so every number the user reads should be rendered with
+ * Persian digits - a Latin `0-9` next to Persian text breaks the reading
+ * rhythm and looks like an untranslated leftover.
+ */
+export function toPersianDigits(input: string | number): string {
+  return String(input).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+}
+
+/**
+ * Format a number for display: thousands separators, then Persian digits.
+ */
+export function formatNumber(value: number, fractionDigits = 0): string {
+  if (!Number.isFinite(value)) return toPersianDigits(0);
+  const fixed = fractionDigits > 0 ? value.toFixed(fractionDigits) : String(Math.round(value));
+  const [intPart, fracPart] = fixed.split('.');
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
+  return toPersianDigits(fracPart ? `${grouped}.${fracPart}` : grouped);
+}
+
+/**
+ * Format a number of seconds as `mm:ss`, with Persian digits.
+ */
+export function formatDuration(totalSeconds: number): string {
+  const safe = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return toPersianDigits(
+    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  );
+}
+
+/**
  * Normalize Arabic/Persian text for search.
  *
  * Persian has no letter case, and the same letter exists in several code

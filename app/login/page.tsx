@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '../../lib/store';
-import { Info } from 'lucide-react';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { normalizeDigits } from '../../lib/utils';
+import { normalizeDigits, toPersianDigits } from '../../lib/utils';
+import { OTP_CODE_LENGTH } from '../../lib/otp';
 
 function LoginForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -132,110 +134,140 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant glass-panel">
-        <h1 className="text-2xl font-bold mb-6 text-center text-primary">
-          {step === 'phone' ? 'ورود' : 'تایید شماره'}
-        </h1>
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Brand + back link - the login screen used to be a bare card on an
+            empty page with no way back to the landing page. */}
+        <div className="flex items-center justify-between mb-6 px-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-bold text-on-surface-variant hover:text-primary transition-colors"
+          >
+            <ArrowRight className="w-4 h-4" />
+            بازگشت به خانه
+          </Link>
+          <span className="text-xl font-black text-primary tracking-tight">علاج‌گر</span>
+        </div>
 
-        {step === 'phone' ? (
-          <form onSubmit={handlePhoneSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="phone">
-                شماره موبایل
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                inputMode="numeric"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(normalizeDigits(e.target.value))}
-                placeholder="09123456789"
-                className={`w-full px-4 py-2 rounded-lg bg-surface border ${phoneError ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2 text-left`}
-                dir="ltr"
-                required
+        <div className="w-full p-8 rounded-3xl card">
+          <h1 className="text-2xl font-bold mb-2 text-center text-primary">
+            {step === 'phone' ? 'ورود یا ثبت‌نام' : 'تایید شماره'}
+          </h1>
+          <p className="text-sm text-on-surface-variant text-center mb-6">
+            {step === 'phone'
+              ? 'شماره موبایل خود را وارد کنید تا کد تایید برایتان ارسال شود.'
+              : `کد ${toPersianDigits(OTP_CODE_LENGTH)} رقمی ارسال‌شده به شمارهٔ شما را وارد کنید.`}
+          </p>
+
+          {step === 'phone' ? (
+            <form onSubmit={handlePhoneSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="phone">
+                  شماره موبایل
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(normalizeDigits(e.target.value))}
+                  placeholder="09123456789"
+                  aria-invalid={!!phoneError}
+                  aria-describedby={phoneError ? 'phone-error' : undefined}
+                  className={`input text-left ${phoneError ? 'border-error' : ''}`}
+                  dir="ltr"
+                  required
+                  disabled={isLoading}
+                />
+                {phoneError && (
+                  <p id="phone-error" role="alert" className="text-error text-xs mt-1">{phoneError}</p>
+                )}
+              </div>
+              <button
+                type="submit"
                 disabled={isLoading}
-              />
-              {phoneError && (
-                <p className="text-red-500 text-xs mt-1">{phoneError}</p>
+                className="btn btn-primary w-full py-2.5"
+              >
+                {isLoading ? 'در حال ارسال...' : 'ارسال کد'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleOtpSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="otp">
+                  کد تایید
+                </label>
+                <div className="text-sm text-on-surface-variant mb-2" dir="ltr">{toPersianDigits(phoneNumber)}</div>
+                <input
+                  id="otp"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  pattern="[0-9]*"
+                  value={otp}
+                  onChange={(e) => {
+                    const value = normalizeDigits(e.target.value);
+                    setOtp(value);
+                    setOtpError('');
+                    if (value.length === 6 && !isLoading) {
+                      submitOtp(value);
+                    }
+                  }}
+                  placeholder="123456"
+                  aria-invalid={!!otpError}
+                  aria-describedby={otpError ? 'otp-error' : undefined}
+                  className={`input text-center tracking-widest ${otpError ? 'border-error' : ''}`}
+                  dir="ltr"
+                  required
+                  disabled={isLoading}
+                />
+                {otpError && (
+                  <p id="otp-error" role="alert" className="text-error text-xs mt-1 text-center">{otpError}</p>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={!!otpError || isLoading}
+                className="btn btn-primary w-full py-2.5"
+              >
+                {isLoading ? 'در حال بررسی...' : 'تایید'}
+              </button>
+
+              {/* The countdown is a status message, not a disabled button -
+                  a dimmed button reads as broken. */}
+              {resendSeconds > 0 ? (
+                <p className="text-center text-sm text-on-surface-variant" role="status">
+                  ارسال مجدد کد تا {toPersianDigits(resendSeconds)} ثانیه دیگر
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={isLoading}
+                  className="btn btn-ghost btn-md w-full"
+                >
+                  ارسال مجدد کد
+                </button>
               )}
-            </div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2 px-4 bg-primary text-on-primary rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-primary-glass"
-            >
-              {isLoading ? 'در حال ارسال...' : 'ارسال کد'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleOtpSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="otp">
-                کد تایید
-              </label>
-              <div className="text-sm text-on-surface-variant mb-2" dir="ltr">{phoneNumber}</div>
-              <input
-                id="otp"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                pattern="[0-9]*"
-                value={otp}
-                onChange={(e) => {
-                  const value = normalizeDigits(e.target.value);
-                  setOtp(value);
-                  setOtpError('');
-                  if (value.length === 6 && !isLoading) {
-                    submitOtp(value);
-                  }
-                }}
-                placeholder="123456"
-                className={`w-full px-4 py-2 rounded-lg bg-surface border ${otpError ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2 text-center tracking-widest`}
-                dir="ltr"
-                required
-                disabled={isLoading}
-              />
-              {otpError && (
-                <p className="text-red-500 text-xs mt-1 text-center">{otpError}</p>
-              )}
-            </div>
-            <button
-              type="submit"
-              disabled={!!otpError || isLoading}
-              className="w-full py-2 px-4 bg-primary text-on-primary rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-primary-glass"
-            >
-              {isLoading ? 'در حال بررسی...' : 'تایید'}
-            </button>
-            {resendSeconds > 0 ? (
+
               <button
                 type="button"
-                disabled
-                className="w-full py-2 px-4 text-primary/50 hover:bg-primary-container rounded-full transition-colors text-sm"
-              >
-                ارسال مجدد کد تا {resendSeconds} ثانیه
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResend}
+                onClick={() => { setStep('phone'); setOtpError(''); setOtp(''); setPhoneNumber(''); }}
                 disabled={isLoading}
-                className="w-full py-2 px-4 text-primary hover:bg-primary-container rounded-full transition-colors text-sm"
+                className="btn btn-ghost btn-md w-full"
               >
-                ارسال مجدد کد
+                تغییر شماره
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => { setStep('phone'); setOtpError(''); setOtp(''); setPhoneNumber(''); }}
-              disabled={isLoading}
-              className="w-full py-2 px-4 text-primary hover:bg-primary-container rounded-full transition-colors text-sm"
-            >
-              تغییر شماره
-            </button>
-          </form>
-        )}
+            </form>
+          )}
+
+          <p className="flex items-center justify-center gap-2 text-xs text-on-surface-variant mt-6 pt-5 border-t border-outline-variant">
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            اطلاعات شما رمزنگاری و محرمانه نگهداری می‌شود.
+          </p>
+        </div>
       </div>
     </div>
   );

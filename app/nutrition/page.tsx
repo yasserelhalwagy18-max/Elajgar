@@ -1,18 +1,21 @@
 'use client';
 
 import * as React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import { searchFoods, FoodItem, getFoodById, getAllFoods } from '@/lib/food-service';
-import { Search, Plus, Droplet, Target, Utensils, X, Check, Sparkles } from 'lucide-react';
+import { searchFoods, FoodItem, getAllFoods } from '@/lib/food-service';
+import { Search, Plus, Droplet, Target, Utensils, Check, Sparkles } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
-import { toDateKey } from '@/lib/utils';
+import { toDateKey, toPersianDigits, formatNumber } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { MacroBar } from '@/components/ui/MacroBar';
 
 export default function NutritionPage() {
   const router = useRouter();
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const { isAuthenticated, hasHydrated } = useAuthGuard();
   const userProfile = useStore((state) => state.userProfile);
   const updateUserProfile = useStore((state) => state.updateUserProfile);
   const logFood = useStore((state) => state.logFood);
@@ -21,10 +24,13 @@ export default function NutritionPage() {
   const mounted = useMounted();
   const [goalModalOpen, setGoalModalOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [debouncedQuery, setDebouncedQuery] = React.useState('');
   const [searchResults, setSearchResults] = React.useState<FoodItem[]>([]);
-  const [isSearching, setIsSearching] = React.useState(false);
+  /** The query the currently displayed results belong to. */
+  const [resolvedQuery, setResolvedQuery] = React.useState<string | null>(null);
   const [isGeneratingPlan, setIsGeneratingPlan] = React.useState(false);
   const [planError, setPlanError] = React.useState<string | null>(null);
+  const [confirmPlan, setConfirmPlan] = React.useState<{ foods: FoodItem[]; calories: number } | null>(null);
 
   // Get current date string (YYYY-MM-DD) - local calendar day
   const todayDate = toDateKey();
@@ -100,35 +106,44 @@ export default function NutritionPage() {
   const consumedCarbs = todayFoods.reduce((acc, food) => acc + food.carbs, 0);
   const consumedFat = todayFoods.reduce((acc, food) => acc + food.fat, 0);
 
-  // Abort the previous search when a new one starts, so a slower earlier
-  // response can never overwrite the results of a newer one.
-  const searchAbortRef = React.useRef<AbortController | null>(null);
+  const isOverCalorieTarget = consumedCalories > targetCalories;
+  const remainingCalories = targetCalories - consumedCalories;
 
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    setIsSearching(true);
-
-    searchAbortRef.current?.abort();
-    const controller = new AbortController();
-    searchAbortRef.current = controller;
-
-    const results = await searchFoods(query, controller.signal);
-    if (controller.signal.aborted) return;
-
-    setSearchResults(results);
-    setIsSearching(false);
-  };
+  // Debounce the search box: without it every keystroke fired a request.
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   React.useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+
+    searchFoods(debouncedQuery, controller.signal)
+      .then((results) => {
+        if (cancelled) return;
+        setSearchResults(results);
+        setResolvedQuery(debouncedQuery);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSearchResults([]);
+        setResolvedQuery(debouncedQuery);
+      });
+
     return () => {
-      searchAbortRef.current?.abort();
+      cancelled = true;
+      controller.abort();
     };
-  }, []);
+  }, [debouncedQuery]);
+
+  // Derived, not stored: we are still searching until the results for the
+  // exact text in the box have arrived.
+  const isSearching = resolvedQuery !== searchQuery;
 
   const handleAddFood = (food: FoodItem) => {
     logFood(todayDate, food);
     setSearchQuery('');
-    setSearchResults([]);
   };
 
   const handleGenerateMealPlan = async () => {
@@ -201,13 +216,8 @@ export default function NutritionPage() {
       }
 
       // Replacing the day's log destroys what the user already recorded, so
-      // ask first.
-      const confirmed = window.confirm(
-        `برنامه غذایی پیشنهادی حدود ${Math.round(bestCalories)} کالری دارد و وعده‌های ثبت‌شده امروز را جایگزین می‌کند. ادامه می‌دهید؟`
-      );
-      if (!confirmed) return;
-
-      clearAndSetFoods(todayDate, bestCombination);
+      // ask first - with a dialog that matches the rest of the app.
+      setConfirmPlan({ foods: bestCombination, calories: bestCalories });
     } catch (error) {
       console.error('Error generating meal plan:', error);
       setPlanError('دریافت برنامه غذایی با خطا مواجه شد. لطفاً دوباره تلاش کنید.');
@@ -216,81 +226,57 @@ export default function NutritionPage() {
     }
   };
 
-  // Run initial search
-  React.useEffect(() => {
-    const controller = new AbortController();
-    const fetchInitial = async () => {
-      setIsSearching(true);
-      const results = await searchFoods('', controller.signal);
-      if (controller.signal.aborted) return;
-      setSearchResults(results);
-      setIsSearching(false);
-    };
-    fetchInitial();
-    return () => controller.abort();
-  }, []);
+  const applyMealPlan = () => {
+    if (!confirmPlan) return;
+    clearAndSetFoods(todayDate, confirmPlan.foods);
+    setConfirmPlan(null);
+  };
 
   React.useEffect(() => {
+    // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
+    if (!hasHydrated) return;
     if (!isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
-
-  // Close the goal dialog with the Escape key and lock background scroll.
-  React.useEffect(() => {
-    if (!goalModalOpen) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setGoalModalOpen(false);
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [goalModalOpen]);
+  }, [hasHydrated, isAuthenticated, router]);
 
   // The persisted store hydrates on the client only: wait for the client
   // render so the server and first client render match.
   if (!mounted) return null;
-  if (!isAuthenticated) return null;
+  if (!hasHydrated || !isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen pb-24 px-4 pt-8">
-      <header className="mb-8 relative z-10 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-black text-primary">تغذیه و رژیم</h1>
-          <p className="text-on-surface-variant font-medium mt-1">مدیریت کالری و آب</p>
-        </div>
+    <div className="min-h-screen pb-28 px-4 pt-6 sm:px-6">
+      <header className="mb-6">
+        <h1 className="text-3xl font-black text-primary">تغذیه و رژیم</h1>
+        <p className="text-on-surface-variant font-medium mt-1">مدیریت کالری و آب</p>
       </header>
 
       {/* Goal Selector */}
-      <section className="glass-panel p-5 rounded-[2rem] mb-6 flex flex-col gap-4">
-        <div className="flex justify-between items-center">
+      <section className="card p-5 rounded-3xl mb-6 flex flex-col gap-4">
+        <div className="flex justify-between items-center gap-3">
             <div>
-                <h3 className="text-sm font-bold text-on-surface-variant">هدف فعلی شما</h3>
+                <h2 className="text-sm font-bold text-on-surface-variant">هدف فعلی شما</h2>
                 <p className="text-lg font-black text-primary flex items-center gap-2">
                     <Target className="w-5 h-5" />
                     {userProfile?.nutritionGoal || 'انتخاب نشده'}
                 </p>
             </div>
             <button
+                type="button"
                 onClick={() => setGoalModalOpen(true)}
-                className="btn-secondary px-4 py-2 rounded-xl text-sm font-bold"
+                className="btn btn-secondary btn-sm shrink-0"
             >
                 تغییر هدف
             </button>
         </div>
 
         <button
+            type="button"
             onClick={handleGenerateMealPlan}
             disabled={isGeneratingPlan}
             aria-busy={isGeneratingPlan}
-            className="w-full flex items-center justify-center gap-2 btn-primary-glass py-3 rounded-xl font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-primary w-full py-3 font-bold"
         >
             <Sparkles className={`w-5 h-5 ${isGeneratingPlan ? 'animate-spin' : ''}`} />
             {isGeneratingPlan ? 'در حال محاسبه...' : 'پیشنهاد رژیم امروز'}
@@ -301,162 +287,200 @@ export default function NutritionPage() {
       </section>
 
       {/* Macros Overview */}
-      <section className="glass-panel p-6 rounded-[2rem] mb-6 relative overflow-hidden">
+      <section className="card p-6 rounded-3xl mb-6 relative overflow-hidden">
          <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
             <Utensils className="w-5 h-5 text-primary" />
             خلاصه روزانه
          </h2>
-         <div className="flex justify-between items-center mb-6">
+
+         <div className="flex justify-between items-center mb-6 gap-3">
              <div className="text-center">
                  <p className="text-sm text-on-surface-variant">مصرف شده</p>
-                 <p className="text-2xl font-black text-primary">{consumedCalories}</p>
+                 <p className={`text-2xl font-black ${isOverCalorieTarget ? 'text-error' : 'text-primary'}`}>
+                   {formatNumber(consumedCalories)}
+                 </p>
              </div>
-             <div className="relative w-24 h-24 flex items-center justify-center">
-                 <svg className="w-full h-full transform -rotate-90">
-                    <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-surface-variant/50" />
-                    <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={`${(consumedCalories / targetCalories) * 251} 251`} className="text-primary transition-all duration-1000" />
+
+             <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
+                 <svg className="w-full h-full transform -rotate-90" aria-hidden="true">
+                    <circle cx="48" cy="48" r="40" strokeWidth="8" fill="transparent" className="text-surface-variant" />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="40"
+                      strokeWidth="8"
+                      fill="transparent"
+                      strokeLinecap="round"
+                      strokeDasharray={`${Math.min((consumedCalories / Math.max(targetCalories, 1)) * 251, 251)} 251`}
+                      className={isOverCalorieTarget ? 'text-error' : 'text-primary'}
+                      style={{ transition: 'stroke-dasharray 0.8s ease, stroke 0.3s ease' }}
+                    />
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                     <span className="text-sm font-bold text-on-surface">{targetCalories - consumedCalories}</span>
-                      <span className="text-xs text-on-surface-variant">باقیمانده</span>
+                     <span className={`text-base font-black ${isOverCalorieTarget ? 'text-error' : 'text-on-surface'}`}>
+                       {formatNumber(Math.abs(remainingCalories))}
+                     </span>
+                     <span className="text-[11px] text-on-surface-variant">
+                       {isOverCalorieTarget ? 'کالری اضافه' : 'باقیمانده'}
+                     </span>
                  </div>
              </div>
+
              <div className="text-center">
                  <p className="text-sm text-on-surface-variant">هدف</p>
-                 <p className="text-2xl font-black text-on-surface">{targetCalories}</p>
+                 <p className="text-2xl font-black text-on-surface">{formatNumber(targetCalories)}</p>
              </div>
          </div>
 
+         {isOverCalorieTarget && (
+           <p className="text-xs text-error font-bold mb-4 text-center">
+             از هدف کالری روزانه عبور کرده‌اید.
+           </p>
+         )}
+
          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-             <MacroBar label="پروتئین" current={consumedProtein} target={targetProtein} color="bg-blue-500" />
-             <MacroBar label="کربوهیدرات" current={consumedCarbs} target={targetCarbs} color="bg-green-500" />
-             <MacroBar label="چربی" current={consumedFat} target={targetFat} color="bg-orange-500" />
+             <MacroBar macro="protein" current={consumedProtein} target={targetProtein} />
+             <MacroBar macro="carbs" current={consumedCarbs} target={targetCarbs} />
+             <MacroBar macro="fat" current={consumedFat} target={targetFat} />
          </div>
       </section>
 
       {/* Food Search and Log */}
-      <section className="glass-panel p-6 rounded-[2rem] mb-6">
+      <section className="card p-6 rounded-3xl mb-6">
         <h2 className="font-bold text-lg mb-4">ثبت غذا</h2>
         <div className="relative mb-4">
             <input
-                type="text"
+                type="search"
                 placeholder="جستجوی غذا..."
                 value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full bg-white/50 border-none rounded-2xl py-3 px-4 pr-10 text-sm focus:ring-2 focus:ring-primary outline-none backdrop-blur-sm"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="جستجوی غذا"
+                className="input pr-11"
             />
-            <Search className="w-5 h-5 text-on-surface-variant absolute top-1/2 right-3 transform -translate-y-1/2" />
+            <Search className="w-5 h-5 text-on-surface-variant absolute top-1/2 right-3 transform -translate-y-1/2 pointer-events-none" />
         </div>
 
-        <div className="max-h-60 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-2">
+        <div className="max-h-72 overflow-y-auto ps-2 pe-1 custom-scrollbar flex flex-col gap-2">
             {isSearching ? (
-                <p className="text-sm text-center text-on-surface-variant py-4">در حال جستجو...</p>
-            ) : searchResults.map((food) => (
-                <div key={food.id} className="flex items-center justify-between p-3 glass-card rounded-xl border border-white/50">
-                    <div>
-                        <p className="font-bold text-sm text-on-surface">{food.name}</p>
-                        <p className="text-xs text-on-surface-variant">{food.calories} کالری | P:{food.protein} C:{food.carbs} F:{food.fat}</p>
+                <p className="text-sm text-center text-on-surface-variant py-4" role="status">در حال جستجو...</p>
+            ) : searchResults.length === 0 ? (
+                <p className="text-sm text-center text-on-surface-variant py-4">غذایی با این نام پیدا نشد.</p>
+            ) : (
+                searchResults.map((food) => (
+                    <div key={food.id} className="flex items-center justify-between p-3 card card-hover rounded-xl">
+                        <div>
+                            <p className="font-bold text-sm text-on-surface">{food.name}</p>
+                            <p className="text-xs text-on-surface-variant">
+                              {formatNumber(food.calories)} کالری • پروتئین {toPersianDigits(food.protein)} • کربوهیدرات {toPersianDigits(food.carbs)} • چربی {toPersianDigits(food.fat)}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => handleAddFood(food)}
+                            aria-label={`افزودن ${food.name}`}
+                            className="icon-btn bg-primary/10 text-primary hover:bg-primary hover:text-white shrink-0"
+                        >
+                            <Plus className="w-4 h-4" />
+                        </button>
                     </div>
-                    <button
-                        onClick={() => handleAddFood(food)}
-                        aria-label={`افزودن ${food.name}`}
-                        className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </button>
-                </div>
-            ))}
+                ))
+            )}
         </div>
       </section>
 
       {/* Water Tracker */}
-      <section className="glass-panel p-6 rounded-[2rem] mb-6 relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
-         <div className="flex justify-between items-center mb-6 relative z-10">
+      <section className="card p-6 rounded-3xl mb-6 relative overflow-hidden">
+         <div className="absolute top-0 right-0 w-32 h-32 bg-water/10 rounded-full blur-2xl" aria-hidden="true"></div>
+         <div className="flex justify-between items-center mb-6 relative z-10 gap-3">
             <div>
                 <h2 className="font-bold text-lg flex items-center gap-2">
-                    <Droplet className="w-5 h-5 text-blue-500" />
+                    <Droplet className="w-5 h-5 text-water" />
                     مصرف آب
                 </h2>
-                <p className="text-sm text-on-surface-variant mt-1">{todayLog.waterIntake} / {waterTarget} ml</p>
+                <p className="text-sm text-on-surface-variant mt-1">
+                  {formatNumber(todayLog.waterIntake || 0)} / {formatNumber(waterTarget)} میلی‌لیتر
+                </p>
             </div>
             <button
+                type="button"
                 onClick={() => addWater(todayDate, 250)}
-                className="btn-primary flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-blue-500 hover:bg-blue-600 shadow-blue-500/30 text-white"
+                className="btn btn-primary btn-sm bg-water hover:bg-water-hover shrink-0"
             >
-                <Plus className="w-4 h-4" /> ۱ لیوان (۲۵۰ml)
+                <Plus className="w-4 h-4" /> یک لیوان
             </button>
          </div>
 
-         <div className="flex flex-wrap gap-2 relative z-10">
-             {Array.from({ length: waterGlasses }).map((_, i) => (
+         {/* Each glass fills proportionally, so a partially-finished last glass
+             is visible instead of looking empty while you are on target. */}
+         <div className="flex flex-wrap gap-2 relative z-10" role="img" aria-label={`${formatNumber(todayLog.waterIntake || 0)} از ${formatNumber(waterTarget)} میلی‌لیتر آب مصرف شده`}>
+             {Array.from({ length: waterGlasses }).map((_, i) => {
+               const fill = Math.max(0, Math.min(1, (todayLog.waterIntake || 0) / 250 - i));
+               return (
                  <div
-                    key={i}
-                    className={`w-8 h-12 rounded-b-xl rounded-t-sm border-2 ${i < Math.floor(todayLog.waterIntake / 250) ? 'bg-blue-500 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-blue-200 bg-transparent'}`}
-                 />
-             ))}
+                   key={i}
+                   className="w-8 h-12 rounded-b-xl rounded-t-sm border-2 border-water/40 bg-surface-variant/40 relative overflow-hidden"
+                 >
+                   <div
+                     className="absolute bottom-0 inset-x-0 bg-water transition-all duration-500"
+                     style={{ height: `${fill * 100}%` }}
+                   />
+                 </div>
+               );
+             })}
          </div>
+
+         <p className="text-xs text-on-surface-variant mt-3 relative z-10">
+           {toPersianDigits(Math.floor((todayLog.waterIntake || 0) / 250))} لیوان کامل از {toPersianDigits(waterGlasses)} لیوان
+         </p>
       </section>
 
       {/* Goal Selection Modal */}
-      <AnimatePresence>
-        {goalModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-on-surface/40 backdrop-blur-sm"
-                    onClick={() => setGoalModalOpen(false)}
-                />
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="goal-modal-title"
-                    className="relative w-full max-w-sm glass-popover bg-white/90 rounded-[2rem] p-6 shadow-2xl z-10"
+      <Modal
+        open={goalModalOpen}
+        onClose={() => setGoalModalOpen(false)}
+        title="انتخاب هدف"
+        size="sm"
+      >
+        <div className="flex flex-col gap-2">
+            {['کاهش وزن', 'حفظ وزن', 'افزایش وزن', 'سلامت عمومی'].map((goal) => (
+                <button
+                    key={goal}
+                    type="button"
+                    onClick={() => {
+                        updateUserProfile({ nutritionGoal: goal as any });
+                        setGoalModalOpen(false);
+                    }}
+                    aria-pressed={userProfile?.nutritionGoal === goal}
+                    className={`flex justify-between items-center p-4 rounded-xl border transition-all ${
+                        userProfile?.nutritionGoal === goal
+                            ? 'border-primary bg-primary/10 text-primary font-bold'
+                            : 'border-outline-variant bg-surface-container text-on-surface hover:border-primary/40'
+                    }`}
                 >
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 id="goal-modal-title" className="text-xl font-bold">انتخاب هدف</h3>
-                        <button onClick={() => setGoalModalOpen(false)} aria-label="بستن"
-                            className="p-2 rounded-full bg-surface-variant/50">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                        {['کاهش وزن', 'حفظ وزن', 'افزایش وزن', 'سلامت عمومی'].map((goal) => (
-                            <button
-                                key={goal}
-                                onClick={() => {
-                                    updateUserProfile({ nutritionGoal: goal as any });
-                                    setGoalModalOpen(false);
-                                }}
-                                className={`flex justify-between items-center p-4 rounded-xl border transition-all ${userProfile?.nutritionGoal === goal ? 'border-primary bg-primary/10' : 'border-transparent bg-white/50'}`}
-                            >
-                                <span className="font-bold">{goal}</span>
-                                {userProfile?.nutritionGoal === goal && <Check className="w-5 h-5 text-primary" />}
-                            </button>
-                        ))}
-                    </div>
-                </motion.div>
-            </div>
-        )}
-      </AnimatePresence>
+                    <span className="font-bold">{goal}</span>
+                    {userProfile?.nutritionGoal === goal && <Check className="w-5 h-5 text-primary" />}
+                </button>
+            ))}
+        </div>
+      </Modal>
+
+      {/* Confirm replacing today's log */}
+      <ConfirmDialog
+        open={!!confirmPlan}
+        onClose={() => setConfirmPlan(null)}
+        onConfirm={applyMealPlan}
+        title="جایگزینی وعده‌های امروز"
+        confirmLabel="بله، جایگزین کن"
+        message={
+          <>
+            برنامه غذایی پیشنهادی حدود{' '}
+            <span className="font-bold text-on-surface">{formatNumber(confirmPlan?.calories ?? 0)}</span> کالری دارد و
+            وعده‌های ثبت‌شده امروز را جایگزین می‌کند.
+          </>
+        }
+      />
 
       <BottomNav />
     </div>
   );
-}
-
-function MacroBar({ label, current, target, color }: { label: string, current: number, target: number, color: string }) {
-    const percentage = Math.min((current / target) * 100, 100) || 0;
-    return (
-        <div>
-            <div className="flex justify-between text-xs mb-1">
-                <span className="font-bold text-on-surface">{label}</span>
-                <span className="text-on-surface-variant">{current}/{target}g</span>
-            </div>
-            <div className="h-2 w-full bg-surface-variant/50 rounded-full overflow-hidden">
-                <div className={`h-full ${color} rounded-full transition-all duration-1000`} style={{ width: `${percentage}%` }}></div>
-            </div>
-        </div>
-    );
 }

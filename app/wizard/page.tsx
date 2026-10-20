@@ -5,29 +5,22 @@ import { useRouter } from 'next/navigation';
 import { useStore } from '../../lib/store';
 import { UserProfile } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toPersianDigits } from '@/lib/utils';
 import { useProfileSync } from '@/hooks/use-profile-sync';
 import { useMounted } from '@/hooks/use-mounted';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 
 import PainHeatmap from '@/components/PainHeatmap';
 export default function WizardPage() {
-  const router = useRouter();
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const { isAuthenticated, hasHydrated } = useAuthGuard();
   const mounted = useMounted();
 
   // Keep the server copy of the profile in sync with the local store.
   const { isLoaded } = useProfileSync();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
-
-  // The persisted store hydrates on the client only, so the server renders
-  // nothing. Wait for mount before rendering to avoid a hydration mismatch.
-  if (!mounted) return null;
+  if (!mounted || !hasHydrated) return null;
   if (!isAuthenticated) return null;
 
   // The wizard's form state is seeded from the profile. If the form mounted
@@ -122,6 +115,24 @@ function WizardForm() {
       if (isNaN(parsedSittingHours) || parsedSittingHours < 0 || parsedSittingHours > 24) newErrors.sittingHoursPerDay = 'ساعات نشستن باید بین ۰ تا ۲۴ باشد';
       const parsedExerciseDays = parseInt(questionnaireAnswers.exerciseDaysPerWeek);
       if (isNaN(parsedExerciseDays) || parsedExerciseDays < 0 || parsedExerciseDays > 7) newErrors.exerciseDaysPerWeek = 'روزهای ورزش باید بین ۰ تا ۷ باشد';
+
+      // The yes/no questions feed the pain analysis, and the server stores the
+      // questionnaire only when it is complete. Asking for them here keeps a
+      // half-answered questionnaire from being dropped.
+      const required = [
+        ['aggravatedByActivity', 'تشدید با فعالیت'],
+        ['relievedByRest', 'تسکین با استراحت'],
+        ['injuryHistory', 'سابقه آسیب'],
+        ['surgeryHistory', 'سابقه جراحی'],
+        ['sleepQuality', 'کیفیت خواب'],
+        ['stressLevel', 'سطح استرس'],
+      ] as const;
+
+      for (const [key, label] of required) {
+        if (!questionnaireAnswers[key]) {
+          newErrors[key] = `لطفاً «${label}» را انتخاب کنید`;
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -213,13 +224,33 @@ function WizardForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div ref={formRef} className="w-full max-w-lg p-8 rounded-2xl bg-surface-container shadow-sm border border-outline-variant relative overflow-hidden">
-        <div className="flex justify-between items-center mb-6">
+      <div ref={formRef} className="w-full max-w-lg p-6 sm:p-8 rounded-3xl card relative overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-primary">تکمیل پروفایل</h1>
           <span className="text-sm font-medium bg-primary-container text-on-primary-container px-3 py-1 rounded-full">
-            مرحله {step} از ۶
+            مرحله {toPersianDigits(step)} از ۶
           </span>
         </div>
+
+        {/* Progress bar - a bare "step X of 6" badge gave no sense of how much
+            was left, especially on the long pain-map step. */}
+        <div
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={6}
+          aria-valuenow={step}
+          aria-label={`مرحله ${toPersianDigits(step)} از ۶`}
+          className="h-1.5 w-full rounded-full bg-surface-variant overflow-hidden mb-6"
+        >
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500"
+            style={{ width: `${(step / 6) * 100}%` }}
+          />
+        </div>
+
+        {/* A minimum height keeps the card from jumping several hundred pixels
+            when moving between the short and the long steps. */}
+        <div className="flex-1">
 
         {/* AnimatePresence is required for the per-step `exit` animations to
             run - without it React unmounts each step instantly. */}
@@ -236,9 +267,9 @@ function WizardForm() {
                   setFullName(e.target.value);
                   if (errors.fullName) setErrors({ ...errors, fullName: '' });
                 }}
-                className={`w-full px-4 py-2 rounded-lg bg-surface border ${errors.fullName ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2`}
+                className={`input ${errors.fullName ? 'border-error' : ''}`} aria-invalid={!!errors.fullName}
               />
-              {errors.fullName && <p className="text-red-500 text-xs mt-1 error-message">{errors.fullName}</p>}
+              {errors.fullName && <p className="text-error text-xs mt-1 error-message">{errors.fullName}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-age">سن</label>
@@ -250,16 +281,16 @@ function WizardForm() {
                   setAge(e.target.value);
                   if (errors.age) setErrors({ ...errors, age: '' });
                 }}
-                className={`w-full px-4 py-2 rounded-lg bg-surface border ${errors.age ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2`}
+                className={`input ${errors.age ? 'border-error' : ''}`} aria-invalid={!!errors.age}
               />
-              {errors.age && <p className="text-red-500 text-xs mt-1 error-message">{errors.age}</p>}
+              {errors.age && <p className="text-error text-xs mt-1 error-message">{errors.age}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-gender">جنسیت</label>
                 <select id="wizard-gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value as 'male' | 'female')}
-                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                className="select"
               >
                 <option value="male">مرد</option>
                 <option value="female">زن</option>
@@ -280,9 +311,9 @@ function WizardForm() {
                     setHeight(e.target.value);
                     if (errors.height) setErrors({ ...errors, height: '' });
                   }}
-                  className={`w-full px-4 py-2 rounded-lg bg-surface border ${errors.height ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2`}
+                  className={`input ${errors.height ? 'border-error' : ''}`} aria-invalid={!!errors.height}
                 />
-                {errors.height && <p className="text-red-500 text-xs mt-1 error-message">{errors.height}</p>}
+                {errors.height && <p className="text-error text-xs mt-1 error-message">{errors.height}</p>}
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1" htmlFor="wizard-weight">وزن (کیلوگرم)</label>
@@ -293,9 +324,9 @@ function WizardForm() {
                     setWeight(e.target.value);
                     if (errors.weight) setErrors({ ...errors, weight: '' });
                   }}
-                  className={`w-full px-4 py-2 rounded-lg bg-surface border ${errors.weight ? 'border-red-500 focus:ring-red-500' : 'border-outline focus:ring-primary'} text-on-surface focus:outline-none focus:ring-2`}
+                  className={`input ${errors.weight ? 'border-error' : ''}`} aria-invalid={!!errors.weight}
                 />
-                {errors.weight && <p className="text-red-500 text-xs mt-1 error-message">{errors.weight}</p>}
+                {errors.weight && <p className="text-error text-xs mt-1 error-message">{errors.weight}</p>}
               </div>
             </div>
             <div>
@@ -303,7 +334,7 @@ function WizardForm() {
                 <select id="wizard-activity"
                 value={activityLevel}
                 onChange={(e) => setActivityLevel(e.target.value as 'sedentary' | 'light' | 'moderate' | 'active')}
-                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                className="select"
               >
                 <option value="sedentary">بدون فعالیت</option>
                 <option value="light">سبک</option>
@@ -318,7 +349,7 @@ function WizardForm() {
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                className="select"
               />
             </div>
           </motion.div>
@@ -328,28 +359,43 @@ function WizardForm() {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-diseases">بیماری‌های زمینه‌ای</label>
-              <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود</p>
-              <input id="wizard-diseases"
-                type="text"
-                value={diseaseInput}
-                onChange={(e) => setDiseaseInput(e.target.value)}
-                onKeyDown={(e) => addTag(e, diseaseInput, setDiseaseInput, diseases, setDiseases)}
-                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary mb-2"
-                placeholder="مثلا: دیابت"
-              />
+              <p className="text-xs text-on-surface-variant mb-2">نام بیماری را بنویسید و دکمهٔ افزودن را بزنید.</p>
+              <div className="flex gap-2 mb-2">
+                <input id="wizard-diseases"
+                  type="text"
+                  value={diseaseInput}
+                  onChange={(e) => setDiseaseInput(e.target.value)}
+                  onKeyDown={(e) => addTag(e, diseaseInput, setDiseaseInput, diseases, setDiseases)}
+                  className="input"
+                  placeholder="مثلا: دیابت"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!diseaseInput.trim()) return;
+                    if (!diseases.includes(diseaseInput.trim())) {
+                      setDiseases([...diseases, diseaseInput.trim()]);
+                    }
+                    setDiseaseInput('');
+                  }}
+                  disabled={!diseaseInput.trim()}
+                  aria-label="افزودن بیماری"
+                  className="btn btn-primary btn-md shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {diseases.map((d) => (
-                  <span
-                    key={d}
-                    className="flex items-center gap-1 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-sm"
-                  >
+                  <span key={d} className="tag">
                     {d}
                     <button
+                      type="button"
                       onClick={() => removeTag(d, diseases, setDiseases)}
                       aria-label={`حذف ${d}`}
-                      className="text-on-secondary-container hover:text-error ml-1"
+                      className="w-6 h-6 -me-1 rounded-full flex items-center justify-center hover:text-error transition-colors"
                     >
-                      &times;
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </span>
                 ))}
@@ -358,28 +404,43 @@ function WizardForm() {
 
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-meds">داروهای فعلی</label>
-              <p className="text-xs text-outline mb-2">Enter بزنید تا اضافه شود</p>
-              <input id="wizard-meds"
-                type="text"
-                value={medInput}
-                onChange={(e) => setMedInput(e.target.value)}
-                onKeyDown={(e) => addTag(e, medInput, setMedInput, meds, setMeds)}
-                className="w-full px-4 py-2 rounded-lg bg-surface border border-outline text-on-surface focus:outline-none focus:ring-2 focus:ring-primary mb-2"
-                placeholder="مثلا: متفورمین"
-              />
+              <p className="text-xs text-on-surface-variant mb-2">نام دارو را بنویسید و دکمهٔ افزودن را بزنید.</p>
+              <div className="flex gap-2 mb-2">
+                <input id="wizard-meds"
+                  type="text"
+                  value={medInput}
+                  onChange={(e) => setMedInput(e.target.value)}
+                  onKeyDown={(e) => addTag(e, medInput, setMedInput, meds, setMeds)}
+                  className="input"
+                  placeholder="مثلا: متفورمین"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!medInput.trim()) return;
+                    if (!meds.includes(medInput.trim())) {
+                      setMeds([...meds, medInput.trim()]);
+                    }
+                    setMedInput('');
+                  }}
+                  disabled={!medInput.trim()}
+                  aria-label="افزودن دارو"
+                  className="btn btn-primary btn-md shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {meds.map((m) => (
-                  <span
-                    key={m}
-                    className="flex items-center gap-1 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-sm"
-                  >
+                  <span key={m} className="tag">
                     {m}
                     <button
+                      type="button"
                       onClick={() => removeTag(m, meds, setMeds)}
                       aria-label={`حذف ${m}`}
-                      className="text-on-secondary-container hover:text-error ml-1"
+                      className="w-6 h-6 -me-1 rounded-full flex items-center justify-center hover:text-error transition-colors"
                     >
-                      &times;
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </span>
                 ))}
@@ -407,7 +468,7 @@ function WizardForm() {
                 className="relative"
             >
                 <Step5BodyMap />
-                {errors.painZones && <div className="absolute bottom-4 right-0 left-0 text-center"><p className="text-red-500 text-sm font-bold bg-white/90 inline-block px-4 py-1 rounded-full shadow-md error-message">{errors.painZones}</p></div>}
+                {errors.painZones && <div className="absolute bottom-4 right-0 left-0 text-center"><p className="text-error text-sm font-bold bg-surface-container inline-block px-4 py-1 rounded-full shadow-md error-message">{errors.painZones}</p></div>}
             </motion.div>
         )}
 
@@ -424,12 +485,14 @@ function WizardForm() {
             </motion.div>
         )}
         </AnimatePresence>
+        </div>
 
-        <div className="flex justify-between mt-8 gap-4">
+        <div className="flex justify-between mt-8 gap-4 shrink-0">
           {step > 1 ? (
             <button
+              type="button"
               onClick={prevStep}
-              className="py-2 px-6 border border-outline text-on-surface rounded-full hover:bg-surface-variant transition-colors"
+              className="btn btn-secondary btn-md"
             >
               قبلی
             </button>
@@ -437,10 +500,12 @@ function WizardForm() {
             <div />
           )}
           <button
+            type="button"
             onClick={nextStep}
             disabled={step === 4 && !termsAccepted}
-            className={cn("py-2 px-6 rounded-full transition-colors flex items-center gap-2",
-                (step === 4 && !termsAccepted) ? "bg-surface-variant text-outline cursor-not-allowed" : "bg-primary text-on-primary hover:bg-primary/90"
+            className={cn(
+              "btn btn-md",
+              (step === 4 && !termsAccepted) ? "btn-secondary" : "btn-primary"
             )}
           >
             {step === 6 ? 'تکمیل' : 'بعدی'} {step < 6 && <ArrowLeft className="w-4 h-4" />}
@@ -454,7 +519,7 @@ function WizardForm() {
 function Step4Terms({ termsAccepted, setTermsAccepted }: { termsAccepted: boolean, setTermsAccepted: (val: boolean) => void }) {
     return (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col h-full items-center justify-center">
-            <div className="glass-card p-8 rounded-[2rem] w-full border border-error/20 shadow-2xl relative overflow-hidden">
+            <div className="card card-hover p-8 rounded-3xl w-full border border-error/20 relative overflow-hidden">
                  <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 blur-3xl rounded-full"></div>
                  <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mb-6 mx-auto">
                     <ShieldAlert className="w-8 h-8 text-error" />
@@ -464,7 +529,7 @@ function Step4Terms({ termsAccepted, setTermsAccepted }: { termsAccepted: boolea
                     &quot;این سامانه جایگزین پزشک نیست. در صورت درد شدید یا علایم خاص به پزشک مراجعه کنید. برنامه‌ها صرفا جنبه‌ی کمکی و آموزشی برای کاهش و بهبود دردهای عضلانی‌مفصلی دارد.&quot;
                  </p>
                  
-                 <label className="flex items-start gap-4 p-4 glass-panel rounded-xl cursor-pointer bg-surface-variant">
+                 <label className="flex items-start gap-4 p-4 card rounded-xl cursor-pointer bg-surface-variant">
                     <input 
                         type="checkbox" 
                         checked={termsAccepted}
@@ -487,13 +552,17 @@ function Step5BodyMap() {
                 <h2 className="text-2xl font-bold mb-2">نقشه درد</h2>
                 <p className="text-sm text-on-surface-variant mb-6">محل درد خود را روی تصویر لمس کنید</p>
 
-                {/* Cinematic Glassmorphism Toggle */}
-                <div className="relative inline-flex items-center p-1 rounded-full backdrop-blur-md bg-slate-900/90 border border-white/10 shadow-2xl overflow-hidden w-64 mx-auto">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
-
+                {/* Front / back switch - restyled to the app's light design
+                    system. The previous dark "cinematic" pill clashed with
+                    every other surface in the product. */}
+                <div
+                    role="group"
+                    aria-label="نمای نقشه درد"
+                    className="relative inline-flex items-center p-1 rounded-full bg-surface-variant border border-outline-variant shadow-sm w-64 mx-auto"
+                >
                     {/* The sliding pill indicator */}
                     <motion.div
-                        className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-slate-700/80 shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/10 z-0"
+                        className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-primary shadow-[0_4px_10px_-2px_rgba(37,99,235,0.4)] z-0"
                         initial={false}
                         animate={{
                             // The row is RTL, so "front" is the physically
@@ -505,19 +574,23 @@ function Step5BodyMap() {
                     />
 
                     <button
+                        type="button"
                         onClick={() => setView('front')}
+                        aria-pressed={view === 'front'}
                         className={cn(
                             "relative flex-1 py-2 rounded-full text-sm font-bold transition-colors z-10",
-                            view === 'front' ? "text-white" : "text-slate-400 hover:text-slate-200"
+                            view === 'front' ? "text-white" : "text-on-surface-variant hover:text-on-surface"
                         )}
                     >
                         جلو
                     </button>
                     <button
+                        type="button"
                         onClick={() => setView('back')}
+                        aria-pressed={view === 'back'}
                         className={cn(
                             "relative flex-1 py-2 rounded-full text-sm font-bold transition-colors z-10",
-                            view === 'back' ? "text-white" : "text-slate-400 hover:text-slate-200"
+                            view === 'back' ? "text-white" : "text-on-surface-variant hover:text-on-surface"
                         )}
                     >
                         پشت
@@ -577,7 +650,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                         name="duration"
                         value={answers.duration}
                         onChange={handleChange}
-                        className="field w-full"
+                        className="input w-full"
                         placeholder="مثال: ۲ ماه"
                     />
                 </label>
@@ -585,59 +658,65 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">تشدید با فعالیت</span>
-                        <select name="aggravatedByActivity" value={answers.aggravatedByActivity} onChange={handleChange} className="field w-full">
+                        <select name="aggravatedByActivity" value={answers.aggravatedByActivity} onChange={handleChange} className={`select w-full ${errors?.aggravatedByActivity ? 'border-error' : ''}`}>
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
+                        {errors?.aggravatedByActivity && <p className="text-error text-xs mt-1 error-message">{errors.aggravatedByActivity}</p>}
                     </label>
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">تسکین با استراحت</span>
-                        <select name="relievedByRest" value={answers.relievedByRest} onChange={handleChange} className="field w-full">
+                        <select name="relievedByRest" value={answers.relievedByRest} onChange={handleChange} className={`select w-full ${errors?.relievedByRest ? 'border-error' : ''}`}>
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
+                        {errors?.relievedByRest && <p className="text-error text-xs mt-1 error-message">{errors.relievedByRest}</p>}
                     </label>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">سابقه آسیب</span>
-                        <select name="injuryHistory" value={answers.injuryHistory} onChange={handleChange} className="field w-full">
+                        <select name="injuryHistory" value={answers.injuryHistory} onChange={handleChange} className={`select w-full ${errors?.injuryHistory ? 'border-error' : ''}`}>
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
+                        {errors?.injuryHistory && <p className="text-error text-xs mt-1 error-message">{errors.injuryHistory}</p>}
                     </label>
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">سابقه جراحی</span>
-                        <select name="surgeryHistory" value={answers.surgeryHistory} onChange={handleChange} className="field w-full">
+                        <select name="surgeryHistory" value={answers.surgeryHistory} onChange={handleChange} className={`select w-full ${errors?.surgeryHistory ? 'border-error' : ''}`}>
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
+                        {errors?.surgeryHistory && <p className="text-error text-xs mt-1 error-message">{errors.surgeryHistory}</p>}
                     </label>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">کیفیت خواب</span>
-                        <select name="sleepQuality" value={answers.sleepQuality} onChange={handleChange} className="field w-full">
+                        <select name="sleepQuality" value={answers.sleepQuality} onChange={handleChange} className={`select w-full ${errors?.sleepQuality ? 'border-error' : ''}`}>
                             <option value="">انتخاب کنید</option>
                             <option value="بد">بد</option>
                             <option value="متوسط">متوسط</option>
                             <option value="خوب">خوب</option>
                         </select>
+                        {errors?.sleepQuality && <p className="text-error text-xs mt-1 error-message">{errors.sleepQuality}</p>}
                     </label>
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">سطح استرس</span>
-                        <select name="stressLevel" value={answers.stressLevel} onChange={handleChange} className="field w-full">
+                        <select name="stressLevel" value={answers.stressLevel} onChange={handleChange} className={`select w-full ${errors?.stressLevel ? 'border-error' : ''}`}>
                             <option value="">انتخاب کنید</option>
                             <option value="کم">کم</option>
                             <option value="متوسط">متوسط</option>
                             <option value="زیاد">زیاد</option>
                         </select>
+                        {errors?.stressLevel && <p className="text-error text-xs mt-1 error-message">{errors.stressLevel}</p>}
                     </label>
                 </div>
 
@@ -649,11 +728,11 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                             name="sittingHoursPerDay"
                             value={answers.sittingHoursPerDay}
                             onChange={handleChange}
-                            className={`field w-full ${errors?.sittingHoursPerDay ? 'border-red-500 focus:ring-red-500' : ''}`}
+                            className={`input w-full ${errors?.sittingHoursPerDay ? 'border-error focus:ring-error' : ''}`}
                             min="0"
                             max="24"
                         />
-                        {errors?.sittingHoursPerDay && <p className="text-red-500 text-xs mt-1 error-message">{errors.sittingHoursPerDay}</p>}
+                        {errors?.sittingHoursPerDay && <p className="text-error text-xs mt-1 error-message">{errors.sittingHoursPerDay}</p>}
                     </label>
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">روزهای ورزش در هفته</span>
@@ -662,11 +741,11 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                             name="exerciseDaysPerWeek"
                             value={answers.exerciseDaysPerWeek}
                             onChange={handleChange}
-                            className={`field w-full ${errors?.exerciseDaysPerWeek ? 'border-red-500 focus:ring-red-500' : ''}`}
+                            className={`input w-full ${errors?.exerciseDaysPerWeek ? 'border-error focus:ring-error' : ''}`}
                             min="0"
                             max="7"
                         />
-                        {errors?.exerciseDaysPerWeek && <p className="text-red-500 text-xs mt-1 error-message">{errors.exerciseDaysPerWeek}</p>}
+                        {errors?.exerciseDaysPerWeek && <p className="text-error text-xs mt-1 error-message">{errors.exerciseDaysPerWeek}</p>}
                     </label>
                 </div>
             </div>

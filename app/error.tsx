@@ -20,7 +20,7 @@ export default function Error({
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="glass-panel p-10 rounded-3xl max-w-md w-full text-center flex flex-col items-center">
+      <div className="card p-10 rounded-3xl max-w-md w-full text-center flex flex-col items-center">
         <div className="bg-error/10 p-6 rounded-full mb-6">
           <AlertCircle className="w-16 h-16 text-error" />
         </div>
@@ -31,8 +31,9 @@ export default function Error({
         </p>
 
         <button
+          type="button"
           onClick={() => reset()}
-          className="btn-primary-glass w-full py-3 px-6 rounded-xl flex items-center justify-center gap-2"
+          className="btn btn-primary w-full py-3 px-6"
         >
           <RefreshCcw className="w-5 h-5" />
           <span>تلاش مجدد</span>

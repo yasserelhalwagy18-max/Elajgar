@@ -1,142 +1,103 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
-import { BookOpen, Droplet, Apple, Activity, HeartPulse, X } from 'lucide-react';
-import Link from 'next/link';
-import { AnimatePresence } from 'motion/react';
 import { motion } from 'motion/react';
 import { articles } from '@/lib/education-content';
+import { Modal } from '@/components/ui/Modal';
 
 export function EducationalContent({ activeTag = 'همه' }: { activeTag?: string }) {
   const [activeArticle, setActiveArticle] = React.useState<typeof articles[0] | null>(null);
-
-  // Close the article dialog with the Escape key.
-  React.useEffect(() => {
-    if (!activeArticle) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setActiveArticle(null);
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [activeArticle]);
 
   const filteredArticles = activeTag === 'همه'
     ? articles
     : articles.filter(article => article.category === activeTag);
 
-
   return (
     <section className="mb-10">
       <div className="flex justify-between items-end mb-4 px-1">
         <h2 className="text-xl font-bold text-on-surface">محتوای آموزشی</h2>
-        <Link href="/dashboard/education" className="text-sm font-bold text-primary cursor-pointer hover:underline">مشاهده همه</Link>
+        {/* This section already renders every article, so the old "see all"
+            link pointed at the page the user was already on. */}
+        <span className="text-sm font-medium text-on-surface-variant">
+          {filteredArticles.length.toLocaleString('fa-IR')} مطلب
+        </span>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {filteredArticles.map((article) => {
-          const Icon = article.icon;
-          return (
-            <motion.button
-              type="button"
-              key={article.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="glass-card p-4 rounded-[2rem] border border-white/60 shadow-sm flex items-center gap-4 text-start cursor-pointer hover:bg-white/50 transition-colors"
-              onClick={() => setActiveArticle(article)}
-            >
-              <div className="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-inner">
-                <Image
-                  src={`https://picsum.photos/seed/${article.image}/200/200`}
-                  alt={article.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+      {filteredArticles.length === 0 ? (
+        <div className="card p-8 rounded-3xl text-center text-on-surface-variant">
+          در این دسته هنوز مطلبی منتشر نشده است.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {filteredArticles.map((article) => {
+            const Icon = article.icon;
+            return (
+              <motion.button
+                type="button"
+                key={article.id}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className="card card-hover p-4 rounded-3xl flex items-center gap-4 text-start cursor-pointer"
+                onClick={() => setActiveArticle(article)}
+              >
+                <div className="relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-inner bg-surface-variant flex items-center justify-center">
+                  {/* A designed tile instead of a random stock photo: the
+                      placeholder service is an external dependency and
+                      unrelated photos read as unreliable medical content. */}
+                  <Icon className={`w-8 h-8 ${article.color}`} />
+                </div>
 
-              <div className="flex-1 flex flex-col justify-between h-full">
-                <div>
+                <div className="flex-1 flex flex-col justify-between h-full">
+                  <div>
                     <div className="flex items-center gap-1.5 mb-1">
                       <div className={`p-1 ${article.bg} rounded-md`}>
                         <Icon className={`w-3 h-3 ${article.color}`} />
                       </div>
-                      <span className="text-xs font-bold text-on-surface-variant uppercase">{article.category}</span>
+                      <span className="text-xs font-bold text-on-surface-variant">{article.category}</span>
                     </div>
                     <h3 className="font-bold text-sm text-on-surface leading-tight mb-2">{article.title}</h3>
+                  </div>
+                  <div className="flex items-center text-xs text-on-surface-variant font-medium">
+                    <span>زمان مطالعه: {article.readTime}</span>
+                  </div>
                 </div>
-                <div className="flex items-center text-xs text-on-surface-variant font-medium">
-                  <span>زمان مطالعه: {article.readTime}</span>
-                </div>
-              </div>
-            </motion.button>
-          );
-        })}
-      </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Article Modal Overlay */}
-      <AnimatePresence>
+      {/* Article Modal */}
+      <Modal
+        open={!!activeArticle}
+        onClose={() => setActiveArticle(null)}
+        title={activeArticle?.title}
+        size="md"
+      >
         {activeArticle && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-black/80 backdrop-blur-md"
-                    onClick={() => setActiveArticle(null)}
-                ></motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby={`article-title-${activeArticle.id}`}
-                    className="relative z-10 w-full max-w-lg bg-surface rounded-[2rem] overflow-hidden shadow-2xl border border-white/20 max-h-[90vh] flex flex-col"
-                >
-                    <div className="relative w-full aspect-video bg-surface-variant">
-                        <button
-                            onClick={() => setActiveArticle(null)}
-                            aria-label="بستن"
-                            className="absolute top-4 left-4 z-20 w-8 h-8 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center text-on-surface hover:bg-white/60 transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                        <Image
-                            src={`https://picsum.photos/seed/${activeArticle.image}/800/400`}
-                            alt={activeArticle.title}
-                            fill
-                            className="object-cover"
-                        />
-                    </div>
-                    <div className="p-6 bg-white overflow-y-auto">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className={`p-1.5 ${activeArticle.bg} rounded-md`}>
-                                {React.createElement(activeArticle.icon, { className: `w-4 h-4 ${activeArticle.color}` })}
-                            </div>
-                            <span className="text-xs font-bold text-on-surface-variant uppercase">{activeArticle.category}</span>
-                            <span className="text-xs text-on-surface-variant mr-auto">{activeArticle.readTime} مطالعه</span>
-                        </div>
-                        <h3 id={`article-title-${activeArticle.id}`} className="text-xl font-bold text-on-surface mb-4 leading-tight">{activeArticle.title}</h3>
-                        <div className="text-sm text-on-surface-variant leading-relaxed space-y-4">
-                            {activeArticle.content.map((paragraph, index) => (
-                                <p key={index}>{paragraph}</p>
-                            ))}
-                        </div>
-                    </div>
-                </motion.div>
+          <>
+            <div className="relative w-full aspect-video bg-surface-variant rounded-2xl overflow-hidden mb-5 flex items-center justify-center">
+              {React.createElement(activeArticle.icon, {
+                className: `w-20 h-20 ${activeArticle.color}`,
+              })}
             </div>
-        )}
-      </AnimatePresence>
-    </section>
 
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`p-1.5 ${activeArticle.bg} rounded-md`}>
+                {React.createElement(activeArticle.icon, { className: `w-4 h-4 ${activeArticle.color}` })}
+              </div>
+              <span className="text-xs font-bold text-on-surface-variant">{activeArticle.category}</span>
+              <span className="text-xs text-on-surface-variant mr-auto">{activeArticle.readTime} مطالعه</span>
+            </div>
+
+            <div className="text-sm text-on-surface-variant leading-relaxed space-y-4">
+              {activeArticle.content.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
+          </>
+        )}
+      </Modal>
+    </section>
   );
 }

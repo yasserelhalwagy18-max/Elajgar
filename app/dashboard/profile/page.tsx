@@ -2,87 +2,178 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Bell, Droplet, Activity, ChevronLeft, User, Shield, LogOut, Database } from 'lucide-react';
-import { cn, toDateKey } from '@/lib/utils';
+import { Bell, Droplet, Activity, User, Shield, LogOut, Pencil, ChevronLeft, Phone } from 'lucide-react';
+import { cn, toPersianDigits } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { useStore } from '../../../lib/store';
 import { useRouter } from 'next/navigation';
 import { useMounted } from '@/hooks/use-mounted';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import toast from 'react-hot-toast';
+
+const NOTIFICATIONS_KEY = 'elajgar-notifications';
+
+interface NotificationPrefs {
+  hydration: boolean;
+  activity: boolean;
+}
+
+/**
+ * Read the saved preferences.
+ *
+ * The state is seeded lazily instead of through an effect so the component
+ * does not set state on every render, and so the toggle never shows "on"
+ * while the browser permission is actually denied.
+ */
+function readNotificationPrefs(): NotificationPrefs {
+    const fallback: NotificationPrefs = { hydration: false, activity: false };
+
+    if (typeof window === 'undefined' || !('Notification' in window)) return fallback;
+
+    // Only offer the reminders when the browser will actually deliver them.
+    if (Notification.permission !== 'granted') return fallback;
+
+    try {
+        const raw = localStorage.getItem(NOTIFICATIONS_KEY);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw);
+        return {
+            hydration: Boolean(parsed?.hydration),
+            activity: Boolean(parsed?.activity),
+        };
+    } catch {
+        // Ignore malformed storage and fall back to the defaults.
+        return fallback;
+    }
+}
 
 export default function ProfilePage() {
-    const [hydrationReminders, setHydrationReminders] = useState(true);
-    const [activityReminders, setActivityReminders] = useState(false);
-    const { isAuthenticated, userProfile, logout, updateUserProfile } = useStore();
+    const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>(readNotificationPrefs);
+    const { userProfile, logout, updateUserProfile } = useStore();
+    const { isAuthenticated, hasHydrated } = useAuthGuard();
     const router = useRouter();
-    const [showToast, setShowToast] = useState(false);
-    const toastTimerRef = React.useRef<number | null>(null);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [showEditProfile, setShowEditProfile] = useState(false);
     const mounted = useMounted();
 
-    // Clear the pending toast timer if the component unmounts first.
     useEffect(() => {
-        return () => {
-            if (toastTimerRef.current !== null) {
-                window.clearTimeout(toastTimerRef.current);
-            }
-        };
-    }, []);
-
-    useEffect(() => {
+        // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
+        if (!hasHydrated) return;
         if (!isAuthenticated) {
             router.push('/login');
         }
-    }, [isAuthenticated, router]);
+    }, [hasHydrated, isAuthenticated, router]);
 
-    // The persisted store hydrates on the client only, so the server renders
-    // nothing. Wait for mount before rendering to avoid a hydration mismatch.
     if (!mounted) return null;
-    if (!isAuthenticated) return null;
+    if (!hasHydrated || !isAuthenticated) return null;
+
+    const persistPrefs = (next: NotificationPrefs) => {
+        setNotificationPrefs(next);
+        try {
+            localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next));
+        } catch {
+            // Storage can be unavailable in private mode - the toggle still
+            // works for the current session.
+        }
+    };
 
     const requestNotificationPermission = async (
-        setter: (v: boolean) => void,
+        key: keyof NotificationPrefs,
         currentValue: boolean
     ) => {
         if (!currentValue) {
             if (typeof window !== 'undefined' && 'Notification' in window) {
-                // Only ask when the browser has not been asked yet - calling
-                // requestPermission() again on an already-decided permission is
-                // a no-op and the old code re-prompted every time.
                 const permission =
                     Notification.permission === 'default'
                         ? await Notification.requestPermission()
                         : Notification.permission;
 
                 if (permission === 'granted') {
-                    setter(true);
+                    persistPrefs({ ...notificationPrefs, [key]: true });
+                    toast.success('یادآورها فعال شد');
                 } else {
-                    alert('دسترسی اعلان‌ها داده نشده است.');
+                    toast.error('دسترسی اعلان‌ها داده نشده است.');
                 }
+            } else {
+                toast.error('مرورگر شما از اعلان پشتیبانی نمی‌کند.');
             }
         } else {
-            setter(false);
+            persistPrefs({ ...notificationPrefs, [key]: false });
         }
     };
 
+    const handleLogout = () => {
+        logout();
+        router.push('/login');
+    };
+
+    const displayName = userProfile?.fullName?.trim() || 'کاربر';
+    const initial = displayName.charAt(0) || 'ا';
+
     return (
-        <div className="p-6 pb-32 min-h-screen">
+        <div className="p-6 pb-28 min-h-screen">
             <header className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold text-on-surface">پروفایل و تنظیمات</h1>
             </header>
 
             <div className="flex flex-col items-center mb-8">
-                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary text-4xl font-bold mb-4 border-4 border-white shadow-lg uppercase">
-                    {userProfile?.fullName?.[0] || 'A'}
+                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary text-4xl font-bold mb-4 border-4 border-surface-container shadow-lg">
+                    {initial}
                 </div>
-                <h2 className="text-xl font-bold">{userProfile?.fullName || 'کاربر'}</h2>
-                <p className="text-on-surface-variant font-medium text-sm">کاربر ویژه</p>
+                <h2 className="text-xl font-bold">{displayName}</h2>
+                {userProfile?.phoneNumber && (
+                    <p className="text-on-surface-variant font-medium text-sm flex items-center gap-1.5 mt-1" dir="ltr">
+                        <Phone className="w-3.5 h-3.5" />
+                        {toPersianDigits(userProfile.phoneNumber)}
+                    </p>
+                )}
             </div>
 
             <section className="mb-8">
+                <h3 className="font-bold text-lg mb-4 text-on-surface px-2">حساب کاربری</h3>
+                <div className="card rounded-3xl overflow-hidden flex flex-col gap-px bg-outline-variant/20">
+                    <button
+                        type="button"
+                        onClick={() => setShowEditProfile(true)}
+                        className="w-full bg-surface-container p-4 flex items-center justify-between text-start hover:bg-surface-variant/60 transition-colors"
+                    >
+                        <span className="flex items-center gap-4">
+                            <User className="w-5 h-5 text-on-surface-variant" />
+                            <span className="font-bold text-on-surface text-sm">اطلاعات فردی</span>
+                        </span>
+                        <Pencil className="w-4 h-4 text-on-surface-variant" />
+                    </button>
+                    <a
+                        href="/privacy"
+                        className="w-full bg-surface-container p-4 flex items-center justify-between hover:bg-surface-variant/60 transition-colors"
+                    >
+                        <span className="flex items-center gap-4">
+                            <Shield className="w-5 h-5 text-on-surface-variant" />
+                            <span className="font-bold text-on-surface text-sm">حریم خصوصی</span>
+                        </span>
+                        <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
+                    </a>
+                    <a
+                        href="#notifications"
+                        className="w-full bg-surface-container p-4 flex items-center justify-between hover:bg-surface-variant/60 transition-colors"
+                    >
+                        <span className="flex items-center gap-4">
+                            <Bell className="w-5 h-5 text-on-surface-variant" />
+                            <span className="font-bold text-on-surface text-sm">اعلان‌های سیستم</span>
+                        </span>
+                        <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
+                    </a>
+                </div>
+            </section>
+
+            <section className="mb-8" id="notifications">
                 <h3 className="font-bold text-lg mb-4 text-on-surface px-2">تنظیمات اعلان‌ها</h3>
-                <div className="glass-panel rounded-3xl overflow-hidden border border-white/60 shadow-sm flex flex-col gap-[1px] bg-outline-variant/20">
-                    <div className="bg-white/80 backdrop-blur-md p-4 flex items-center justify-between">
+                <div className="card rounded-3xl overflow-hidden flex flex-col gap-px bg-outline-variant/20">
+                    <div className="bg-surface-container p-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                                 <Droplet className="w-5 h-5" />
                             </div>
                             <div>
@@ -92,13 +183,13 @@ export default function ProfilePage() {
                         </div>
                         <Switch
                             label="یادآور نوشیدن آب"
-                            checked={hydrationReminders}
-                            onChange={() => requestNotificationPermission(setHydrationReminders, hydrationReminders)}
+                            checked={notificationPrefs.hydration}
+                            onChange={() => requestNotificationPermission('hydration', notificationPrefs.hydration)}
                         />
                     </div>
-                    <div className="bg-white/80 backdrop-blur-md p-4 flex items-center justify-between">
+                    <div className="bg-surface-container p-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+                            <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0">
                                 <Activity className="w-5 h-5" />
                             </div>
                             <div>
@@ -108,115 +199,187 @@ export default function ProfilePage() {
                         </div>
                         <Switch
                             label="یادآور فعالیت"
-                            checked={activityReminders}
-                            onChange={() => requestNotificationPermission(setActivityReminders, activityReminders)}
+                            checked={notificationPrefs.activity}
+                            onChange={() => requestNotificationPermission('activity', notificationPrefs.activity)}
                         />
                     </div>
                 </div>
-            </section>
-
-            <section className="mb-8">
-                <h3 className="font-bold text-lg mb-4 text-on-surface px-2">حساب کاربری</h3>
-                <div className="glass-panel rounded-3xl overflow-hidden border border-white/60 shadow-sm flex flex-col gap-[1px] bg-outline-variant/20">
-                    <SettingItem icon={User} label="اطلاعات فردی" />
-                    <SettingItem icon={Shield} label="حریم خصوصی" />
-                    <SettingItem icon={Bell} label="اعلان‌های سیستم" />
-                </div>
-            </section>
-
-            <section className="mb-8">
-                <button
-                    onClick={() => {
-                        const confirmed = window.confirm(
-                            'داده نمونه برای ۷ روز گذشته ساخته می‌شود. روزهایی که داده واقعی دارند دست‌نخورده می‌مانند. ادامه می‌دهید؟'
-                        );
-                        if (!confirmed) return;
-
-                        const today = new Date();
-                        const mealNames = ['صبحانه', 'ناهار', 'شام', 'میان‌وعده'];
-
-                        // Only fill in days that have no real log, so loading
-                        // sample data can never destroy what the user recorded.
-                        const existing = new Map(
-                            (userProfile?.dailyLogs ?? []).map((log) => [log.date, log])
-                        );
-
-                        const sampleLogs = [];
-                        for (let i = 0; i < 7; i++) {
-                            const d = new Date(today);
-                            d.setDate(today.getDate() - i);
-                            const dateStr = toDateKey(d);
-
-                            if (existing.has(dateStr)) continue;
-
-                            const numMeals = Math.floor(Math.random() * 3) + 3; // 3 to 5 meals
-                            const foods = [];
-                            for (let j = 0; j < numMeals; j++) {
-                                foods.push({
-                                    id: crypto.randomUUID(),
-                                    name: mealNames[Math.floor(Math.random() * mealNames.length)],
-                                    calories: Math.floor(Math.random() * 601) + 200, // 200 to 800
-                                    protein: Math.floor(Math.random() * 31) + 10,   // 10 to 40
-                                    carbs: Math.floor(Math.random() * 61) + 20,     // 20 to 80
-                                    fat: Math.floor(Math.random() * 26) + 5         // 5 to 30
-                                });
-                            }
-
-                            const waterIntake = (Math.floor(Math.random() * 7) + 4) * 250; // 4 to 10 * 250
-
-                            sampleLogs.push({
-                                date: dateStr,
-                                foods,
-                                waterIntake,
-                                sleepHours: Math.floor(Math.random() * 5) + 5, // 5 to 9
-                                sleepQuality: ['poor', 'fair', 'good'][Math.floor(Math.random() * 3)] as 'poor' | 'fair' | 'good',
-                                activityMinutes: Math.floor(Math.random() * 76) + 15 // 15 to 90
-                            });
-                        }
-
-                        updateUserProfile({
-                            dailyLogs: [...(userProfile?.dailyLogs ?? []), ...sampleLogs],
-                        });
-                        setShowToast(true);
-                        toastTimerRef.current = window.setTimeout(() => setShowToast(false), 3000);
-                    }}
-                    className="w-full border border-primary text-primary bg-transparent rounded-2xl py-3 font-bold flex items-center justify-center gap-2"
-                >
-                    <Database className="w-5 h-5" />
-                    بارگذاری داده نمونه
-                </button>
+                {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'denied' && (
+                    <p className="text-xs text-on-surface-variant mt-2 px-2">
+                        اعلان‌ها در تنظیمات مرورگر مسدود شده‌اند. برای فعال‌سازی، آن‌ها را از تنظیمات سایت اجازه دهید.
+                  </p>
+                )}
             </section>
 
             <button
-                onClick={() => {
-                    logout();
-                    router.push('/login');
-                }}
-                className="w-full py-4 text-error font-bold flex items-center justify-center gap-2 bg-error/10 rounded-2xl hover:bg-error/20 transition-colors"
+                type="button"
+                onClick={() => setShowLogoutConfirm(true)}
+                className="btn btn-danger w-full py-4 font-bold"
             >
                 <LogOut className="w-5 h-5" />
                 خروج از حساب
             </button>
 
-            {showToast && (
-                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-full shadow-lg font-bold z-50 animate-bounce">
-                    ✅ داده‌های نمونه بارگذاری شد
-                </div>
-            )}
+            <EditProfileModal
+                open={showEditProfile}
+                onClose={() => setShowEditProfile(false)}
+                onSave={(updates) => {
+                    updateUserProfile(updates);
+                    setShowEditProfile(false);
+                    toast.success('اطلاعات شما به‌روزرسانی شد');
+                }}
+            />
+
+            <ConfirmDialog
+                open={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={handleLogout}
+                title="خروج از حساب"
+                confirmLabel="بله، خروج کن"
+                tone="danger"
+                message="برای ورود دوباره باید شماره موبایل خود را وارد کنید. مطمئن هستید می‌خواهید خارج شوید؟"
+            />
         </div>
     );
 }
 
-function SettingItem({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
-    // These rows are not clickable yet, so they are rendered as a static list
-    // row rather than a button that does nothing.
+interface EditProfileModalProps {
+    open: boolean;
+    onClose: () => void;
+    onSave: (updates: Record<string, unknown>) => void;
+}
+
+function EditProfileModal({ open, onClose, onSave }: EditProfileModalProps) {
     return (
-        <div className="w-full bg-white/80 backdrop-blur-md p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-                <Icon className="w-5 h-5 text-on-surface-variant" />
-                <span className="font-bold text-on-surface text-sm">{label}</span>
+        <Modal
+            open={open}
+            onClose={onClose}
+            title="اطلاعات فردی"
+            description="ویرایش این اطلاعات، شاخص سلامت و اهداف تغذیه‌ای را به‌روز می‌کند."
+        >
+            {/* The form is a separate component so it mounts fresh every time
+                the dialog opens - the fields are then seeded from the current
+                profile without an effect that copies props into state. */}
+            <EditProfileForm onSave={onSave} onCancel={onClose} />
+        </Modal>
+    );
+}
+
+function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string, unknown>) => void; onCancel: () => void }) {
+    const userProfile = useStore((state) => state.userProfile);
+
+    const [fullName, setFullName] = useState(userProfile?.fullName || '');
+    const [age, setAge] = useState(userProfile?.age?.toString() || '');
+    const [gender, setGender] = useState<'male' | 'female'>(userProfile?.gender || 'male');
+    const [height, setHeight] = useState(userProfile?.height?.toString() || '');
+    const [weight, setWeight] = useState(userProfile?.weight?.toString() || '');
+    const [activityLevel, setActivityLevel] = useState<'sedentary' | 'light' | 'moderate' | 'active'>(
+        userProfile?.activityLevel || 'sedentary'
+    );
+    const [error, setError] = useState<string | null>(null);
+
+    const handleSubmit = () => {
+        const parsedAge = parseInt(age);
+        const parsedHeight = parseInt(height);
+        const parsedWeight = parseInt(weight);
+
+        if (!fullName.trim() || fullName.trim().length < 2) {
+            setError('نام و نام خانوادگی باید حداقل ۲ حرف باشد');
+            return;
+        }
+        if (Number.isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+            setError('سن باید بین ۱ تا ۱۲۰ باشد');
+            return;
+        }
+        if (Number.isNaN(parsedHeight) || parsedHeight < 50 || parsedHeight > 250) {
+            setError('قد باید بین ۵۰ تا ۲۵۰ سانتی‌متر باشد');
+            return;
+        }
+        if (Number.isNaN(parsedWeight) || parsedWeight < 10 || parsedWeight > 300) {
+            setError('وزن باید بین ۱۰ تا ۳۰۰ کیلوگرم باشد');
+            return;
+        }
+
+        setError(null);
+        onSave({
+            fullName: fullName.trim(),
+            age: parsedAge,
+            gender,
+            height: parsedHeight,
+            weight: parsedWeight,
+            activityLevel,
+        });
+    };
+
+    return (
+        <form
+            className="flex flex-col gap-4"
+            onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+            }}
+        >
+            <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="profile-full-name">نام و نام خانوادگی</label>
+                <input
+                    id="profile-full-name"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="input"
+                />
             </div>
-        </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="profile-age">سن</label>
+                    <input id="profile-age" type="number" value={age} onChange={(e) => setAge(e.target.value)} className="input" />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="profile-gender">جنسیت</label>
+                    <select id="profile-gender" value={gender} onChange={(e) => setGender(e.target.value as 'male' | 'female')} className="select">
+                        <option value="male">مرد</option>
+                        <option value="female">زن</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="profile-height">قد (سانتی‌متر)</label>
+                    <input id="profile-height" type="number" value={height} onChange={(e) => setHeight(e.target.value)} className="input" />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="profile-weight">وزن (کیلوگرم)</label>
+                    <input id="profile-weight" type="number" value={weight} onChange={(e) => setWeight(e.target.value)} className="input" />
+                </div>
+            </div>
+            <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="profile-activity">سطح فعالیت</label>
+                <select
+                    id="profile-activity"
+                    value={activityLevel}
+                    onChange={(e) => setActivityLevel(e.target.value as 'sedentary' | 'light' | 'moderate' | 'active')}
+                    className="select"
+                >
+                    <option value="sedentary">بدون فعالیت</option>
+                    <option value="light">سبک</option>
+                    <option value="moderate">متوسط</option>
+                    <option value="active">فعال</option>
+                </select>
+            </div>
+
+            {error && (
+                <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
+                    {error}
+                </p>
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-1">
+                <button type="button" onClick={onCancel} className="btn btn-secondary btn-md">
+                    انصراف
+                </button>
+                <button type="submit" className="btn btn-primary btn-md">
+                    ذخیره تغییرات
+                </button>
+            </div>
+        </form>
     );
 }
 
@@ -229,16 +392,14 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: () =
             aria-label={label}
             onClick={onChange}
             className={cn(
-                "w-12 h-6 rounded-full transition-colors relative shrink-0",
+                "w-12 h-7 rounded-full transition-colors relative shrink-0",
                 checked ? "bg-primary" : "bg-outline-variant"
             )}
         >
-            <motion.div 
-                className={cn(
-                    "w-5 h-5 bg-white rounded-full absolute top-[2px] right-[2px] shadow-sm"
-                )}
+            <motion.div
+                className="w-5 h-5 bg-surface-container rounded-full absolute top-[3px] right-[3px] shadow-sm"
                 style={{
-                    transform: checked ? 'translateX(-24px)' : 'translateX(0px)',
+                    transform: checked ? 'translateX(-22px)' : 'translateX(0px)',
                     transition: 'transform 0.2s ease-in-out'
                 }}
             />

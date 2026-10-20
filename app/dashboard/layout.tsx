@@ -12,7 +12,7 @@ export default function DashboardLayout({
   useProfileSync();
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="min-h-screen">
       {children}
       <BottomNav />
     </div>

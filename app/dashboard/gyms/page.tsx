@@ -2,128 +2,118 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Search, MapPin, Star, Tag, CheckCircle2, Ticket, X } from 'lucide-react';
-import { cn, normalizeText } from '@/lib/utils';
-import dynamic from 'next/dynamic';
-import { useStore } from '@/lib/store';
+import { Search, MapPin, Star, Tag, CheckCircle2, Ticket, X, Percent } from 'lucide-react';
+import { cn, normalizeText, toPersianDigits } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { useRouter } from 'next/navigation';
 
-const GymMap = dynamic(() => import('@/components/GymMap'), { ssr: false });
+interface Gym {
+  id: string;
+  name: string;
+  location: string;
+  category: string;
+  rating: number;
+  isPremium: boolean;
+  discountPercentage: number;
+  amenities?: string[] | null;
+  imageUrl?: string | null;
+  isPlaceholder: boolean;
+}
 
-// Mock Gym Data
-const MOCK_GYMS = [
-    {
-        id: 'gym-1',
-        name: 'مجموعه ورزشی اکسیژن',
-        location: 'تهران، نیاوران',
-        discount: '۳۰٪ تخفیف ویژه',
-        discountCode: 'ELAJ-OXYGEN-30',
-        rating: 4.8,
-        desc: 'تجهیزات بدنسازی مدرن، استخر، سونا و کلاس‌های گروهی یوگا و پیلاتس.',
-        imageSeed: 'gym_modern',
-        tags: ['همه', 'استخر', 'کراس‌فیت'],
-        isPremium: false,
-    },
-    {
-        id: 'gym-2',
-        name: 'استودیو یوگا پرانا',
-        location: 'تهران، شهرک غرب',
-        discount: 'پکیج‌های سلامت',
-        discountCode: 'ELAJ-PRANA-VIP',
-        rating: 4.9,
-        desc: 'مرکز تخصصی یوگا، مدیتیشن و سلامت روان با مربیان بین‌المللی.',
-        imageSeed: 'yoga_studio',
-        tags: ['همه', 'یوگا'],
-        isPremium: true,
-    },
-    {
-        id: 'gym-3',
-        name: 'باشگاه کراس‌فیت آلفا',
-        location: 'تهران، سعادت‌آباد',
-        discount: '۲۰٪ تخفیف ثبت‌نام',
-        discountCode: 'ELAJ-ALPHA-20',
-        rating: 4.7,
-        desc: 'بزرگترین سالن کراس‌فیت با مربیان مجرب و تجهیزات استاندارد مسابقات.',
-        imageSeed: 'crossfit_box',
-        tags: ['همه', 'کراس‌فیت'],
-        isPremium: false,
-    },
-    {
-        id: 'gym-4',
-        name: 'مجموعه آبی آرامیس',
-        location: 'تهران، فرمانیه',
-        discount: '۱۵٪ تخفیف آب‌درمانی',
-        discountCode: 'ELAJ-ARAMIS-AQUA',
-        rating: 4.6,
-        desc: 'استخر قهرمانی، خدمات تخصصی آب‌درمانی و ماساژ، مناسب برای ریکاوری مفاصل.',
-        imageSeed: 'swimming_pool',
-        tags: ['همه', 'استخر'],
-        isPremium: false,
-    }
-];
+const CATEGORY_LABELS: Record<string, string> = {
+  YOGA: 'یوگا',
+  POOL: 'استخر',
+  CROSSFIT: 'کراس‌فیت',
+  MARTIAL_ARTS: 'هنرهای رزمی',
+  GENERAL: 'عمومی',
+};
 
 const FILTERS = ['همه', 'یوگا', 'استخر', 'کراس‌فیت'];
 
 export default function GymsPage() {
     const router = useRouter();
-    const isAuthenticated = useStore((state) => state.isAuthenticated);
+    const { isAuthenticated, hasHydrated } = useAuthGuard();
     const mounted = useMounted();
 
+    const [gyms, setGyms] = React.useState<Gym[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [loadError, setLoadError] = React.useState<string | null>(null);
     const [activeFilter, setActiveFilter] = React.useState('همه');
     const [isSearching, setIsSearching] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState('');
 
+    // The gyms come from the API - the page used to render a hardcoded list
+    // *and* a separate fetched list, so the same screen showed two different
+    // sets of gyms.
+    React.useEffect(() => {
+        const controller = new AbortController();
+
+        async function load() {
+            try {
+                const res = await fetch('/api/gyms', { signal: controller.signal });
+                if (!res.ok) throw new Error('خطا در دریافت اطلاعات باشگاه‌ها');
+                const data = await res.json();
+                setGyms(Array.isArray(data) ? data : []);
+                setLoadError(null);
+            } catch (err: any) {
+                if (err?.name === 'AbortError') return;
+                setLoadError(err.message || 'مشکلی پیش آمد');
+            } finally {
+                if (!controller.signal.aborted) setIsLoading(false);
+            }
+        }
+
+        load();
+        return () => controller.abort();
+    }, []);
+
     const filteredGyms = React.useMemo(() => {
         const query = normalizeText(searchQuery);
-        return MOCK_GYMS.filter(gym => {
-            const matchesFilter = gym.tags.includes(activeFilter);
+
+        return gyms.filter((gym) => {
+            const matchesFilter =
+                activeFilter === 'همه' || CATEGORY_LABELS[gym.category] === activeFilter;
             if (!matchesFilter) return false;
             if (query === '') return true;
-            // Match the name, the location, the description and the tags - and
-            // normalize Arabic/Persian letter variants so the search works.
+
+            // Match the name, the location, the description and the amenities -
+            // and normalize Arabic/Persian letter variants so the search works.
             return (
                 normalizeText(gym.name).includes(query) ||
                 normalizeText(gym.location).includes(query) ||
-                normalizeText(gym.desc ?? '').includes(query) ||
-                gym.tags.some((tag) => normalizeText(tag).includes(query))
+                normalizeText((gym.amenities ?? []).join(' ')).includes(query) ||
+                normalizeText(CATEGORY_LABELS[gym.category] ?? '').includes(query)
             );
         });
-    }, [activeFilter, searchQuery]);
+    }, [gyms, activeFilter, searchQuery]);
 
-    React.useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/login');
-        }
-    }, [isAuthenticated, router]);
-
-    // The persisted store hydrates on the client only: wait for the client
-    // render so the server and first client render match.
-    if (!mounted) return null;
-    if (!isAuthenticated) return null;
+    if (!mounted || !hasHydrated || !isAuthenticated) return null;
 
     return (
-        <div className="p-6 pb-32 max-w-2xl mx-auto">
-            <header className="bg-white border border-outline-variant/20 shadow-sm sticky top-0 z-40 px-6 py-5 rounded-[2rem] mb-8 mt-2 transition-all">
+        <div className="p-6 pb-28 max-w-2xl mx-auto">
+            <header className="card sticky top-0 z-40 px-6 py-5 rounded-3xl mb-8 mt-2 transition-all">
                 {isSearching ? (
                     <div className="flex items-center gap-3">
                         <button
+                            type="button"
                             onClick={() => {
                                 setIsSearching(false);
                                 setSearchQuery('');
                             }}
                             aria-label="پاک کردن جستجو"
-                            className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors"
+                            className="icon-btn shrink-0"
                         >
                             <X className="w-5 h-5" />
                         </button>
                         <input
-                            type="text"
+                            type="search"
                             autoFocus
+                            aria-label="جستجو در نام یا مکان باشگاه"
                             placeholder="جستجو در نام یا مکان باشگاه..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-surface-variant/50 border-none rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                            className="input"
                         />
                     </div>
                 ) : (
@@ -133,9 +123,10 @@ export default function GymsPage() {
                             <p className="text-sm text-on-surface-variant mt-1">باشگاه‌های شریک و تخفیف‌ها</p>
                         </div>
                         <button
+                            type="button"
                             onClick={() => setIsSearching(true)}
                             aria-label="جستجو"
-                            className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary shadow-sm border border-outline-variant/20 hover:bg-surface-variant transition-colors"
+                            className="icon-btn bg-surface-variant text-primary"
                         >
                             <Search className="w-5 h-5" />
                         </button>
@@ -143,101 +134,127 @@ export default function GymsPage() {
                 )}
             </header>
 
-            {/* Map Section */}
-            <GymMap />
-
             {/* Filters */}
-            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-4 mb-2 mt-4">
+            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-4 mb-2 mt-4 rail-fade">
                 {FILTERS.map(filter => (
                     <button
                         key={filter}
+                        type="button"
                         onClick={() => setActiveFilter(filter)}
-                        className={cn(
-                            "whitespace-nowrap px-6 py-2.5 rounded-full font-bold text-sm transition-all",
-                            activeFilter === filter
-                                ? "bg-primary text-white shadow-[0_4px_15px_rgba(37,99,235,0.3)]"
-                                : "bg-white border border-outline-variant/20 shadow-sm text-on-surface-variant  hover:bg-white/40"
-                        )}
+                        aria-pressed={activeFilter === filter}
+                        className="chip"
                     >
                         {filter}
                     </button>
                 ))}
             </div>
 
-            {/* Gym List */}
+            {/* List */}
             <div className="flex flex-col gap-6 mt-4">
-                {filteredGyms.map(gym => (
-                    <GymCard key={gym.id} {...gym} />
-                ))}
+                {isLoading ? (
+                    <div className="flex flex-col gap-6" aria-busy="true" aria-label="در حال بارگذاری">
+                        {[1, 2].map(i => (
+                            <div key={i} className="card h-72 rounded-3xl animate-pulse" />
+                        ))}
+                    </div>
+                ) : loadError ? (
+                    <div className="card p-8 rounded-3xl text-center text-error">{loadError}</div>
+                ) : filteredGyms.length === 0 ? (
+                    <div className="card p-8 rounded-3xl text-center text-on-surface-variant">
+                        باشگاهی با این فیلتر پیدا نشد.
+                    </div>
+                ) : (
+                    filteredGyms.map(gym => (
+                        <GymCard key={gym.id} gym={gym} />
+                    ))
+                )}
             </div>
         </div>
     );
 }
 
-function GymCard({ name, location, discount, discountCode, rating, desc, imageSeed, isPremium }: any) {
+function GymCard({ gym }: { gym: Gym }) {
     const [isClaimed, setIsClaimed] = React.useState(false);
     const [isExpanded, setIsExpanded] = React.useState(false);
 
-    const handleClaim = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsClaimed(true);
-    };
+    const detailsId = `gym-details-${gym.id}`;
+    const amenities = gym.amenities ?? [];
+    const description = amenities.join(' • ');
+    const categoryLabel = CATEGORY_LABELS[gym.category] ?? gym.category;
+    const discountCode = `ELAJ-${gym.id.slice(-6).toUpperCase()}`;
+    const discountLabel = gym.discountPercentage > 0 ? `${toPersianDigits(gym.discountPercentage)}٪ تخفیف ویژه` : 'عضویت ویژه';
 
     return (
-        <article className="bg-white rounded-[2rem] overflow-hidden relative group border border-outline-variant/20 shadow-sm transition-all hover:shadow-md">
+        <article className="card rounded-3xl overflow-hidden relative group">
             <div className={cn(
                 "absolute top-4 right-4 z-10 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm",
-                isPremium ? "bg-white/90 backdrop-blur-md text-primary" : "bg-primary text-white"
+                gym.isPremium ? "bg-surface-container/90 backdrop-blur-md text-primary" : "bg-primary text-white"
             )}>
-                <Tag className="w-4 h-4" />
-                {discount}
+                {gym.discountPercentage > 0 ? <Percent className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
+                {discountLabel}
             </div>
 
             <div className="relative h-48 w-full">
-                <Image 
-                    src={`https://picsum.photos/seed/${imageSeed}/600/400`}
-                    alt={name}
+                <Image
+                    src={`https://picsum.photos/seed/${gym.id}/600/400`}
+                    alt={gym.name}
                     fill
                     className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden="true" />
                 <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
-                    {location}
+                    {gym.location}
                 </div>
             </div>
 
             <div className="p-6">
-                <div className="flex justify-between items-start mb-3">
-                    <h2 className="text-xl font-bold text-on-surface">{name}</h2>
-                    <div className="flex items-center gap-1 bg-surface/50 px-2.5 py-1 rounded-lg">
-                        <span className="font-bold text-sm">{rating}</span>
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                <div className="flex justify-between items-start mb-3 gap-3">
+                    <h2 className="text-xl font-bold text-on-surface">{gym.name}</h2>
+                    <div className="flex items-center gap-1 bg-surface/50 px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="font-bold text-sm">{toPersianDigits(gym.rating)}</span>
+                        <Star className="w-4 h-4 text-warning fill-warning" />
                     </div>
                 </div>
-                
-                <p className="text-on-surface-variant text-sm line-clamp-2 mb-4 leading-relaxed">
-                    {desc}
-                </p>
+
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs font-medium bg-surface-variant text-on-surface-variant px-2.5 py-1 rounded-md">
+                        {categoryLabel}
+                    </span>
+                    {gym.isPremium && (
+                        <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
+                            ویژه
+                        </span>
+                    )}
+                </div>
+
+                {description && (
+                    <p className="text-on-surface-variant text-sm line-clamp-2 mb-4 leading-relaxed">
+                        {description}
+                    </p>
+                )}
 
                 {isExpanded && (
-                    <div id={`gym-details-${imageSeed}`} className="mb-4 p-4 bg-surface rounded-2xl border border-outline-variant/30 animate-in fade-in slide-in-from-top-2">
+                    <div id={detailsId} className="mb-4 p-4 bg-surface rounded-2xl border border-outline-variant/30">
                         {isClaimed ? (
                             <div className="flex flex-col items-center text-center gap-2">
-                                <CheckCircle2 className="w-8 h-8 text-green-500 mb-1" />
+                                <CheckCircle2 className="w-8 h-8 text-success mb-1" />
                                 <p className="text-sm font-medium text-on-surface-variant">کد تخفیف شما با موفقیت صادر شد!</p>
-                                <div className="bg-white px-6 py-3 rounded-xl border border-dashed border-primary text-primary font-mono font-bold text-lg mt-2 w-full select-all">
+                                <div className="bg-surface-container px-6 py-3 rounded-xl border border-dashed border-primary text-primary font-mono font-bold text-lg mt-2 w-full select-all">
                                     {discountCode}
                                 </div>
-                                <p className="text-xs text-outline mt-1">هنگام مراجعه به باشگاه این کد را ارائه دهید.</p>
+                                <p className="text-xs text-on-surface-variant mt-1">هنگام مراجعه به باشگاه این کد را ارائه دهید.</p>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center text-center gap-3">
                                 <Ticket className="w-8 h-8 text-primary opacity-80" />
-                                <p className="text-sm text-on-surface-variant">شما می‌توانید از تخفیف اختصاصی علاج‌گر برای این مجموعه استفاده کنید.</p>
+                                <p className="text-sm text-on-surface-variant">
+                                    شما می‌توانید از تخفیف اختصاصی علاج‌گر برای این مجموعه استفاده کنید.
+                                </p>
                                 <button
-                                    onClick={handleClaim}
-                                    className="w-full mt-2 bg-primary text-white py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors"
+                                    type="button"
+                                    onClick={() => setIsClaimed(true)}
+                                    className="btn btn-primary btn-md w-full mt-2"
                                 >
                                     دریافت کد تخفیف
                                 </button>
@@ -250,10 +267,10 @@ function GymCard({ name, location, discount, discountCode, rating, desc, imageSe
                     type="button"
                     onClick={() => setIsExpanded(!isExpanded)}
                     aria-expanded={isExpanded}
-                    aria-controls={`gym-details-${imageSeed}`}
+                    aria-controls={detailsId}
                     className={cn(
-                        "w-full py-3 rounded-xl font-bold text-sm flex justify-center items-center transition-colors",
-                        isExpanded ? "bg-surface text-on-surface-variant" : "bg-primary/10 text-primary hover:bg-primary/20"
+                        "btn w-full",
+                        isExpanded ? "btn-secondary btn-md" : "btn-primary btn-md"
                     )}
                 >
                     {isExpanded ? 'بستن' : 'مشاهده جزئیات و دریافت تخفیف'}

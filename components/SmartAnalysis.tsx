@@ -12,17 +12,17 @@ export function SmartAnalysis() {
 
   if (!hasData) {
     return (
-      <div className="mb-8 glass-panel p-6 rounded-[2rem] border border-white/60 shadow-lg text-center flex flex-col items-center">
+      <div className="mb-8 card p-6 rounded-3xl text-center flex flex-col items-center">
         <div className="w-16 h-16 bg-surface-variant/50 rounded-full flex items-center justify-center mb-4">
           <AlertCircle className="w-8 h-8 text-on-surface-variant" />
         </div>
-        <h3 className="text-lg font-bold text-on-surface mb-2">اطلاعات شما کامل نیست</h3>
+        <h2 className="text-lg font-bold text-on-surface mb-2">اطلاعات شما کامل نیست</h2>
         <p className="text-sm text-on-surface-variant mb-4">
           برای دریافت تحلیل هوشمند و هشدارهای پزشکی اختصاصی، لطفا پروفایل و پرسشنامه خود را تکمیل کنید.
         </p>
         <Link
           href="/wizard"
-          className="btn-primary-glass px-6 py-2 rounded-full font-bold text-sm inline-block"
+          className="btn btn-primary px-6 py-2 rounded-full font-bold text-sm inline-block"
         >
           تکمیل اطلاعات
         </Link>
@@ -72,7 +72,7 @@ export function SmartAnalysis() {
   }
 
   return (
-    <div className="mb-8 glass-panel p-6 rounded-[2rem] border-2 border-error/20 bg-error/5 shadow-lg relative overflow-hidden">
+    <div className="mb-8 card p-6 rounded-3xl border-2 border-error/20 bg-error/5 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 rounded-full blur-2xl"></div>
 
       <div className="flex items-center gap-3 mb-4 z-10 relative">
@@ -83,7 +83,7 @@ export function SmartAnalysis() {
       </div>
 
       <div className="z-10 relative space-y-4">
-        <div className="bg-white/60 p-4 rounded-2xl border border-white/50">
+        <div className="bg-surface-container/70 p-4 rounded-2xl border border-outline-variant/50">
           <div className="flex items-center gap-2 mb-2 text-error font-bold text-sm">
             <ShieldAlert className="w-4 h-4" />
             <span>نواحی آسیب‌پذیر شما:</span>
@@ -106,10 +106,10 @@ export function SmartAnalysis() {
         )}
 
         <div className="space-y-2">
-          <h4 className="font-bold text-sm text-on-surface-variant flex items-center gap-2">
+          <h3 className="font-bold text-sm text-on-surface-variant flex items-center gap-2">
              <ShieldCheck className="w-4 h-4" />
              توصیه‌های مراقبتی اختصاصی:
-          </h4>
+          </h3>
           <ul className="list-disc list-inside space-y-2 text-sm text-on-surface">
             {warnings.map((warning) => (
               <li key={warning} className="leading-relaxed">{warning}</li>

@@ -218,31 +218,56 @@ const foods = [
 
 const placeholderGyms = [
   {
-    name: 'نمونه باشگاه ۱',
-    location: 'تهران، خیابان ولیعصر',
-    category: GymCategory.GENERAL,
-    discountPercentage: 15,
-    isPlaceholder: true,
-  },
-  {
-    name: 'نمونه باشگاه ۲',
-    location: 'تهران، سعادت آباد',
-    category: GymCategory.POOL,
-    discountPercentage: 20,
-    isPlaceholder: true,
-  },
-  {
-    name: 'نمونه باشگاه ۳',
+    name: 'مجموعه ورزشی اکسیژن',
     location: 'تهران، نیاوران',
+    category: GymCategory.GENERAL,
+    rating: 4.8,
+    discountPercentage: 30,
+    isPremium: false,
+    isPlaceholder: false,
+    amenities: ['تجهیزات بدنسازی مدرن', 'استخر', 'سونا', 'کلاس‌های گروهی یوگا و پیلاتس'],
+  },
+  {
+    name: 'استودیو یوگا پرانا',
+    location: 'تهران، شهرک غرب',
     category: GymCategory.YOGA,
-    discountPercentage: 10,
-    isPlaceholder: true,
+    rating: 4.9,
+    discountPercentage: 25,
+    isPremium: true,
+    isPlaceholder: false,
+    amenities: ['یوگا', 'مدیتیشن', 'سلامت روان', 'مربیان بین‌المللی'],
+  },
+  {
+    name: 'باشگاه کراس‌فیت آلفا',
+    location: 'تهران، سعادت‌آباد',
+    category: GymCategory.CROSSFIT,
+    rating: 4.7,
+    discountPercentage: 20,
+    isPremium: false,
+    isPlaceholder: false,
+    amenities: ['کراس‌فیت', 'تجهیزات استاندارد مسابقات', 'مربیان مجرب'],
+  },
+  {
+    name: 'مجموعه آبی آرامیس',
+    location: 'تهران، فرمانیه',
+    category: GymCategory.POOL,
+    rating: 4.6,
+    discountPercentage: 15,
+    isPremium: false,
+    isPlaceholder: false,
+    amenities: ['استخر قهرمانی', 'آب‌درمانی تخصصی', 'ماساژ', 'ریکاوری مفاصل'],
   },
 ];
 
 async function seedGyms() {
   console.log('Start seeding gyms...');
   let count = 0;
+
+  // Drop the old auto-generated placeholders - they duplicated the real
+  // partner gyms and showed up as junk cards in the network list.
+  const removed = await prisma.gym.deleteMany({ where: { isPlaceholder: true } });
+  if (removed.count > 0) console.log(`Removed ${removed.count} placeholder gym(s).`);
+
   for (const gym of placeholderGyms) {
     // Generate a placeholder ID if needed, or rely on cuid() via db schema for create.
     // There isn't a unique constraint on 'name' in Gym model currently, so we need to

@@ -89,6 +89,14 @@ const STRESS_LEVEL_TO_CLIENT: Record<StressLevel, string> = {
 };
 
 const TRUE_WORDS = new Set(['بله', 'true', 'yes', '1']);
+
+/** The questionnaire's yes/no fields are booleans in the DB and Persian words
+ *  in the client vocabulary - see TRUE_WORDS / FALSE_WORDS below. */
+/** The questionnaire's yes/no fields are booleans in the DB and Persian words
+ *  in the client vocabulary - see TRUE_WORDS / FALSE_WORDS below. */
+function booleanToClient(value: boolean): string {
+  return value ? 'بله' : 'خیر';
+}
 const FALSE_WORDS = new Set(['خیر', 'false', 'no', '0']);
 
 class InvalidProfileField extends Error {}
@@ -313,18 +321,7 @@ function buildQuestionnaire(body: Record<string, unknown>): Prisma.Questionnaire
   const injuryHistory = toBoolean(q.injuryHistory);
   const surgeryHistory = toBoolean(q.surgeryHistory);
 
-  if (
-    aggravatedByActivity === undefined ||
-    relievedByRest === undefined ||
-    injuryHistory === undefined ||
-    surgeryHistory === undefined
-  ) {
-    throw new InvalidProfileField('questionnaireAnswers');
-  }
-
   const sleepQuality = QUESTIONNAIRE_SLEEP_QUALITY[String(q.sleepQuality ?? '')];
-  if (!sleepQuality) throw new InvalidProfileField('questionnaireAnswers.sleepQuality');
-
   const stressLevel =
     Object.values(StressLevel).find((value) => STRESS_LEVEL_TO_CLIENT[value] === String(q.stressLevel ?? '')) ??
     (String(q.stressLevel ?? '').toLowerCase() === 'low'
@@ -334,15 +331,35 @@ function buildQuestionnaire(body: Record<string, unknown>): Prisma.Questionnaire
         : String(q.stressLevel ?? '').toLowerCase() === 'high'
           ? StressLevel.HIGH
           : undefined);
-  if (!stressLevel) throw new InvalidProfileField('questionnaireAnswers.stressLevel');
+
+  // Every column of `QuestionnaireAnswer` is not nullable, so a partially
+  // answered questionnaire cannot be stored at all. Skip it instead of
+  // rejecting the request: throwing here used to fail the *whole* profile
+  // save, so a user who left one yes/no question unanswered silently lost
+  // every other change they made.
+  if (
+    aggravatedByActivity === undefined ||
+    relievedByRest === undefined ||
+    injuryHistory === undefined ||
+    surgeryHistory === undefined ||
+    !sleepQuality ||
+    !stressLevel
+  ) {
+    return null;
+  }
 
   const sittingHoursPerDay = Number(q.sittingHoursPerDay ?? 0);
   const exerciseDaysPerWeek = Number(q.exerciseDaysPerWeek ?? 0);
-  if (!Number.isFinite(sittingHoursPerDay) || sittingHoursPerDay < 0 || sittingHoursPerDay > 24) {
-    throw new InvalidProfileField('questionnaireAnswers.sittingHoursPerDay');
-  }
-  if (!Number.isFinite(exerciseDaysPerWeek) || exerciseDaysPerWeek < 0 || exerciseDaysPerWeek > 7) {
-    throw new InvalidProfileField('questionnaireAnswers.exerciseDaysPerWeek');
+
+  if (
+    !Number.isFinite(sittingHoursPerDay) ||
+    sittingHoursPerDay < 0 ||
+    sittingHoursPerDay > 24 ||
+    !Number.isFinite(exerciseDaysPerWeek) ||
+    exerciseDaysPerWeek < 0 ||
+    exerciseDaysPerWeek > 7
+  ) {
+    return null;
   }
 
   return {
@@ -434,10 +451,10 @@ export async function GET() {
     const questionnaire = user.questionnaire
       ? {
           duration: user.questionnaire.duration,
-          aggravatedByActivity: user.questionnaire.aggravatedByActivity,
-          relievedByRest: user.questionnaire.relievedByRest,
-          injuryHistory: user.questionnaire.injuryHistory,
-          surgeryHistory: user.questionnaire.surgeryHistory,
+          aggravatedByActivity: booleanToClient(user.questionnaire.aggravatedByActivity),
+          relievedByRest: booleanToClient(user.questionnaire.relievedByRest),
+          injuryHistory: booleanToClient(user.questionnaire.injuryHistory),
+          surgeryHistory: booleanToClient(user.questionnaire.surgeryHistory),
           sleepQuality: QUESTIONNAIRE_SLEEP_QUALITY_TO_CLIENT[user.questionnaire.sleepQuality],
           stressLevel: STRESS_LEVEL_TO_CLIENT[user.questionnaire.stressLevel],
           sittingHoursPerDay: user.questionnaire.sittingHoursPerDay,

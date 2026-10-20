@@ -21,6 +21,7 @@ export default function TermsPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <h1 className="text-xl font-bold text-on-surface">شرایط و قوانین خدمات</h1>
           <button
+            type="button"
             onClick={handleBack}
             className="p-2 -ml-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors"
             aria-label="بازگشت"
@@ -31,8 +32,8 @@ export default function TermsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-8">
-        <div className="glass-panel p-8 rounded-3xl">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8">
+        <div className="card p-8 rounded-3xl">
           <div className="prose prose-lg prose-slate dark:prose-invert max-w-none">
             <h2 className="text-2xl font-bold mb-4 text-primary">۱. تعریف خدمات</h2>
             <p className="text-on-surface-variant mb-6 leading-relaxed">
@@ -50,7 +51,7 @@ export default function TermsPage() {
             </p>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

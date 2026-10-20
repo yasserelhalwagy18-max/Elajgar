@@ -5,14 +5,21 @@ import './globals.css';
 
 const vazirmatn = Vazirmatn({ subsets: ['arabic', 'latin'], variable: '--font-sans' });
 
+const APP_TITLE = 'علاج‌گر';
+const APP_DESCRIPTION = 'برنامه هوشمند ارزیابی درد و سلامت مفاصل و عضلات';
+
 export const metadata: Metadata = {
-  title: 'علاجگر',
-  description: 'علاجگر.برای سلامت شما',
   manifest: '/manifest.json',
+  applicationName: APP_TITLE,
+  appleWebApp: {
+    capable: true,
+    title: APP_TITLE,
+    statusBarStyle: 'default',
+  },
   openGraph: {
-    title: 'علاجگر',
-    description: 'علاجگر.برای سلامت شما',
-    siteName: 'علاجگر',
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+    siteName: APP_TITLE,
     locale: 'fa_IR',
     type: 'website',
   },
@@ -28,8 +35,17 @@ export const viewport: Viewport = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="fa" dir="rtl">
+      {/* An explicit <head> keeps the title and description where crawlers and
+          Lighthouse look for them. Without it Next.js streamed them into the
+          end of the <body>. */}
+      <head>
+        <title>{APP_TITLE}</title>
+        <meta name="description" content={APP_DESCRIPTION} />
+      </head>
       <body className={`${vazirmatn.variable} font-sans antialiased bg-surface text-on-surface`} suppressHydrationWarning>
-        {children}
+        {/* A single `main` landmark per page - screen reader users rely on
+            it to jump past the navigation. */}
+        <main id="main-content">{children}</main>
         <Toaster
           position="top-center"
           toastOptions={{

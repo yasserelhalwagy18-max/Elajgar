@@ -6,9 +6,9 @@ export default function DashboardLoading() {
         <div className="h-4 w-64 bg-outline-variant/20 rounded-lg animate-pulse"></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="glass-card h-36 p-6 rounded-2xl flex flex-col justify-between">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="card h-36 p-6 rounded-3xl flex flex-col justify-between">
             <div className="flex justify-between items-start">
               <div className="h-4 w-20 bg-outline-variant/30 rounded animate-pulse"></div>
               <div className="h-10 w-10 bg-outline-variant/20 rounded-full animate-pulse"></div>

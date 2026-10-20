@@ -1,6 +1,7 @@
 {
-  "name": "علاجگر",
-  "short_name": "علاجگر",
+  "name": "علاج‌گر",
+  "short_name": "علاج‌گر",
+  "description": "برنامه هوشمند ارزیابی درد و سلامت مفاصل و عضلات",
   "lang": "fa",
   "dir": "rtl",
   "start_url": "/dashboard",

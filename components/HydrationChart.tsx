@@ -1,20 +1,9 @@
 'use client';
 
-import * as React from 'react';
 import { useEffect, useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import { useStore } from '@/lib/store';
-import { toDateKey } from '@/lib/utils';
-
-const mockData = [
-    { day: 'شنبه', amount: 1.2 },
-    { day: 'یکشنبه', amount: 1.5 },
-    { day: 'دوشنبه', amount: 1.0 },
-    { day: 'سه‌شنبه', amount: 2.2 },
-    { day: 'چهارشنبه', amount: 1.8 },
-    { day: 'پنجشنبه', amount: 2.5 },
-    { day: 'جمعه', amount: 2.0 },
-];
+import { toDateKey, toPersianDigits } from '@/lib/utils';
 
 export default function HydrationChart() {
     const svgRef = useRef<SVGSVGElement>(null);
@@ -24,12 +13,12 @@ export default function HydrationChart() {
     const [chartWidth, setChartWidth] = useState(0);
 
     const chartData = useMemo(() => {
-        if (!userProfile) return { data: mockData, hasEnoughData: false };
+        if (!userProfile) return { data: [], hasEnoughData: false };
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const generatedData = [];
+        const generatedData: { day: string; amount: number }[] = [];
         let validEntriesCount = 0;
 
         const formatter = new Intl.DateTimeFormat('fa-IR', { weekday: 'long' });
@@ -73,8 +62,10 @@ export default function HydrationChart() {
         const graphWidth = width - margin.left - margin.right;
         const graphHeight = height - margin.top - margin.bottom;
 
+        // The app reads right-to-left, so the newest day sits on the left and
+        // the axis runs backwards compared to a Latin chart.
         const x = d3.scalePoint()
-            .domain(activeData.map(d => d.day))
+            .domain([...activeData].reverse().map(d => d.day))
             .range([0, graphWidth])
             .padding(0.1);
 
@@ -105,7 +96,7 @@ export default function HydrationChart() {
             .attr('id', 'hydration-gradient')
             .attr('x1', '0%').attr('y1', '0%')
             .attr('x2', '0%').attr('y2', '100%');
-            
+
         gradient.append('stop')
             .attr('offset', '0%')
             .attr('stop-color', '#dbe1ff'); // Primary container color
@@ -113,19 +104,23 @@ export default function HydrationChart() {
             .attr('offset', '100%')
             .attr('stop-color', 'rgba(219, 225, 255, 0)');
 
+        // Build the path strings once - d3's `.attr('d', fn)` typing does not
+        // accept the area/line generators directly.
+        const areaPath = area(activeData) ?? '';
+        const linePath = line(activeData) ?? '';
+
         // Draw area
         g.append('path')
             .datum(activeData)
             .attr('fill', 'url(#hydration-gradient)')
-            .attr('d', area);
+            .attr('d', areaPath);
 
         // Draw line
         g.append('path')
-            .datum(activeData)
             .attr('fill', 'none')
             .attr('stroke', '#2563EB')
             .attr('stroke-width', 3)
-            .attr('d', line);
+            .attr('d', linePath);
 
         // Draw data points
         g.selectAll('.dot')
@@ -149,9 +144,10 @@ export default function HydrationChart() {
         // Customize X axis text
         g.selectAll('.tick text')
             .attr('font-size', '11px')
-            .attr('fill', '#737686')
+            .attr('fill', '#475569')
             .attr('font-weight', '600')
-            .attr('font-family', 'inherit');
+            .attr('font-family', 'inherit')
+            .text((d: unknown) => toPersianDigits(String(d)));
 
         // Add subtle horizontal grid lines for Y values based on yMax
         const yTicks = d3.range(1, yMax + 1);
@@ -163,7 +159,7 @@ export default function HydrationChart() {
             .attr('x2', graphWidth)
             .attr('y1', d => y(d))
             .attr('y2', d => y(d))
-            .attr('stroke', '#f1f5f9')
+            .attr('stroke', '#e2e8f0')
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '4,4');
 
@@ -190,7 +186,7 @@ export default function HydrationChart() {
         return (
             <div className="flex flex-col items-center justify-center h-[150px] mt-4 text-center gap-2">
                 <svg className="w-6 h-6 text-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
                 <p className="text-on-surface-variant text-xs">
                     هنوز داده کافی ندارید. بعد از چند روز استفاده، نمودار نمایش داده می‌شود.
@@ -200,7 +196,13 @@ export default function HydrationChart() {
     }
 
     return (
-        <div ref={wrapperRef} className="w-full h-[150px] mt-4 flex items-center justify-center relative">
+        <div
+            ref={wrapperRef}
+            className="w-full h-[150px] mt-4 flex items-center justify-center relative"
+            dir="ltr"
+            role="img"
+            aria-label="نمودار مصرف آب هفت روز گذشته"
+        >
             <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="none"></svg>
         </div>
     );
