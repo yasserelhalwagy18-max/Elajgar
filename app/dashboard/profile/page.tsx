@@ -371,6 +371,8 @@ export default function ProfilePage() {
                                 value={currentPassword}
                                 onChange={(e) => { setCurrentPassword(e.target.value); setPasswordError(null); }}
                                 className={`input text-left ${passwordError ? 'border-error' : ''}`}
+                                aria-invalid={!!passwordError}
+                                aria-describedby={passwordError ? 'password-error' : undefined}
                                 dir="ltr"
                                 disabled={savingPassword}
                             />
@@ -389,6 +391,8 @@ export default function ProfilePage() {
                             onChange={(e) => { setNewPassword(e.target.value); setPasswordError(null); }}
                             placeholder="حداقل ۸ کاراکتر"
                             className={`input text-left ${passwordError ? 'border-error' : ''}`}
+                            aria-invalid={!!passwordError}
+                            aria-describedby={passwordError ? 'password-error' : undefined}
                             dir="ltr"
                             minLength={8}
                             required
@@ -397,7 +401,7 @@ export default function ProfilePage() {
                     </div>
 
                     {passwordError && (
-                        <p role="alert" className="text-error text-xs">{passwordError}</p>
+                        <p id="password-error" role="alert" className="text-error text-xs">{passwordError}</p>
                     )}
                     {passwordMessage && (
                         <p role="status" className="text-success text-xs">{passwordMessage}</p>
@@ -478,11 +482,15 @@ export default function ProfilePage() {
                                 value={removePasswordValue}
                                 onChange={(e) => { setRemovePasswordValue(e.target.value); setRemovePasswordError(null); }}
                                 className={`input text-left ${removePasswordError ? 'border-error' : ''}`}
+                                aria-invalid={!!removePasswordError}
+                                aria-describedby={removePasswordError ? 'remove-password-error' : undefined}
                                 dir="ltr"
                                 disabled={removingPassword}
                             />
                             {removePasswordError && (
-                                <p role="alert" className="text-error text-xs mt-1">{removePasswordError}</p>
+                                <p id="remove-password-error" role="alert" className="text-error text-xs mt-1">
+                                    {removePasswordError}
+                                </p>
                             )}
                         </div>
                     </div>
