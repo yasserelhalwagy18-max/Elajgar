@@ -22,7 +22,7 @@ export default function Error({
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card p-10 rounded-3xl max-w-md w-full text-center flex flex-col items-center">
         <div className="bg-error/10 p-6 rounded-full mb-6">
-          <AlertCircle className="w-16 h-16 text-error" />
+          <AlertCircle className="w-16 h-16 text-error" aria-hidden="true" />
         </div>
 
         <h2 className="text-3xl font-bold text-on-surface mb-4">مشکلی پیش آمد!</h2>

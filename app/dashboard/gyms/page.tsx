@@ -131,7 +131,7 @@ export default function GymsPage() {
 
     return (
         <div className="p-6 pb-28 max-w-2xl mx-auto">
-            <header className="card sticky top-0 z-40 px-6 py-5 rounded-3xl mb-8 mt-2 transition-all">
+            <header className="card sticky top-0 z-40 px-6 py-5 rounded-3xl mb-8 mt-2 transition-[box-shadow]">
                 {isSearching ? (
                     <div className="flex items-center gap-3">
                         <button

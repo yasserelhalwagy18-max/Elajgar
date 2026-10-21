@@ -65,7 +65,7 @@ export default function ProgressReport() {
             type="button"
             onClick={() => setTimeRange('7')}
             aria-pressed={timeRange === '7'}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${timeRange === '7' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${timeRange === '7' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
           >
             ۷ روز
           </button>
@@ -73,7 +73,7 @@ export default function ProgressReport() {
             type="button"
             onClick={() => setTimeRange('30')}
             aria-pressed={timeRange === '30'}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${timeRange === '30' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${timeRange === '30' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
           >
             ۱ ماه
           </button>

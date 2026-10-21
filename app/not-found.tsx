@@ -6,7 +6,7 @@ export default function NotFound() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card p-10 rounded-3xl max-w-md w-full text-center flex flex-col items-center">
         <div className="bg-primary-container p-6 rounded-full mb-6">
-          <FileQuestion className="w-16 h-16 text-primary" />
+          <FileQuestion className="w-16 h-16 text-primary" aria-hidden="true" />
         </div>
 
         <h1 className="text-3xl font-bold text-on-surface mb-2">صفحه پیدا نشد!</h1>

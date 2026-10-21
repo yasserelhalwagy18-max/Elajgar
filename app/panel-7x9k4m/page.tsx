@@ -204,7 +204,7 @@ export default function AdminOverviewPage() {
                     {toPersianDigits(day.count)}
                   </span>
                   <div
-                    className="w-full rounded-t-xl bg-primary/80 min-h-[4px] transition-all"
+                    className="w-full rounded-t-xl bg-primary/80 min-h-[4px] transition-[width]"
                     style={{ height: `${Math.max(height, day.count > 0 ? 8 : 4)}%` }}
                   />
                   <span className="text-[10px] text-on-surface-variant text-center leading-tight">
@@ -234,7 +234,7 @@ export default function AdminOverviewPage() {
                 </span>
                 <div className="flex-1 h-2 rounded-full bg-surface-variant overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-primary transition-all"
+                    className="h-full rounded-full bg-primary transition-[width]"
                     style={{ width: `${Math.min(100, region.percentage)}%` }}
                   />
                 </div>

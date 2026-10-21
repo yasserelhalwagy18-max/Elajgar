@@ -67,11 +67,15 @@ export function MacroBar({ macro, current, target, compact = false, className }:
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={target}
-        aria-valuenow={Math.round(current)}
+        // `aria-valuenow` has to stay inside the range: a macro over its
+        // target reported a value above the maximum, which is not a valid
+        // progressbar state.
+        aria-valuenow={Math.min(Math.round(current), target)}
+        aria-valuetext={`${formatNumber(current)} از ${formatNumber(target)} گرم`}
         aria-label={`${MACRO_LABEL[macro]}: ${formatNumber(current)} از ${formatNumber(target)} گرم`}
       >
         <div
-          className="h-full rounded-full transition-all duration-500"
+          className="h-full rounded-full transition-[width] duration-500"
           style={{
             width: `${percentage}%`,
             background: isOver ? 'var(--color-error)' : MACRO_COLOR[macro],

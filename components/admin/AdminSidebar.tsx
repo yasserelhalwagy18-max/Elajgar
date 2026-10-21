@@ -79,7 +79,7 @@ export function AdminSidebar() {
             onClick={() => setIsOpen(false)}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 font-bold text-sm',
+              'flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors duration-200 font-bold text-sm',
               active
                 ? 'bg-secondary-container text-on-secondary-container'
                 : 'text-on-surface-variant hover:bg-surface-variant hover:-translate-x-1',

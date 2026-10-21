@@ -566,7 +566,7 @@ export default function DashboardIndex() {
                  <div className="z-10">
                     <div className="h-3 w-full rounded-full bg-surface-variant overflow-hidden">
                        <div
-                         className="h-full rounded-full transition-all duration-700"
+                         className="h-full rounded-full transition-[width] duration-700"
                          style={{
                            width: `${Math.min((consumedCalories / Math.max(targetCalories, 1)) * 100, 100)}%`,
                            background: caloriesOver ? 'var(--color-error)' : 'var(--color-primary)',

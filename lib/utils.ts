@@ -58,7 +58,9 @@ export function formatNumber(value: number, fractionDigits = 0): string {
   const fixed = fractionDigits > 0 ? value.toFixed(fractionDigits) : String(Math.round(value));
   const [intPart, fracPart] = fixed.split('.');
   const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
-  return toPersianDigits(fracPart ? `${grouped}.${fracPart}` : grouped);
+  // The decimal separator is the Arabic one, not a Latin full stop: "۰.۵"
+  // reads as a stray Latin dot in the middle of Persian text.
+  return toPersianDigits(fracPart ? `${grouped}\u066B${fracPart}` : grouped);
 }
 
 /**

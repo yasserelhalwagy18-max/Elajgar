@@ -376,7 +376,7 @@ function HubCard({
             <p className="text-on-surface-variant text-base leading-relaxed mb-6">{desc}</p>
 
             {active && (
-                <div className="flex items-center text-primary font-bold text-sm gap-2 transition-all group-hover:gap-3">
+                <div className="flex items-center text-primary font-bold text-sm gap-2 transition-[gap] group-hover:gap-3">
                     <span>ورود به سامانه</span>
                     <ArrowLeft className="w-4 h-4" />
                 </div>
@@ -385,7 +385,7 @@ function HubCard({
     );
 
     const cardClass = cn(
-        "bg-surface-container border border-outline-variant card p-8 rounded-3xl relative overflow-hidden group transition-all duration-300",
+        "bg-surface-container border border-outline-variant card p-8 rounded-3xl relative overflow-hidden group transition-[transform,box-shadow,border-color] duration-300",
         active
             ? "border-2 border-primary shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer"
             : available
