@@ -22,6 +22,28 @@ The Prisma CLI only reads `.env`, while Next.js reads `.env.local` first. The
 `.env.local` when it exists and falls back to `.env`, so the same commands work
 locally and on the host.
 
+## Check that everything is wired up
+
+```bash
+npm run db:doctor
+```
+
+One command that verifies the environment variables, the database connection,
+that the schema matches `prisma/schema.prisma`, that an account can open the
+admin panel, that the Prisma client is up to date, and that the SMS provider
+is reachable and still has credit. It is the fastest way to find out what is
+broken after a deploy or a host migration.
+
+> **Aiven free tier:** the MySQL service is powered off automatically after a
+> period of inactivity. When that happens the app reports "Can't reach
+> database server" and `npm run db:doctor` fails the database check. Log in to
+> the Aiven console, press **Power on** for the service, and run
+> `npm run db:doctor` again.
+>
+> The app repairs its own connection pool when the database comes back, so
+> there is no need to restart it - the first request after the service is
+> powered on takes a few seconds longer, and then everything works again.
+
 ## The admin panel
 
 `/admin` is the control panel. It needs an account with the `ADMIN` role -

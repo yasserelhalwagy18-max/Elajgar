@@ -50,8 +50,13 @@ On your host, set these environment variables (via cPanel "Setup Node.js App" en
 The `DATABASE_URL` format is:
 
 ```
-mysql://USERNAME:PASSWORD@localhost:3306/DATABASENAME
+mysql://USERNAME:PASSWORD@localhost:3306/DATABASENAME?connection_limit=10
 ```
+
+Keep `connection_limit` in the URL. Aiven's free tier allows only 20
+concurrent connections per MySQL service, while Prisma's default pool size is
+(CPU cores × 2 + 1) - on a shared host that is more than the database
+accepts, and the app fails with "too many connections".
 
 If you want to use PostgreSQL (e.g. Supabase, Neon) you must change
 `provider` in `prisma/schema.prisma` to `postgresql` **and** use a PostgreSQL
@@ -82,6 +87,27 @@ only reads `.env`, which is why the scripts go through `scripts/prisma.mjs`.
 `prisma db push` creates the database tables from your schema. Run it again
 after any change to `prisma/schema.prisma` — it only applies the difference
 and never drops data.
+
+After the push, check the whole stack in one go:
+
+```bash
+npm run db:doctor
+```
+
+It verifies the environment variables, the database connection, that the schema
+matches `prisma/schema.prisma`, that an admin account exists, that the Prisma
+client is up to date, and that the SMS provider still has credit.
+
+> **Aiven free tier:** the MySQL service is powered off automatically after a
+> period of inactivity. The symptom is `Can't reach database server`, or
+> `npm run db:doctor` failing the database check. Log in to the Aiven console,
+> press **Power on** for the service, wait for it to start, and run
+> `npm run db:doctor` again. Nothing in the data is lost — the service comes
+> back with all of it.
+>
+> You do not have to restart the app after that: the connection pool is
+> repaired automatically the first time a query fails, so the first request
+> takes a few seconds longer and the rest are normal.
 
 ### Seed the food database (optional but recommended)
 

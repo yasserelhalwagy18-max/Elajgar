@@ -15,6 +15,7 @@
     "db:push": "node scripts/prisma.mjs db push",
     "db:studio": "node scripts/prisma.mjs studio",
     "db:seed": "node scripts/prisma.mjs db seed",
+    "db:doctor": "node scripts/doctor.mjs",
     "admin:promote": "node scripts/promote-admin.mjs"
   },
   "dependencies": {
