@@ -65,9 +65,14 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
             and transform from JavaScript, not from a CSS animation, so the
             `animation-duration: 0.001ms` override never reaches it. */}
         <MotionConfig reducedMotion="user">
+          {/* The first Tab press on every page lands here, so a keyboard user
+              can jump straight past the navigation to the page content. */}
+          <a href="#main-content" className="skip-link">
+            پرش به محتوای اصلی
+          </a>
           {/* A single `main` landmark per page - screen reader users rely on
               it to jump past the navigation. */}
-          <main id="main-content">{children}</main>
+          <main id="main-content" tabIndex={-1}>{children}</main>
         </MotionConfig>
         <Toaster
           position="top-center"
