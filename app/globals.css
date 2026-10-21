@@ -357,6 +357,17 @@ body {
   }
 
   /* ========================================================================
+     Radio choices
+     ====================================================================== */
+  /* A radio whose input is visually hidden still has to show where the
+     focus is. The ring moves to the label that wraps it, so the focus is
+     visible on the part of the control the user can actually see. */
+  .radio-choice:has(input:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* ========================================================================
      Scrollbars
      ====================================================================== */
   .custom-scrollbar {

@@ -759,28 +759,45 @@ export default function DashboardIndex() {
                     </div>
                 </div>
 
-                <div>
-                    <span id="sleep-quality-label" className="block text-xs font-bold mb-1 text-on-surface-variant text-center">کیفیت خواب</span>
-                    <div role="radiogroup" aria-labelledby="sleep-quality-label" className="flex justify-center gap-2">
-                        {(['good', 'fair', 'poor'] as const).map((quality) => (
-                            <button
+                {/* A real radio group. The three buttons used to carry
+                    `role="radio"` inside a `role="radiogroup"`, which put all
+                    three of them in the tab order and gave the group no
+                    arrow-key behaviour. Native radios give one tab stop,
+                    arrow-key movement and the right announcement for free. */}
+                <fieldset>
+                    <legend className="text-xs font-bold mb-1 text-on-surface-variant text-center w-full">
+                        کیفیت خواب
+                    </legend>
+                    <div className="flex justify-center gap-2">
+                        {(
+                            [
+                                ['good', 'خوب'],
+                                ['fair', 'متوسط'],
+                                ['poor', 'بد'],
+                            ] as const
+                        ).map(([quality, label]) => (
+                            <label
                                 key={quality}
-                                type="button"
-                                role="radio"
-                                aria-checked={sleepQuality === quality}
-                                onClick={() => setSleepQuality(quality)}
                                 className={cn(
-                                    'px-4 py-2 rounded-xl text-sm font-bold transition-colors',
+                                    'radio-choice px-4 py-2 rounded-xl text-sm font-bold transition-colors cursor-pointer',
                                     sleepQuality === quality
                                         ? 'bg-primary text-white shadow-md'
                                         : 'bg-surface-variant/60 hover:bg-surface-variant text-on-surface'
                                 )}
                             >
-                                {quality === 'good' ? 'خوب' : quality === 'fair' ? 'متوسط' : 'بد'}
-                            </button>
+                                <input
+                                    type="radio"
+                                    name="sleepQuality"
+                                    value={quality}
+                                    checked={sleepQuality === quality}
+                                    onChange={() => setSleepQuality(quality)}
+                                    className="sr-only"
+                                />
+                                {label}
+                            </label>
                         ))}
                     </div>
-                </div>
+                </fieldset>
 
                 <button
                     type="button"
