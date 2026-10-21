@@ -473,7 +473,7 @@ export default function DashboardIndex() {
                         </>
                     ) : (
                         <>
-                            <span className="text-5xl font-black text-on-surface-variant/40" aria-hidden="true">—</span>
+                            <span className="text-5xl font-black text-on-surface-variant/70" aria-hidden="true">—</span>
                             <span className="text-sm font-bold text-on-surface-variant mt-1">بدون امتیاز</span>
                         </>
                     )}

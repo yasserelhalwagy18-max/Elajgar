@@ -123,7 +123,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative w-full flex flex-col md:flex-row items-center justify-between gap-12 mb-24 md:min-h-[70vh]">
         <div className="flex-1 text-start z-10 flex flex-col gap-6 items-start">
-          <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium border border-primary/20">
+          <div className="inline-block bg-primary/10 text-primary-dark px-4 py-2 rounded-full text-sm font-medium border border-primary/20">
             پیشگام در سلامت دیجیتال
           </div>
           <h1 className="text-4xl md:text-6xl text-on-surface leading-tight font-extrabold">

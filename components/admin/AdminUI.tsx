@@ -275,10 +275,10 @@ export function StatusPill({
 }) {
   const tones = {
     success: 'bg-success-container text-success',
-    error: 'bg-error/10 text-error border border-error/20',
-    warning: 'bg-warning/10 text-warning border border-warning/20',
+    error: 'bg-error/10 text-error-strong border border-error/20',
+    warning: 'bg-warning/10 text-warning-strong border border-warning/20',
     neutral: 'bg-surface-variant text-on-surface-variant',
-    primary: 'bg-primary/10 text-primary',
+    primary: 'bg-primary/10 text-primary-dark',
   };
 
   return (

@@ -520,7 +520,7 @@ export default function ProfilePage() {
                                     'px-3 py-1 text-xs font-bold rounded-full',
                                     subscription.isActive
                                         ? 'bg-success-container text-success'
-                                        : 'bg-warning/10 text-warning'
+                                        : 'bg-warning/10 text-warning-strong'
                                 )}
                             >
                                 {subscription.isActive ? 'فعال' : 'منقضی شده'}
