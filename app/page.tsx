@@ -128,15 +128,16 @@ export default function LandingPage() {
           </div>
           <h1 className="text-4xl md:text-6xl text-on-surface leading-tight font-extrabold">
             {BRAND}:<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-l from-primary to-secondary">هوش مصنوعی</span><br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-l from-primary to-secondary">ارزیابی درد</span><br />
             برای سلامت مفاصل و عضلات شما
           </h1>
           <p className="text-lg text-on-surface-variant max-w-xl">
-            با ترکیب دانش پزشکی و فناوری پیشرفته، مسیر بهبودی خود را هوشمندانه و دقیق طی کنید.
+            محل و شدت درد خود را مرحله‌به‌مرحله ثبت کنید و توصیه‌های مراقبتی متناسب با
+            پاسخ‌های خودتان را ببینید.
           </p>
           <div className="flex mt-8 w-full sm:w-auto">
              <Link href="/login" className="btn btn-primary px-8 py-4 text-lg font-bold w-full sm:w-auto group">
-                <span>شروع ارزیابی هوشمند و سنجش درد</span>
+                <span>شروع ارزیابی و سنجش درد</span>
                 <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
              </Link>
           </div>
@@ -149,7 +150,7 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-2 text-on-surface-variant text-sm font-medium bg-surface-variant px-3 py-1.5 rounded-full border border-outline-variant/30">
               <Sparkles className="w-4 h-4 text-primary" />
-              <span>هوش مصنوعی</span>
+              <span>ارزیابی مرحله‌به‌مرحله</span>
             </div>
             <div className="flex items-center gap-2 text-on-surface-variant text-sm font-medium bg-surface-variant px-3 py-1.5 rounded-full border border-outline-variant/30">
               <AlertCircle className="w-4 h-4 text-primary" />
@@ -217,7 +218,7 @@ export default function LandingPage() {
                 active
                 href="/login"
                 title={BRAND}
-                desc="ارزیابی هوشمند و سنجش دقیق درد با استفاده از الگوریتم‌های پیشرفته."
+                desc="ارزیابی مرحله‌به‌مرحله و ثبت دقیق محل و شدت درد، بر پایهٔ پاسخ‌های خودتان."
                 icon={HeartPulse}
             />
             {/* These two unlock with a subscription. When there is no plan on
@@ -286,7 +287,7 @@ export default function LandingPage() {
           <div className="col-span-1 md:col-span-2">
             <h3 className="text-2xl font-black text-primary tracking-tight mb-4">{BRAND}</h3>
             <p className="text-sm text-on-surface-variant max-w-sm leading-relaxed mx-auto md:mx-0">
-              پلتفرم جامع هوشمند برای سلامت مفاصل، ارزیابی درد و ارائه برنامه‌های تمرینی اختصاصی با بهره‌گیری از هوش مصنوعی.
+              پلتفرم جامع برای سلامت مفاصل، ارزیابی درد و ارائه برنامه‌های تمرینی اختصاصی بر پایهٔ پاسخ‌های خودتان.
             </p>
           </div>
           <div>
