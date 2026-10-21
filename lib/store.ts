@@ -27,6 +27,14 @@ interface AuthState {
    */
   logout: () => Promise<void>;
   logFood: (date: string, food: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }) => void;
+  /**
+   * Take one logged food back out of a day.
+   *
+   * Logging a food used to be one-way: the item vanished from the search
+   * results and there was no list of what had been eaten, so a mistake
+   * could not be corrected.
+   */
+  removeFood: (date: string, foodId: string) => void;
   clearAndSetFoods: (date: string, foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[]) => void;
   addWater: (date: string, amount: number) => void;
   logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number; weight?: number; painIntensity?: number }) => void;
@@ -119,6 +127,24 @@ export const useStore = create<AuthState>()(
             userProfile: {
               ...profile,
               dailyLogs: newLogs,
+            },
+          };
+        }),
+      removeFood: (date, foodId) =>
+        set((state) => {
+          const profile = state.userProfile || {};
+          const logs = profile.dailyLogs || [];
+          const log = logs.find((l) => l.date === date);
+          if (!log) return state;
+
+          return {
+            userProfile: {
+              ...profile,
+              dailyLogs: logs.map((l) =>
+                l.date === date
+                  ? { ...l, foods: l.foods.filter((food) => food.id !== foodId) }
+                  : l
+              ),
             },
           };
         }),
