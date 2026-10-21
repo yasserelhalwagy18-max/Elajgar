@@ -405,6 +405,30 @@ body {
   outline-offset: 2px;
 }
 
+/* ========================================================================
+   Skip link
+   ====================================================================== */
+/* The first thing in the tab order. It is off-screen until it is focused,
+   so it costs nothing visually but saves a keyboard user from tabbing
+   through the whole navigation on every page. */
+.skip-link {
+  position: absolute;
+  inset-inline-start: 0.5rem;
+  top: -4rem;
+  z-index: 200;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
 /* A soft fade on the trailing edge of a horizontal rail, so it is obvious
    that there is more content to scroll to. */
 .rail-fade {
