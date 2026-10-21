@@ -24,7 +24,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  output: 'standalone',
+  // `output: 'standalone'` is left off on purpose. Liara (and every other
+  // host that runs `npm start`) starts the app with `next start`, which does
+  // not work with the standalone output - Next.js prints a warning and the
+  // static files are not served the way they should be. Turn it back on if
+  // the app is ever built into a Docker image.
   transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.

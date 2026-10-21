@@ -70,5 +70,16 @@ child.on('exit', (code, signal) => {
     process.kill(process.pid, signal);
     return;
   }
+
+  // On Windows the Prisma query engine is a .dll that a running app holds
+  // open, so it cannot be replaced. The raw error says nothing about that.
+  if (code !== 0 && process.platform === 'win32') {
+    console.error(
+      '\n  If the error above mentions "EPERM" or "query_engine", the app is\n' +
+        '  still running and is holding the Prisma engine open. Stop it\n' +
+        '  (Ctrl+C in the terminal it runs in) and run this again.\n',
+    );
+  }
+
   process.exit(code ?? 0);
 });

@@ -238,5 +238,32 @@ npm run lint      # eslint
 
 ## Deploying
 
+**[DEPLOY.md](./DEPLOY.md)** is the step-by-step guide for putting the site
+online on Liara with the `elajgar.ir` domain - the database, the
+environment variables, the upload, the DNS records and the SSL certificate.
+
+The short version:
+
+```bash
+npm install -g liara
+liara login
+liara deploy --port 3000
+```
+
+Or, to upload a file instead:
+
+```bash
+npm run deploy:zip      # writes deploy/elajgar.zip
+```
+
+What is already set up for it:
+
+| File | What it is for |
+| --- | --- |
+| `liara.json` | The app id, the port, the Node version and the health check |
+| `liara_pre_start.sh` | Runs on the server before the app starts: builds the Prisma client, applies the schema, seeds the content |
+| `.liaraignore` | What must not be uploaded - the environment files above all |
+| `.env.production.example` | The variables the server needs, with an explanation of each |
+
 See [howto.md](./howto.md) for the cPanel deployment steps and
 [CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md) for the server configuration.

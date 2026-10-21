@@ -2,6 +2,10 @@
 
 This guide walks you through uploading this Next.js application to a webhost and getting it live.
 
+> **Deploying to Liara?** Use [DEPLOY.md](./DEPLOY.md) instead - it is the
+> guide for the `elajgar.ir` domain on Liara, and it covers the database,
+> the DNS records and the SSL certificate. This page is for a cPanel host.
+
 ## 1. What You Need Before Starting
 
 - A webhosting account that supports Node.js (cPanel with "Setup Node.js App", VPS, or any Node.js-capable host).
