@@ -319,22 +319,38 @@ export default function NutritionPage() {
       <section className="card p-6 rounded-3xl mb-6">
         <h2 className="font-bold text-lg mb-4">ثبت غذا</h2>
         <div className="relative mb-4">
+            {/* A visible label, not only a placeholder: the placeholder
+                disappears the moment the user types, and it was the only
+                thing telling them what the box was for. */}
+            <label htmlFor="food-search" className="block text-sm font-medium mb-1">
+                جستجوی غذا
+            </label>
             <input
+                id="food-search"
+                name="food-search"
                 type="search"
-                placeholder="جستجوی غذا..."
+                placeholder="مثال: کباب کوبیده"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="جستجوی غذا"
                 className="input pe-11"
             />
             <Search className="w-5 h-5 text-on-surface-variant absolute top-1/2 end-3 transform -translate-y-1/2 pointer-events-none" aria-hidden="true" />
         </div>
 
-        <div className="max-h-72 overflow-y-auto ps-2 pe-1 custom-scrollbar flex flex-col gap-2">
+        <div
+            className="max-h-72 overflow-y-auto ps-2 pe-1 custom-scrollbar flex flex-col gap-2"
+            role="region"
+            aria-label="نتیجه‌های جستجوی غذا"
+        >
             {isSearching ? (
                 <p className="text-sm text-center text-on-surface-variant py-4" role="status">در حال جستجو...</p>
             ) : searchResults.length === 0 ? (
-                <p className="text-sm text-center text-on-surface-variant py-4">غذایی با این نام پیدا نشد.</p>
+                // Announced: a search that finds nothing used to be silent,
+                // so a screen reader user could not tell it apart from a
+                // search that had not finished.
+                <p className="text-sm text-center text-on-surface-variant py-4" role="status">
+                    غذایی با این نام پیدا نشد. می‌توانید نام دیگری را امتحان کنید.
+                </p>
             ) : (
                 searchResults.map((food) => (
                     <div key={food.id} className="flex items-center justify-between p-3 card card-hover rounded-xl">
