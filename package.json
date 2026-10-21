@@ -17,7 +17,9 @@
     "db:seed": "node scripts/prisma.mjs db seed",
     "db:doctor": "node scripts/doctor.mjs",
     "icons:generate": "node scripts/generate-icons.mjs",
-    "admin:promote": "node scripts/promote-admin.mjs"
+    "admin:promote": "node scripts/promote-admin.mjs",
+    "admin:delete": "node scripts/promote-admin.mjs --delete",
+    "admin:clear-password": "node scripts/promote-admin.mjs --clear-password"
   },
   "dependencies": {
     "@fontsource/vazirmatn": "^5.3.0",

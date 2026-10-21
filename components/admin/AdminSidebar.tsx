@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/lib/store';
+import { ADMIN_PATH } from '@/lib/admin-path';
 
 interface NavEntry {
   href: string;
@@ -32,15 +33,15 @@ interface NavEntry {
 }
 
 const NAV_ENTRIES: NavEntry[] = [
-  { href: '/admin', label: 'نمای کلی', icon: LayoutDashboard, exact: true },
-  { href: '/admin/users', label: 'کاربران', icon: Users },
-  { href: '/admin/gyms', label: 'باشگاه‌ها', icon: Dumbbell },
-  { href: '/admin/foods', label: 'بانک غذا', icon: Utensils },
-  { href: '/admin/content', label: 'محتوا', icon: BookOpen },
-  { href: '/admin/plans', label: 'پلن‌های اشتراک', icon: CreditCard },
-  { href: '/admin/subscriptions', label: 'اشتراک‌ها و پرداخت‌ها', icon: BadgeCheck },
-  { href: '/admin/settings', label: 'تنظیمات', icon: Settings },
-  { href: '/admin/audit', label: 'گزارش تغییرات', icon: ScrollText },
+  { href: ADMIN_PATH, label: 'نمای کلی', icon: LayoutDashboard, exact: true },
+  { href: `${ADMIN_PATH}/users`, label: 'کاربران', icon: Users },
+  { href: `${ADMIN_PATH}/gyms`, label: 'باشگاه‌ها', icon: Dumbbell },
+  { href: `${ADMIN_PATH}/foods`, label: 'بانک غذا', icon: Utensils },
+  { href: `${ADMIN_PATH}/content`, label: 'محتوا', icon: BookOpen },
+  { href: `${ADMIN_PATH}/plans`, label: 'پلن‌های اشتراک', icon: CreditCard },
+  { href: `${ADMIN_PATH}/subscriptions`, label: 'اشتراک‌ها و پرداخت‌ها', icon: BadgeCheck },
+  { href: `${ADMIN_PATH}/settings`, label: 'تنظیمات', icon: Settings },
+  { href: `${ADMIN_PATH}/audit`, label: 'گزارش تغییرات', icon: ScrollText },
 ];
 
 function isActive(pathname: string, entry: NavEntry): boolean {
@@ -92,7 +93,7 @@ export function AdminSidebar() {
 
   const brand = (
     <div className="px-4 mb-8">
-      <Link href="/admin" className="block">
+      <Link href={ADMIN_PATH} className="block">
         <h1 className="text-xl font-black text-primary mb-1">پنل مدیریت</h1>
         <p className="text-xs font-bold text-on-surface-variant">کنترل سیستم علاج‌گر</p>
       </Link>

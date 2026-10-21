@@ -417,7 +417,7 @@ async function seedAdmins() {
   if (phones.length === 0) {
     console.warn(
       '\n⚠️  No admin was created. Set ADMIN_PHONE (or ADMIN_PHONES) before seeding\n' +
-        '   to grant access to /admin, for example:\n' +
+        '   to grant access to the admin panel, for example:\n' +
         '   ADMIN_PHONE=09123456789 npm run db:seed\n',
     );
     return;

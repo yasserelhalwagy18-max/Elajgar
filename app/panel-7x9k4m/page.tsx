@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { AdminPageHeader, StatCard, StatusPill } from '@/components/admin/AdminUI';
 import { toPersianDigits } from '@/lib/utils';
+import { ADMIN_PATH } from '@/lib/admin-path';
 
 const PainHeatmap3D = dynamic(() => import('@/components/PainHeatmap3D'), { ssr: false });
 
@@ -107,7 +108,7 @@ export default function AdminOverviewPage() {
         title="نمای کلی"
         description="وضعیت زنده سامانه: کاربران، محتوا و گزارش‌های درد."
         actions={
-          <Link href="/admin/users" className="btn btn-primary btn-md">
+          <Link href={`${ADMIN_PATH}/users`} className="btn btn-primary btn-md">
             <Users className="w-4 h-4" />
             مدیریت کاربران
           </Link>
@@ -260,12 +261,12 @@ export default function AdminOverviewPage() {
           <h3 className="text-lg font-bold mb-4">دسترسی سریع</h3>
           <div className="flex flex-col gap-2">
             {[
-              { href: '/admin/users', label: 'فهرست کاربران و گزارش‌ها' },
-              { href: '/admin/gyms', label: 'مدیریت باشگاه‌های شریک' },
-              { href: '/admin/foods', label: 'ویرایش بانک غذا' },
-              { href: '/admin/content', label: 'محتوای آموزشی و تمرینات' },
-              { href: '/admin/settings', label: 'وزن‌های الگوریتم سلامت' },
-              { href: '/admin/audit', label: 'گزارش تغییرات مدیران' },
+              { href: `${ADMIN_PATH}/users`, label: 'فهرست کاربران و گزارش‌ها' },
+              { href: `${ADMIN_PATH}/gyms`, label: 'مدیریت باشگاه‌های شریک' },
+              { href: `${ADMIN_PATH}/foods`, label: 'ویرایش بانک غذا' },
+              { href: `${ADMIN_PATH}/content`, label: 'محتوای آموزشی و تمرینات' },
+              { href: `${ADMIN_PATH}/settings`, label: 'وزن‌های الگوریتم سلامت' },
+              { href: `${ADMIN_PATH}/audit`, label: 'گزارش تغییرات مدیران' },
             ].map((link) => (
               <Link
                 key={link.href}

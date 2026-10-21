@@ -15,6 +15,7 @@ import {
 } from '@/components/admin/AdminUI';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { adminDelete, adminPatch } from '@/lib/admin-client';
+import { ADMIN_PATH } from '@/lib/admin-path';
 import { useAdminResource, useDebouncedValue, usePageNumber } from '@/hooks/use-admin-resource';
 import { toPersianDigits } from '@/lib/utils';
 
@@ -208,7 +209,7 @@ export default function AdminUsersPage() {
       render: (user) => (
         <div className="flex items-center justify-center gap-1">
           <Link
-            href={`/admin/users/${user.id}`}
+            href={`${ADMIN_PATH}/users/${user.id}`}
             aria-label={`مشاهده پرونده ${user.phoneNumber ?? 'کاربر'}`}
             title="مشاهده پرونده"
             className="icon-btn h-9 w-9 bg-surface-variant"
@@ -259,7 +260,7 @@ export default function AdminUsersPage() {
         title="کاربران"
         description={`${toPersianDigits(total)} کاربر ثبت‌شده در سامانه. سطح ریسک از شدت درد و پاسخ پرسشنامه محاسبه می‌شود.`}
         actions={
-          <Link href="/admin/audit" className="btn btn-secondary btn-md">
+          <Link href={`${ADMIN_PATH}/audit`} className="btn btn-secondary btn-md">
             <UserCog className="w-4 h-4" />
             گزارش تغییرات
           </Link>

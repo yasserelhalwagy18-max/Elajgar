@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 /**
- * Promote a user to admin (or take the role away).
+ * Manage the accounts that can open the admin panel.
  *
  * Usage:
- *   node scripts/promote-admin.mjs 09123456789
- *   node scripts/promote-admin.mjs 09123456789 --revoke
+ *   node scripts/promote-admin.mjs 09123456789            give the role
+ *   node scripts/promote-admin.mjs 09123456789 --revoke   take the role away
+ *   node scripts/promote-admin.mjs 09123456789 --clear-password
+ *                                                          remove the password,
+ *                                                          so the account can
+ *                                                          only sign in with an
+ *                                                          SMS code
+ *   node scripts/promote-admin.mjs 09123456789 --delete    delete the account
  *
  * The user must already exist - sign in through the app once so the account
  * is created, then run this. Alternatively set `ADMIN_PHONE` and run
@@ -47,10 +53,14 @@ for (const file of ['.env.local', '.env']) {
 
 const args = process.argv.slice(2);
 const revoke = args.includes('--revoke');
+const clearPassword = args.includes('--clear-password');
+const remove = args.includes('--delete');
 const phoneNumber = args.find((arg) => !arg.startsWith('--'));
 
 if (!phoneNumber) {
-  console.error('Usage: node scripts/promote-admin.mjs <phoneNumber> [--revoke]');
+  console.error(
+    'Usage: node scripts/promote-admin.mjs <phoneNumber> [--revoke] [--clear-password] [--delete]',
+  );
   process.exit(1);
 }
 
@@ -68,17 +78,30 @@ try {
     process.exit(1);
   }
 
-  const updated = await prisma.user.update({
-    where: { id: user.id },
-    data: { role: revoke ? Role.USER : Role.ADMIN },
-    select: { id: true, phoneNumber: true, fullName: true, role: true },
-  });
+  if (remove) {
+    // The account and everything that belongs to it - the health record, the
+    // daily logs, the questionnaire - go with it.
+    await prisma.user.delete({ where: { id: user.id } });
+    console.log(`✔ Deleted the account ${user.phoneNumber} and everything in it.`);
+  } else if (clearPassword) {
+    await prisma.hashedPassword.deleteMany({ where: { userId: user.id } });
+    console.log(
+      `✔ The password of ${user.phoneNumber} was removed. ` +
+        'The account can only sign in with an SMS code now.',
+    );
+  } else {
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { role: revoke ? Role.USER : Role.ADMIN },
+      select: { id: true, phoneNumber: true, fullName: true, role: true },
+    });
 
-  console.log(
-    revoke
-      ? `✔ Role revoked. ${updated.phoneNumber} is now a regular user.`
-      : `✔ Promoted. ${updated.phoneNumber} can now open /admin.`,
-  );
+    console.log(
+      revoke
+        ? `✔ Role revoked. ${updated.phoneNumber} is now a regular user.`
+        : `✔ Promoted. ${updated.phoneNumber} can now open the admin panel.`,
+    );
+  }
 } catch (error) {
   console.error('✖ Failed:', error instanceof Error ? error.message : error);
   process.exit(1);

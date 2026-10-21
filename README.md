@@ -151,9 +151,22 @@ broken after a deploy or a host migration.
 > A local MySQL avoids the whole problem, which is why development uses one.
 
 ## The admin panel
-`/admin` is the control panel. It needs an account with the `ADMIN` role -
-there is no way to become an admin through the app, so it is provisioned out
-of band:
+
+The panel is at **`/panel-7x9k4m`**, not at `/admin`. The path is set in
+`lib/admin-path.ts`, and the folder in `app/` has to have the same name. A
+scanner that finds the login form would try `/admin` first, and a panel that
+answers there tells the world it exists - so the path is deliberately
+unguessable. The **role check is what actually protects it**; the unusual
+path is only the first line of defence.
+
+The path can be changed:
+
+1. rename the folder in `app/` to the new path
+2. change `ADMIN_PATH` in `lib/admin-path.ts`
+3. the middleware reads `ADMIN_PATH` too, so nothing else needs changing
+
+The panel needs an account with the `ADMIN` role - there is no way to become
+an admin through the app, so it is provisioned out of band:
 
 ```bash
 ADMIN_PHONE=09123456789 npm run db:seed
@@ -173,16 +186,48 @@ What the panel covers:
 
 | Section | What it manages |
 | --- | --- |
-| `/admin` | Overview: user counts, the pain distribution across all users, the signup trend |
-| `/admin/users` | Every user: role, active state, the record, the risk level |
-| `/admin/gyms` | The partner gyms in the health network |
-| `/admin/foods` | The food database the nutrition screen searches |
-| `/admin/content` | Articles, exercises and videos |
-| `/admin/settings` | The health score weights and the daily targets |
-| `/admin/audit` | Every change an admin made, with the actor and the time |
+| `/panel-7x9k4m` | Overview: user counts, the pain distribution across all users, the signup trend |
+| `/panel-7x9k4m/users` | Every user: role, active state, the record, the risk level |
+| `/panel-7x9k4m/gyms` | The partner gyms in the health network |
+| `/panel-7x9k4m/foods` | The food database the nutrition screen searches |
+| `/panel-7x9k4m/content` | Articles, exercises and videos |
+| `/panel-7x9k4m/settings` | The health score weights and the daily targets |
+| `/panel-7x9k4m/audit` | Every change an admin made, with the actor and the time |
 
 The settings are stored in the database and read by the health score, so a
 change applies to every user rather than to one browser.
+
+## Before you go live
+
+Development accounts and the development admin path are **not** for
+production. Check this list before the real launch:
+
+- [ ] **Delete the test accounts.** The accounts created for development -
+      the admin `09369913228` and the test user `09121512173` - both have the
+      password `13474393`. Remove the test user with:
+      ```bash
+      npm run admin:delete 09121512173
+      ```
+      and change the admin's password from **Profile → Password**. If you
+      would rather keep the account but take away its password:
+      ```bash
+      npm run admin:clear-password 09121512173
+      ```
+- [ ] **Change the admin path.** `/panel-7x9k4m` is a development path.
+      Pick a new one: rename the folder in `app/`, change `ADMIN_PATH` in
+      `lib/admin-path.ts`, and rebuild. The role check protects the panel
+      either way - the path only keeps scanners away.
+- [ ] **Check `ADMIN_PHONE` in `.env`.** It is the number the seed turns
+      into an admin on every run.
+- [ ] **Check the sms.ir balance** with `npm run db:doctor` - a top-up is
+      needed for the login code to be delivered.
+- [ ] **Move off the development database.** The local MySQL is for
+      development; production needs its own, with its own `DATABASE_URL`.
+- [ ] **Rotate the secrets.** `JWT_SECRET` in `.env` is the one from
+      development. Give production a new one:
+      ```bash
+      node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+      ```
 
 ## Tests
 

@@ -18,6 +18,7 @@ import { AdminPageHeader, StatusPill } from '@/components/admin/AdminUI';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { adminDelete, adminPatch, adminRequest } from '@/lib/admin-client';
 import { toPersianDigits } from '@/lib/utils';
+import { ADMIN_PATH } from '@/lib/admin-path';
 
 interface UserDetail {
   id: string;
@@ -171,7 +172,7 @@ export default function AdminUserDetailPage() {
 
     if (result.ok) {
       toast.success('حساب کاربر حذف شد');
-      router.push('/admin/users');
+      router.push(`${ADMIN_PATH}/users`);
       return;
     }
 
@@ -206,7 +207,7 @@ export default function AdminUserDetailPage() {
         description={`شماره موبایل: ${user.phoneNumber ?? '—'}`}
         actions={
           <>
-            <Link href="/admin/users" className="btn btn-secondary btn-md">
+            <Link href={`${ADMIN_PATH}/users`} className="btn btn-secondary btn-md">
               <ArrowRight className="w-4 h-4" />
               بازگشت به فهرست
             </Link>

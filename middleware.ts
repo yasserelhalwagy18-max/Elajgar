@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
+import { ADMIN_PATH } from '@/lib/admin-path';
 
 /**
  * Routes that require a signed-in user. The pages also guard themselves on
  * the client, but the client-side check is trivially bypassed - this is the
  * server-side half.
  */
-const PROTECTED_PREFIXES = ['/dashboard', '/wizard', '/nutrition', '/admin', '/checkout'];
+const PROTECTED_PREFIXES = ['/dashboard', '/wizard', '/nutrition', ADMIN_PATH, '/checkout'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

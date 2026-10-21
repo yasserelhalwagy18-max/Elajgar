@@ -136,9 +136,11 @@ exercises) and the default health-score settings.
 
 ### Create an admin account
 
-The admin panel is at `/admin`. It needs an account with the `ADMIN` role, and
-there is no way to get that role through the app - the OTP login always
-creates a regular user. Provision it with the seed:
+The admin panel is at `/panel-7x9k4m` - the path is set in
+`lib/admin-path.ts` and the folder in `app/` has to have the same name. It
+needs an account with the `ADMIN` role, and there is no way to get that role
+through the app - the OTP login always creates a regular user. Provision it
+with the seed:
 
 ```bash
 ADMIN_PHONE=09123456789 npm run db:seed

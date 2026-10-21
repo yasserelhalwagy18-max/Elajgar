@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Bell, Droplet, Activity, User, Shield, LogOut, Pencil, ChevronLeft, Phone, Verified } from 'lucide-react';
 import { cn, toPersianDigits } from '@/lib/utils';
+import { ADMIN_PATH } from '@/lib/admin-path';
 import { motion } from 'motion/react';
 import { useStore } from '../../../lib/store';
 import { useRouter } from 'next/navigation';
@@ -220,7 +221,7 @@ export default function ProfilePage() {
                 <div className="card rounded-3xl overflow-hidden flex flex-col gap-px bg-outline-variant/20">
                     {userProfile?.role === 'ADMIN' && (
                         <Link
-                            href="/admin"
+                            href={ADMIN_PATH}
                             className="w-full bg-surface-container p-4 flex items-center justify-between hover:bg-surface-variant/60 transition-colors"
                         >
                             <span className="flex items-center gap-4">
