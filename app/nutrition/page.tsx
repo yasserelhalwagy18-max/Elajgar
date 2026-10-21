@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useStore } from '@/lib/store';
 import { searchFoods, FoodItem, getAllFoods } from '@/lib/food-service';
-import { Search, Plus, Droplet, Target, Utensils, Check, Sparkles } from 'lucide-react';
+import { Search, Plus, Droplet, Target, Utensils, Check, Sparkles, Trash2 } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
 import { toDateKey, toPersianDigits, formatNumber } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
@@ -14,6 +14,7 @@ import {
   DEFAULT_NUTRITION_CONFIG,
 } from '@/lib/nutrition-targets';
 import { Modal } from '@/components/ui/Modal';
+import toast from 'react-hot-toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { MacroBar } from '@/components/ui/MacroBar';
 
@@ -26,6 +27,7 @@ export default function NutritionPage() {
   const userProfile = useStore((state) => state.userProfile);
   const updateUserProfile = useStore((state) => state.updateUserProfile);
   const logFood = useStore((state) => state.logFood);
+  const removeFood = useStore((state) => state.removeFood);
   const addWater = useStore((state) => state.addWater);
   const clearAndSetFoods = useStore((state) => state.clearAndSetFoods);
   const mounted = useMounted();
@@ -111,6 +113,15 @@ export default function NutritionPage() {
   const handleAddFood = (food: FoodItem) => {
     logFood(todayDate, food);
     setSearchQuery('');
+    // Without this the item simply disappeared from the search results and
+    // nothing said that it had been recorded.
+    toast.success(`«${food.name}» به وعده‌های امروز اضافه شد`);
+  };
+
+  /** Take a logged food back out. */
+  const handleRemoveFood = (food: FoodItem) => {
+    removeFood(todayDate, food.id);
+    toast(`«${food.name}» از وعده‌های امروز حذف شد`, { icon: null });
   };
 
   const handleGenerateMealPlan = async () => {
@@ -345,6 +356,46 @@ export default function NutritionPage() {
                 ))
             )}
         </div>
+      </section>
+
+      {/* What was actually logged today.
+          Without this the nutrition page showed only the totals, so a user
+          could not see what they had eaten or take a mistake back. */}
+      <section className="card p-6 rounded-3xl mb-6">
+        <h2 className="font-bold text-lg mb-1">غذاهای امروز</h2>
+        <p className="text-xs text-on-surface-variant mb-4">
+          {toPersianDigits(todayFoods.length)} مورد ثبت‌شده
+        </p>
+
+        {todayFoods.length === 0 ? (
+          <p className="text-sm text-on-surface-variant text-center py-4">
+            هنوز چیزی برای امروز ثبت نکرده‌اید.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {todayFoods.map((food) => (
+              <li
+                key={food.id}
+                className="flex items-center justify-between gap-3 p-3 card rounded-xl"
+              >
+                <div className="min-w-0">
+                  <p className="font-bold text-sm text-on-surface truncate">{food.name}</p>
+                  <p className="text-xs text-on-surface-variant">
+                    {formatNumber(food.calories)} کالری
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveFood(food)}
+                  aria-label={`حذف ${food.name} از وعده‌های امروز`}
+                  className="icon-btn shrink-0 hover:text-error hover:bg-error/10"
+                >
+                  <Trash2 className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* Water Tracker */}

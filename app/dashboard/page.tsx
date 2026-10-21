@@ -16,6 +16,7 @@ import {
   DEFAULT_NUTRITION_CONFIG,
 } from '@/lib/nutrition-targets';
 import { Modal } from '@/components/ui/Modal';
+import toast from 'react-hot-toast';
 import { MacroBar } from '@/components/ui/MacroBar';
 
 const ProgressReport = dynamic(() => import('@/components/ProgressReport'), { ssr: false });
@@ -244,6 +245,9 @@ export default function DashboardIndex() {
         fat: preset.fat,
     });
     setIsLogModalOpen(false);
+    // The dialog used to close and nothing else happened - there was no
+    // confirmation that the meal had been recorded.
+    toast.success(`«${preset.label}» ثبت شد`);
   };
 
   const handleDrinkWater = () => {
