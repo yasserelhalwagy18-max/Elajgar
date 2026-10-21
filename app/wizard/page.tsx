@@ -11,14 +11,25 @@ import { toPersianDigits } from '@/lib/utils';
 import { useProfileSync } from '@/hooks/use-profile-sync';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { ADMIN_PATH } from '@/lib/admin-path';
 
 import PainHeatmap from '@/components/PainHeatmap';
 export default function WizardPage() {
   const { isAuthenticated, hasHydrated } = useAuthGuard();
   const mounted = useMounted();
+  const router = useRouter();
+  const userProfile = useStore((state) => state.userProfile);
 
   // Keep the server copy of the profile in sync with the local store.
   const { isLoaded } = useProfileSync();
+
+  // An admin has no use for the questionnaire - the panel is what they came
+  // for. Sending them to the panel also saves them from answering questions
+  // about their own health.
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (userProfile?.role === 'ADMIN') router.replace(ADMIN_PATH);
+  }, [isLoaded, userProfile?.role, router]);
 
   if (!mounted || !hasHydrated) return null;
   if (!isAuthenticated) return null;

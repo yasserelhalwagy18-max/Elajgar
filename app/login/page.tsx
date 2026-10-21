@@ -8,6 +8,7 @@ import { ArrowRight, ShieldCheck, KeyRound, MessageSquare, Check } from 'lucide-
 import toast from 'react-hot-toast';
 import { normalizeDigits, toPersianDigits } from '../../lib/utils';
 import { OTP_CODE_LENGTH } from '../../lib/otp';
+import { ADMIN_PATH } from '@/lib/admin-path';
 
 /**
  * The login screen.
@@ -37,13 +38,24 @@ function LoginForm() {
   // Where to go after a successful login. The middleware sends unauthenticated
   // visitors here with a `next` parameter.
   const nextPath = searchParams.get('next');
-  const destination = nextPath && nextPath.startsWith('/') ? nextPath : '/wizard';
+
+  /**
+   * Where to go once the user is signed in.
+   *
+   * An admin has no use for the questionnaire - the panel is what they came
+   * for. A page they were sent to is honoured either way, because getting
+   * there was a deliberate click.
+   */
+  const destinationFor = (role?: string) => {
+    if (nextPath && nextPath.startsWith('/')) return nextPath;
+    return role === 'ADMIN' ? ADMIN_PATH : '/wizard';
+  };
 
   /**
    * Finish the sign-in: tell the store who the user is, pull their profile
    * and go where they were headed.
    */
-  const completeSignIn = async () => {
+  const completeSignIn = async (knownRole?: string) => {
     signIn(phoneNumber);
 
     try {
@@ -52,7 +64,11 @@ function LoginForm() {
       console.error('Failed server synchronization:', error);
     }
 
-    router.push(destination);
+    // The store now holds the profile the server sent, so the role is known
+    // even when the caller did not read it.
+    const role = knownRole ?? useStore.getState().userProfile?.role;
+
+    router.push(destinationFor(role));
   };
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -109,7 +125,7 @@ function LoginForm() {
         // first one's data.
         signIn(phoneNumber);
 
-        let profile: { hasPassword?: boolean } | null = null;
+        let profile: { hasPassword?: boolean; role?: string } | null = null;
         try {
           const me = await fetch('/api/user', { cache: 'no-store' });
           if (me.ok) profile = await me.json();
@@ -125,7 +141,7 @@ function LoginForm() {
           return;
         }
 
-        await completeSignIn();
+        await completeSignIn(profile?.role);
       } else {
         setOtpError(data.error || 'کد تایید نادرست است');
       }
