@@ -105,7 +105,7 @@ export default function DashboardIndex() {
   const todayDate = toDateKey();
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
   const isToday = selectedDate === todayDate;
-  const dayLog = userProfile?.dailyLogs?.find(l => l.date === selectedDate) || { foods: [], waterIntake: 0, activityMinutes: 0, sleepHours: 0, sleepQuality: 'fair' as const };
+  const dayLog = userProfile?.dailyLogs?.find(l => l.date === selectedDate) || { foods: [], waterIntake: 0, activityMinutes: 0, sleepHours: 0, sleepQuality: 'fair' as const, weight: 0, painIntensity: 0 };
 
   const dateOptions = React.useMemo(() => {
     const options: { key: string; weekday: string; day: string; month: string }[] = [];
@@ -173,6 +173,22 @@ export default function DashboardIndex() {
     sleepHours: dayLog.sleepHours || 0,
     sleepQuality: dayLog.sleepQuality || ('fair' as const),
   };
+
+  /**
+   * Has the user recorded anything for this day at all?
+   *
+   * Without this the score is worked out from zeros, so a brand new user
+   * opens the app and is told their health is "unfavourable" - a number
+   * that means nothing, and a poor first impression. A day with nothing in
+   * it gets an empty state instead.
+   */
+  const hasDayData =
+    consumedCalories > 0 ||
+    waterAmountMl > 0 ||
+    (dayLog.sleepHours ?? 0) > 0 ||
+    (dayLog.activityMinutes ?? 0) > 0 ||
+    (dayLog.weight ?? 0) > 0 ||
+    (dayLog.painIntensity ?? 0) > 0;
   // Score against the user's own targets so the score agrees with the goal
   // shown right next to it.
   const targetScore = calculateHealthScore({
@@ -409,7 +425,9 @@ export default function DashboardIndex() {
         <section className="card p-8 rounded-3xl flex flex-col items-center mb-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl mix-blend-multiply" aria-hidden="true"></div>
             <h2 className="text-xl text-on-surface font-bold z-10">شاخص سلامت شما</h2>
-            <p className="text-primary font-medium text-sm mb-8 z-10">{getStatusText(targetScore)}</p>
+            <p className="text-primary font-medium text-sm mb-8 z-10">
+                {hasDayData ? getStatusText(targetScore) : 'هنوز برای این روز چیزی ثبت نشده'}
+            </p>
 
             <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -436,12 +454,30 @@ export default function DashboardIndex() {
                     </g>
                 </svg>
                 <div className="w-40 h-40 bg-surface-container rounded-full border-4 border-surface-container shadow-2xl flex flex-col items-center justify-center">
-                    <motion.span className="text-6xl font-black text-primary" aria-live="polite">
-                      {roundedCount}
-                    </motion.span>
-                    <span className="text-sm font-bold text-on-surface-variant">از ۱۰۰</span>
+                    {hasDayData ? (
+                        <>
+                            <motion.span className="text-6xl font-black text-primary" aria-live="polite">
+                                {roundedCount}
+                            </motion.span>
+                            <span className="text-sm font-bold text-on-surface-variant">
+                                {toPersianDigits(100)}
+                            </span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-5xl font-black text-on-surface-variant/40" aria-hidden="true">—</span>
+                            <span className="text-sm font-bold text-on-surface-variant mt-1">بدون امتیاز</span>
+                        </>
+                    )}
                 </div>
             </motion.div>
+
+            {/* A day with nothing in it gets a prompt instead of a number. */}
+            {!hasDayData && (
+                <p className="text-sm text-on-surface-variant text-center z-10 max-w-sm mt-2">
+                    برای دیدن شاخص سلامت، غذای روز و آب و فعالیت و خواب این روز را ثبت کنید.
+                </p>
+            )}
         </section>
 
         {/* Quick Metrics Grid */}

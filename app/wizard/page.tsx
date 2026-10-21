@@ -12,6 +12,7 @@ import { useProfileSync } from '@/hooks/use-profile-sync';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { ADMIN_PATH } from '@/lib/admin-path';
+import { WIZARD_LAST_STEP } from '@/lib/wizard';
 
 import PainHeatmap from '@/components/PainHeatmap';
 export default function WizardPage() {
@@ -121,7 +122,7 @@ function WizardForm() {
       if (isNaN(parsedWeight) || parsedWeight < 10 || parsedWeight > 300) newErrors.weight = 'وزن باید بین ۱۰ تا ۳۰۰ کیلوگرم باشد';
     } else if (step === 5) {
       if ((userProfile?.painZones?.length || 0) === 0) newErrors.painZones = 'حداقل یک ناحیه درد باید انتخاب شود';
-    } else if (step === 6) {
+    } else if (step === WIZARD_LAST_STEP) {
       const parsedSittingHours = parseInt(questionnaireAnswers.sittingHoursPerDay);
       if (isNaN(parsedSittingHours) || parsedSittingHours < 0 || parsedSittingHours > 24) newErrors.sittingHoursPerDay = 'ساعات نشستن باید بین ۰ تا ۲۴ باشد';
       const parsedExerciseDays = parseInt(questionnaireAnswers.exerciseDaysPerWeek);
@@ -166,7 +167,7 @@ function WizardForm() {
   const nextStep = () => {
     if (!validateStep()) return;
 
-    if (step < 6) {
+    if (step < WIZARD_LAST_STEP) {
       saveCurrentStepData();
       setWizardStep(step + 1);
     } else {
@@ -202,7 +203,7 @@ function WizardForm() {
       });
     } else if (step === 5) {
       // Zustand already has it updated via PainHeatmap onClick
-    } else if (step === 6) {
+    } else if (step === WIZARD_LAST_STEP) {
       updateUserProfile({
         questionnaireAnswers: {
             ...questionnaireAnswers,
@@ -248,14 +249,14 @@ function WizardForm() {
         <div
           role="progressbar"
           aria-valuemin={1}
-          aria-valuemax={6}
+          aria-valuemax={WIZARD_LAST_STEP}
           aria-valuenow={step}
           aria-label={`مرحله ${toPersianDigits(step)} از ۶`}
           className="h-1.5 w-full rounded-full bg-surface-variant overflow-hidden mb-6"
         >
           <div
             className="h-full rounded-full bg-primary transition-all duration-500"
-            style={{ width: `${(step / 6) * 100}%` }}
+            style={{ width: `${(step / WIZARD_LAST_STEP) * 100}%` }}
           />
         </div>
 
@@ -483,7 +484,7 @@ function WizardForm() {
             </motion.div>
         )}
 
-        {step === 6 && (
+        {step === WIZARD_LAST_STEP && (
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -519,7 +520,7 @@ function WizardForm() {
               (step === 4 && !termsAccepted) ? "btn-secondary" : "btn-primary"
             )}
           >
-            {step === 6 ? 'تکمیل' : 'بعدی'} {step < 6 && <ArrowLeft className="w-4 h-4" />}
+            {step === WIZARD_LAST_STEP ? 'تکمیل' : 'بعدی'} {step < WIZARD_LAST_STEP && <ArrowLeft className="w-4 h-4" />}
           </button>
         </div>
       </div>

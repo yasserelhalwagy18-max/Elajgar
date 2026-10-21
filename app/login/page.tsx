@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { normalizeDigits, toPersianDigits } from '../../lib/utils';
 import { OTP_CODE_LENGTH } from '../../lib/otp';
 import { ADMIN_PATH } from '@/lib/admin-path';
+import { isWizardComplete } from '@/lib/wizard';
 
 /**
  * The login screen.
@@ -42,20 +43,31 @@ function LoginForm() {
   /**
    * Where to go once the user is signed in.
    *
-   * An admin has no use for the questionnaire - the panel is what they came
-   * for. A page they were sent to is honoured either way, because getting
-   * there was a deliberate click.
+   * - An admin has no use for the questionnaire - the panel is what they
+   *   came for.
+   * - A user who has already answered the questionnaire has no use for it
+   *   either - the dashboard is where the answers pay off.
+   * - Anyone else is sent to the wizard, which opens at the step they left
+   *   it, so they carry on where they stopped.
+   *
+   * A page they were sent to is honoured either way, because getting there
+   * was a deliberate click.
    */
-  const destinationFor = (role?: string) => {
+  const destinationFor = (role?: string, wizardStep?: number | null) => {
     if (nextPath && nextPath.startsWith('/')) return nextPath;
-    return role === 'ADMIN' ? ADMIN_PATH : '/wizard';
+    if (role === 'ADMIN') return ADMIN_PATH;
+    if (isWizardComplete(wizardStep)) return '/dashboard';
+    return '/wizard';
   };
 
   /**
    * Finish the sign-in: tell the store who the user is, pull their profile
    * and go where they were headed.
    */
-  const completeSignIn = async (knownRole?: string) => {
+  const completeSignIn = async (knownProfile?: {
+    role?: string;
+    currentWizardStep?: number | null;
+  }) => {
     signIn(phoneNumber);
 
     try {
@@ -64,11 +76,11 @@ function LoginForm() {
       console.error('Failed server synchronization:', error);
     }
 
-    // The store now holds the profile the server sent, so the role is known
-    // even when the caller did not read it.
-    const role = knownRole ?? useStore.getState().userProfile?.role;
+    // The store now holds the profile the server sent, so the role and the
+    // step are known even when the caller did not read them.
+    const profile = knownProfile ?? useStore.getState().userProfile;
 
-    router.push(destinationFor(role));
+    router.push(destinationFor(profile?.role, profile?.currentWizardStep));
   };
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -125,7 +137,7 @@ function LoginForm() {
         // first one's data.
         signIn(phoneNumber);
 
-        let profile: { hasPassword?: boolean; role?: string } | null = null;
+        let profile: { hasPassword?: boolean; role?: string; currentWizardStep?: number | null } | null = null;
         try {
           const me = await fetch('/api/user', { cache: 'no-store' });
           if (me.ok) profile = await me.json();
@@ -141,7 +153,7 @@ function LoginForm() {
           return;
         }
 
-        await completeSignIn(profile?.role);
+        await completeSignIn(profile ?? undefined);
       } else {
         setOtpError(data.error || 'کد تایید نادرست است');
       }
