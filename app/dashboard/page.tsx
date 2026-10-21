@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'motion/react';
 import { Plus, Droplet, Activity, Scale, Activity as Pulse, Check, User } from 'lucide-react';
-import { cn, toDateKey, toPersianDigits, formatNumber } from '@/lib/utils';
+import { cn, toDateKey, toPersianDigits, formatNumber, normalizeDigits } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import dynamic from 'next/dynamic';
@@ -683,12 +683,10 @@ export default function DashboardIndex() {
                         <label htmlFor="daily-sleep-hours" className="block text-xs font-bold mb-1 text-on-surface-variant">ساعت خواب</label>
                         <input
                             id="daily-sleep-hours"
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            max="24"
+                            type="text"
+                            inputMode="decimal"
                             value={sleepHours}
-                            onChange={e => setSleepHours(parseFloat(e.target.value) || 0)}
+                            onChange={e => setSleepHours(parseFloat(normalizeDigits(e.target.value)) || 0)}
                             aria-invalid={!!sleepError}
                             aria-describedby={sleepError ? 'daily-sleep-hours-error' : undefined}
                             className={`input text-center ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
@@ -703,11 +701,10 @@ export default function DashboardIndex() {
                         <label htmlFor="daily-activity-minutes" className="block text-xs font-bold mb-1 text-on-surface-variant">فعالیت (دقیقه)</label>
                         <input
                             id="daily-activity-minutes"
-                            type="number"
-                            min="0"
-                            max="1440"
+                            type="text"
+                            inputMode="numeric"
                             value={activityMinutes}
-                            onChange={e => setActivityMinutes(parseFloat(e.target.value) || 0)}
+                            onChange={e => setActivityMinutes(parseFloat(normalizeDigits(e.target.value)) || 0)}
                             aria-invalid={!!activityError}
                             aria-describedby={activityError ? 'daily-activity-minutes-error' : undefined}
                             className={`input text-center ${activityError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
@@ -722,13 +719,10 @@ export default function DashboardIndex() {
                         <label htmlFor="daily-weight" className="block text-xs font-bold mb-1 text-on-surface-variant">وزن امروز (کیلوگرم)</label>
                         <input
                             id="daily-weight"
-                            type="number"
-                            step="0.1"
-                            min="20"
-                            max="300"
+                            type="text"
                             inputMode="decimal"
                             value={dailyWeight}
-                            onChange={e => setDailyWeight(e.target.value)}
+                            onChange={e => setDailyWeight(normalizeDigits(e.target.value))}
                             placeholder={userProfile?.weight ? toPersianDigits(String(userProfile.weight)) : '—'}
                             aria-invalid={!!weightError}
                             aria-describedby={weightError ? 'daily-weight-error' : undefined}
@@ -744,13 +738,10 @@ export default function DashboardIndex() {
                         <label htmlFor="daily-pain" className="block text-xs font-bold mb-1 text-on-surface-variant">شدت درد امروز (۰-۱۰)</label>
                         <input
                             id="daily-pain"
-                            type="number"
-                            step="1"
-                            min="0"
-                            max="10"
+                            type="text"
                             inputMode="numeric"
                             value={dailyPain}
-                            onChange={e => setDailyPain(e.target.value)}
+                            onChange={e => setDailyPain(normalizeDigits(e.target.value))}
                             placeholder="—"
                             aria-invalid={!!painError}
                             aria-describedby={painError ? 'daily-pain-error' : undefined}
