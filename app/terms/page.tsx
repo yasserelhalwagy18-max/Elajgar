@@ -7,11 +7,15 @@ export default function TermsPage() {
   const router = useRouter();
 
   const handleBack = () => {
-    if (window.history.length <= 1) {
+    // `history.length` counts the whole tab, so a page that was opened
+    // directly - in a new tab, from a bookmark, from a link - still has an
+    // entry before it: the blank page the browser started on. Going back
+    // there shows nothing at all, so the home page is the better answer.
+    if (window.history.length <= 1 || !document.referrer) {
       router.push('/');
-    } else {
-      router.back();
+      return;
     }
+    router.back();
   };
 
   return (
