@@ -255,7 +255,7 @@ function WizardForm() {
           className="h-1.5 w-full rounded-full bg-surface-variant overflow-hidden mb-6"
         >
           <div
-            className="h-full rounded-full bg-primary transition-all duration-500"
+            className="h-full rounded-full bg-primary transition-[width] duration-500"
             style={{ width: `${(step / WIZARD_LAST_STEP) * 100}%` }}
           />
         </div>

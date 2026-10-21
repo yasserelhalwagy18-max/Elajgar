@@ -58,7 +58,7 @@ export function ConfirmDialog({
     >
       <div className="flex gap-3">
         <div className="shrink-0 w-10 h-10 rounded-full bg-warning-container flex items-center justify-center">
-          <AlertTriangle className="w-5 h-5 text-warning" />
+          <AlertTriangle className="w-5 h-5 text-warning" aria-hidden="true" />
         </div>
         <div className="text-sm text-on-surface-variant leading-relaxed">{message}</div>
       </div>

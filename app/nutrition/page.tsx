@@ -431,7 +431,7 @@ export default function NutritionPage() {
                    className="w-8 h-12 rounded-b-xl rounded-t-sm border-2 border-water/40 bg-surface-variant/40 relative overflow-hidden"
                  >
                    <div
-                     className="absolute bottom-0 inset-x-0 bg-water transition-all duration-500"
+                     className="absolute bottom-0 inset-x-0 bg-water transition-[height] duration-500"
                      style={{ height: `${fill * 100}%` }}
                    />
                  </div>
@@ -461,7 +461,7 @@ export default function NutritionPage() {
                         setGoalModalOpen(false);
                     }}
                     aria-pressed={userProfile?.nutritionGoal === goal}
-                    className={`flex justify-between items-center p-4 rounded-xl border transition-all ${
+                    className={`flex justify-between items-center p-4 rounded-xl border transition-colors ${
                         userProfile?.nutritionGoal === goal
                             ? 'border-primary bg-primary/10 text-primary-dark font-bold'
                             : 'border-outline-variant bg-surface-container text-on-surface hover:border-primary/40'

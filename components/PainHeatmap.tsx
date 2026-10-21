@@ -122,7 +122,7 @@ export default function PainHeatmap({
                 >
                   <span
                     className={cn(
-                      'w-5 h-5 rounded-full transition-all',
+                      'w-5 h-5 rounded-full transition-transform',
                       isSelected
                         ? 'scale-125 border-2 border-error shadow-[0_0_15px_rgba(220,38,38,0.8)] bg-error/30'
                         : 'border border-primary/50 bg-white/40 shadow-[0_0_8px_rgba(37,99,235,0.3)] hover:scale-125 hover:border-primary hover:bg-white/60 hover:shadow-[0_0_12px_rgba(37,99,235,0.5)]'

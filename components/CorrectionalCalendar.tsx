@@ -317,7 +317,7 @@ export function CorrectionalCalendar() {
                                     aria-pressed={isSelected}
                                     aria-label={`${day.weekday} ${day.label}${sessionForDay ? ` - ${sessionForDay.text}` : ''}`}
                                     className={cn(
-                                        'w-11 h-11 rounded-xl font-bold flex items-center justify-center transition-all border-2 relative',
+                                        'w-11 h-11 rounded-xl font-bold flex items-center justify-center transition-[transform,background-color,border-color] border-2 relative',
                                         // Selection is a ring + scale, so it stays
                                         // readable on top of any session tint.
                                         isSelected ? 'border-primary scale-105 shadow-md ring-2 ring-primary/25' : 'border-transparent',

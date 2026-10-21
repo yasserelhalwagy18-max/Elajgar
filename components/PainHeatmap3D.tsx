@@ -210,7 +210,7 @@ function Marker({ data }: { data: PositionedRegion }) {
                 <Html center distanceFactor={4} zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
                     <div
                         dir="rtl"
-                        className="bg-on-surface/90 backdrop-blur-md border border-white/10 text-white rounded-lg px-4 py-2 shadow-2xl min-w-max transform transition-all"
+                        className="bg-on-surface/90 backdrop-blur-md border border-white/10 text-white rounded-lg px-4 py-2 shadow-2xl min-w-max transition-transform"
                         style={{ boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' }}
                     >
                         <div className="font-bold text-sm mb-1">{data.label}</div>
