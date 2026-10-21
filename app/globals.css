@@ -441,7 +441,11 @@ body {
 }
 
 /* A soft fade on the trailing edge of a horizontal rail, so it is obvious
-   that there is more content to scroll to. */
+   that there is more content to scroll to.
+
+   The app reads right-to-left, so a rail starts at its right-hand end and
+   the content that is cut off is on the LEFT. The transparent end of the
+   gradient therefore has to be on the left as well. */
 .rail-fade {
   -webkit-mask-image: linear-gradient(to left, #000 85%, transparent 100%);
   mask-image: linear-gradient(to left, #000 85%, transparent 100%);

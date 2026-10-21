@@ -543,7 +543,7 @@ export default function DashboardIndex() {
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Calorie */}
             <div id="calorie-section" className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden">
-                 <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" aria-hidden="true"></div>
+                 <div className="absolute top-0 end-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" aria-hidden="true"></div>
                  <div className="flex justify-between items-start z-10 w-full">
                     <div>
                         <h3 className="font-bold text-lg">کالری {dayWord}</h3>
@@ -603,7 +603,7 @@ export default function DashboardIndex() {
 
             {/* Hydration */}
             <div id="water-section" className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col relative overflow-hidden min-h-[160px]">
-                <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-water/10 to-transparent blur-sm" aria-hidden="true"></div>
+                <div className="absolute top-0 end-0 w-full h-1/2 bg-gradient-to-b from-water/10 to-transparent blur-sm" aria-hidden="true"></div>
                 <div className="flex justify-between items-start z-10 w-full mb-2">
                     <div>
                         <h3 className="font-bold text-on-surface mb-1">آب مصرفی</h3>

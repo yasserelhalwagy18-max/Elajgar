@@ -261,7 +261,7 @@ export default function EducationPage() {
 
                                 <div className="text-xl font-bold text-primary mb-6 mt-auto">
                                     {formatNumber(plan.price)}
-                                    <span className="text-sm font-normal text-on-surface-variant mr-1">تومان / ماه</span>
+                                    <span className="text-sm font-normal text-on-surface-variant me-1">تومان / ماه</span>
                                 </div>
 
                                 {plan.features.length > 0 && (
