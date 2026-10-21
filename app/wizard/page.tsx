@@ -279,9 +279,15 @@ function WizardForm() {
                   setFullName(e.target.value);
                   if (errors.fullName) setErrors({ ...errors, fullName: '' });
                 }}
-                className={`input ${errors.fullName ? 'border-error' : ''}`} aria-invalid={!!errors.fullName}
+                className={`input ${errors.fullName ? 'border-error' : ''}`}
+                aria-invalid={!!errors.fullName}
+                aria-describedby={errors.fullName ? 'wizard-full-name-error' : undefined}
               />
-              {errors.fullName && <p className="text-error text-xs mt-1 error-message">{errors.fullName}</p>}
+              {errors.fullName && (
+                <p id="wizard-full-name-error" role="alert" className="text-error text-xs mt-1 error-message">
+                  {errors.fullName}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-age">سن</label>
@@ -293,9 +299,15 @@ function WizardForm() {
                   setAge(e.target.value);
                   if (errors.age) setErrors({ ...errors, age: '' });
                 }}
-                className={`input ${errors.age ? 'border-error' : ''}`} aria-invalid={!!errors.age}
+                className={`input ${errors.age ? 'border-error' : ''}`}
+                aria-invalid={!!errors.age}
+                aria-describedby={errors.age ? 'wizard-age-error' : undefined}
               />
-              {errors.age && <p className="text-error text-xs mt-1 error-message">{errors.age}</p>}
+              {errors.age && (
+                <p id="wizard-age-error" role="alert" className="text-error text-xs mt-1 error-message">
+                  {errors.age}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-gender">جنسیت</label>
@@ -323,9 +335,15 @@ function WizardForm() {
                     setHeight(e.target.value);
                     if (errors.height) setErrors({ ...errors, height: '' });
                   }}
-                  className={`input ${errors.height ? 'border-error' : ''}`} aria-invalid={!!errors.height}
+                  className={`input ${errors.height ? 'border-error' : ''}`}
+                  aria-invalid={!!errors.height}
+                  aria-describedby={errors.height ? 'wizard-height-error' : undefined}
                 />
-                {errors.height && <p className="text-error text-xs mt-1 error-message">{errors.height}</p>}
+                {errors.height && (
+                  <p id="wizard-height-error" role="alert" className="text-error text-xs mt-1 error-message">
+                    {errors.height}
+                  </p>
+                )}
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1" htmlFor="wizard-weight">وزن (کیلوگرم)</label>
@@ -336,9 +354,15 @@ function WizardForm() {
                     setWeight(e.target.value);
                     if (errors.weight) setErrors({ ...errors, weight: '' });
                   }}
-                  className={`input ${errors.weight ? 'border-error' : ''}`} aria-invalid={!!errors.weight}
+                  className={`input ${errors.weight ? 'border-error' : ''}`}
+                  aria-invalid={!!errors.weight}
+                  aria-describedby={errors.weight ? 'wizard-weight-error' : undefined}
                 />
-                {errors.weight && <p className="text-error text-xs mt-1 error-message">{errors.weight}</p>}
+                {errors.weight && (
+                  <p id="wizard-weight-error" role="alert" className="text-error text-xs mt-1 error-message">
+                    {errors.weight}
+                  </p>
+                )}
               </div>
             </div>
             <div>
@@ -479,8 +503,14 @@ function WizardForm() {
                 exit={{ opacity: 0, x: -20 }}
                 className="relative"
             >
-                <Step5BodyMap />
-                {errors.painZones && <div className="absolute bottom-4 right-0 left-0 text-center"><p className="text-error text-sm font-bold bg-surface-container inline-block px-4 py-1 rounded-full shadow-md error-message">{errors.painZones}</p></div>}
+                <Step5BodyMap errorId={errors.painZones ? 'wizard-pain-zones-error' : undefined} />
+                {errors.painZones && (
+                  <div className="absolute bottom-4 right-0 left-0 text-center">
+                    <p id="wizard-pain-zones-error" role="alert" className="text-error text-sm font-bold bg-surface-container inline-block px-4 py-1 rounded-full shadow-md error-message">
+                      {errors.painZones}
+                    </p>
+                  </div>
+                )}
             </motion.div>
         )}
 
@@ -555,7 +585,7 @@ function Step4Terms({ termsAccepted, setTermsAccepted }: { termsAccepted: boolea
     );
 }
 
-function Step5BodyMap() {
+function Step5BodyMap({ errorId }: { errorId?: string }) {
     const [view, setView] = useState<'front' | 'back'>('back');
 
     return (
@@ -611,7 +641,7 @@ function Step5BodyMap() {
             </div>
 
             <div className="flex-1 w-full flex items-center justify-center">
-                <PainHeatmap view={view} />
+                <PainHeatmap view={view} describedById={errorId} />
             </div>
         </motion.div>
     );
@@ -658,6 +688,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                 <label className="block">
                     <span className="text-sm font-medium mb-1 block">مدت زمان درد</span>
                     <input
+                        id="wizard-duration"
                         type="text"
                         name="duration"
                         value={answers.duration}
@@ -670,65 +701,137 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">تشدید با فعالیت</span>
-                        <select name="aggravatedByActivity" value={answers.aggravatedByActivity} onChange={handleChange} className={`select w-full ${errors?.aggravatedByActivity ? 'border-error' : ''}`}>
+                        <select
+                            id="wizard-aggravated-by-activity"
+                            name="aggravatedByActivity"
+                            value={answers.aggravatedByActivity}
+                            onChange={handleChange}
+                            aria-invalid={!!errors?.aggravatedByActivity}
+                            aria-describedby={errors?.aggravatedByActivity ? 'wizard-aggravated-by-activity-error' : undefined}
+                            className={`select w-full ${errors?.aggravatedByActivity ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
-                        {errors?.aggravatedByActivity && <p className="text-error text-xs mt-1 error-message">{errors.aggravatedByActivity}</p>}
+                        {errors?.aggravatedByActivity && (
+                            <p id="wizard-aggravated-by-activity-error" role="alert" className="text-error text-xs mt-1 error-message">
+                                {errors.aggravatedByActivity}
+                            </p>
+                        )}
                     </label>
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">تسکین با استراحت</span>
-                        <select name="relievedByRest" value={answers.relievedByRest} onChange={handleChange} className={`select w-full ${errors?.relievedByRest ? 'border-error' : ''}`}>
+                        <select
+                            id="wizard-relieved-by-rest"
+                            name="relievedByRest"
+                            value={answers.relievedByRest}
+                            onChange={handleChange}
+                            aria-invalid={!!errors?.relievedByRest}
+                            aria-describedby={errors?.relievedByRest ? 'wizard-relieved-by-rest-error' : undefined}
+                            className={`select w-full ${errors?.relievedByRest ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
-                        {errors?.relievedByRest && <p className="text-error text-xs mt-1 error-message">{errors.relievedByRest}</p>}
+                        {errors?.relievedByRest && (
+                            <p id="wizard-relieved-by-rest-error" role="alert" className="text-error text-xs mt-1 error-message">
+                                {errors.relievedByRest}
+                            </p>
+                        )}
                     </label>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">سابقه آسیب</span>
-                        <select name="injuryHistory" value={answers.injuryHistory} onChange={handleChange} className={`select w-full ${errors?.injuryHistory ? 'border-error' : ''}`}>
+                        <select
+                            id="wizard-injury-history"
+                            name="injuryHistory"
+                            value={answers.injuryHistory}
+                            onChange={handleChange}
+                            aria-invalid={!!errors?.injuryHistory}
+                            aria-describedby={errors?.injuryHistory ? 'wizard-injury-history-error' : undefined}
+                            className={`select w-full ${errors?.injuryHistory ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
-                        {errors?.injuryHistory && <p className="text-error text-xs mt-1 error-message">{errors.injuryHistory}</p>}
+                        {errors?.injuryHistory && (
+                            <p id="wizard-injury-history-error" role="alert" className="text-error text-xs mt-1 error-message">
+                                {errors.injuryHistory}
+                            </p>
+                        )}
                     </label>
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">سابقه جراحی</span>
-                        <select name="surgeryHistory" value={answers.surgeryHistory} onChange={handleChange} className={`select w-full ${errors?.surgeryHistory ? 'border-error' : ''}`}>
+                        <select
+                            id="wizard-surgery-history"
+                            name="surgeryHistory"
+                            value={answers.surgeryHistory}
+                            onChange={handleChange}
+                            aria-invalid={!!errors?.surgeryHistory}
+                            aria-describedby={errors?.surgeryHistory ? 'wizard-surgery-history-error' : undefined}
+                            className={`select w-full ${errors?.surgeryHistory ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
-                        {errors?.surgeryHistory && <p className="text-error text-xs mt-1 error-message">{errors.surgeryHistory}</p>}
+                        {errors?.surgeryHistory && (
+                            <p id="wizard-surgery-history-error" role="alert" className="text-error text-xs mt-1 error-message">
+                                {errors.surgeryHistory}
+                            </p>
+                        )}
                     </label>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">کیفیت خواب</span>
-                        <select name="sleepQuality" value={answers.sleepQuality} onChange={handleChange} className={`select w-full ${errors?.sleepQuality ? 'border-error' : ''}`}>
+                        <select
+                            id="wizard-sleep-quality"
+                            name="sleepQuality"
+                            value={answers.sleepQuality}
+                            onChange={handleChange}
+                            aria-invalid={!!errors?.sleepQuality}
+                            aria-describedby={errors?.sleepQuality ? 'wizard-sleep-quality-error' : undefined}
+                            className={`select w-full ${errors?.sleepQuality ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="بد">بد</option>
                             <option value="متوسط">متوسط</option>
                             <option value="خوب">خوب</option>
                         </select>
-                        {errors?.sleepQuality && <p className="text-error text-xs mt-1 error-message">{errors.sleepQuality}</p>}
+                        {errors?.sleepQuality && (
+                            <p id="wizard-sleep-quality-error" role="alert" className="text-error text-xs mt-1 error-message">
+                                {errors.sleepQuality}
+                            </p>
+                        )}
                     </label>
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">سطح استرس</span>
-                        <select name="stressLevel" value={answers.stressLevel} onChange={handleChange} className={`select w-full ${errors?.stressLevel ? 'border-error' : ''}`}>
+                        <select
+                            id="wizard-stress-level"
+                            name="stressLevel"
+                            value={answers.stressLevel}
+                            onChange={handleChange}
+                            aria-invalid={!!errors?.stressLevel}
+                            aria-describedby={errors?.stressLevel ? 'wizard-stress-level-error' : undefined}
+                            className={`select w-full ${errors?.stressLevel ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="کم">کم</option>
                             <option value="متوسط">متوسط</option>
                             <option value="زیاد">زیاد</option>
                         </select>
-                        {errors?.stressLevel && <p className="text-error text-xs mt-1 error-message">{errors.stressLevel}</p>}
+                        {errors?.stressLevel && (
+                            <p id="wizard-stress-level-error" role="alert" className="text-error text-xs mt-1 error-message">
+                                {errors.stressLevel}
+                            </p>
+                        )}
                     </label>
                 </div>
 
@@ -736,28 +839,42 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">ساعات نشستن در روز</span>
                         <input
+                            id="wizard-sitting-hours"
                             type="number"
                             name="sittingHoursPerDay"
                             value={answers.sittingHoursPerDay}
                             onChange={handleChange}
+                            aria-invalid={!!errors?.sittingHoursPerDay}
+                            aria-describedby={errors?.sittingHoursPerDay ? 'wizard-sitting-hours-error' : undefined}
                             className={`input w-full ${errors?.sittingHoursPerDay ? 'border-error focus:ring-error' : ''}`}
                             min="0"
                             max="24"
                         />
-                        {errors?.sittingHoursPerDay && <p className="text-error text-xs mt-1 error-message">{errors.sittingHoursPerDay}</p>}
+                        {errors?.sittingHoursPerDay && (
+                            <p id="wizard-sitting-hours-error" role="alert" className="text-error text-xs mt-1 error-message">
+                                {errors.sittingHoursPerDay}
+                            </p>
+                        )}
                     </label>
                     <label className="block">
                         <span className="text-sm font-medium mb-1 block">روزهای ورزش در هفته</span>
                         <input
+                            id="wizard-exercise-days"
                             type="number"
                             name="exerciseDaysPerWeek"
                             value={answers.exerciseDaysPerWeek}
                             onChange={handleChange}
+                            aria-invalid={!!errors?.exerciseDaysPerWeek}
+                            aria-describedby={errors?.exerciseDaysPerWeek ? 'wizard-exercise-days-error' : undefined}
                             className={`input w-full ${errors?.exerciseDaysPerWeek ? 'border-error focus:ring-error' : ''}`}
                             min="0"
                             max="7"
                         />
-                        {errors?.exerciseDaysPerWeek && <p className="text-error text-xs mt-1 error-message">{errors.exerciseDaysPerWeek}</p>}
+                        {errors?.exerciseDaysPerWeek && (
+                            <p id="wizard-exercise-days-error" role="alert" className="text-error text-xs mt-1 error-message">
+                                {errors.exerciseDaysPerWeek}
+                            </p>
+                        )}
                     </label>
                 </div>
             </div>
