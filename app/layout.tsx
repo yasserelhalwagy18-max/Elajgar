@@ -1,5 +1,6 @@
 import type {Metadata, Viewport} from 'next';
 import { Toaster } from 'react-hot-toast';
+import { MotionConfig } from 'motion/react';
 import { vazirmatnArabic, vazirmatnLatin } from '@/lib/fonts';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
@@ -57,9 +58,17 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <meta name="description" content={APP_DESCRIPTION} />
       </head>
       <body className="font-sans antialiased bg-surface text-on-surface" suppressHydrationWarning>
-        {/* A single `main` landmark per page - screen reader users rely on
-            it to jump past the navigation. */}
-        <main id="main-content">{children}</main>
+        {/* `reducedMotion="user"` makes every `motion` animation in the app -
+            the wizard's step slides, the dialogs, the health-score count-up -
+            respect the operating system's "reduce motion" setting. The global
+            CSS rule in `globals.css` cannot do this: Motion drives opacity
+            and transform from JavaScript, not from a CSS animation, so the
+            `animation-duration: 0.001ms` override never reaches it. */}
+        <MotionConfig reducedMotion="user">
+          {/* A single `main` landmark per page - screen reader users rely on
+              it to jump past the navigation. */}
+          <main id="main-content">{children}</main>
+        </MotionConfig>
         <Toaster
           position="top-center"
           toastOptions={{
