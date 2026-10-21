@@ -7,7 +7,7 @@ import { UserProfile } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ShieldAlert, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toPersianDigits } from '@/lib/utils';
+import { normalizeDigits, toPersianDigits } from '@/lib/utils';
 import { useProfileSync } from '@/hooks/use-profile-sync';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
@@ -293,10 +293,11 @@ function WizardForm() {
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-age">سن</label>
               <input
                 id="wizard-age"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={age}
                 onChange={(e) => {
-                  setAge(e.target.value);
+                  setAge(normalizeDigits(e.target.value));
                   if (errors.age) setErrors({ ...errors, age: '' });
                 }}
                 className={`input ${errors.age ? 'border-error' : ''}`}
@@ -329,10 +330,11 @@ function WizardForm() {
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1" htmlFor="wizard-height">قد (سانتی‌متر)</label>
                 <input id="wizard-height"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={height}
                   onChange={(e) => {
-                    setHeight(e.target.value);
+                    setHeight(normalizeDigits(e.target.value));
                     if (errors.height) setErrors({ ...errors, height: '' });
                   }}
                   className={`input ${errors.height ? 'border-error' : ''}`}
@@ -348,10 +350,11 @@ function WizardForm() {
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1" htmlFor="wizard-weight">وزن (کیلوگرم)</label>
                 <input id="wizard-weight"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={weight}
                   onChange={(e) => {
-                    setWeight(e.target.value);
+                    setWeight(normalizeDigits(e.target.value));
                     if (errors.weight) setErrors({ ...errors, weight: '' });
                   }}
                   className={`input ${errors.weight ? 'border-error' : ''}`}
@@ -681,6 +684,21 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
         }
     };
 
+    /**
+     * The numeric fields only accept digits, and a Persian keyboard types
+     * Persian-Indic ones. `normalizeDigits` turns them into Latin digits so
+     * `parseInt` still works. It is NOT used by `handleChange`, because that
+     * also handles free text (the "how long have you had it" field), where
+     * stripping spaces would ruin the answer.
+     */
+    const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name } = e.target;
+        setAnswers(prev => ({ ...prev, [name]: normalizeDigits(e.target.value) }));
+        if (errors && errors[name] && setErrors) {
+            setErrors({ ...errors, [name]: '' });
+        }
+    };
+
     return (
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col h-full">
             <h2 className="text-2xl font-bold mb-6 text-on-surface">پرسشنامه هوشمند درد</h2>
@@ -840,10 +858,11 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                         <span className="text-sm font-medium mb-1 block">ساعات نشستن در روز</span>
                         <input
                             id="wizard-sitting-hours"
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
                             name="sittingHoursPerDay"
                             value={answers.sittingHoursPerDay}
-                            onChange={handleChange}
+                            onChange={handleNumericChange}
                             aria-invalid={!!errors?.sittingHoursPerDay}
                             aria-describedby={errors?.sittingHoursPerDay ? 'wizard-sitting-hours-error' : undefined}
                             className={`input w-full ${errors?.sittingHoursPerDay ? 'border-error focus:ring-error' : ''}`}
@@ -860,10 +879,11 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                         <span className="text-sm font-medium mb-1 block">روزهای ورزش در هفته</span>
                         <input
                             id="wizard-exercise-days"
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
                             name="exerciseDaysPerWeek"
                             value={answers.exerciseDaysPerWeek}
-                            onChange={handleChange}
+                            onChange={handleNumericChange}
                             aria-invalid={!!errors?.exerciseDaysPerWeek}
                             aria-describedby={errors?.exerciseDaysPerWeek ? 'wizard-exercise-days-error' : undefined}
                             className={`input w-full ${errors?.exerciseDaysPerWeek ? 'border-error focus:ring-error' : ''}`}

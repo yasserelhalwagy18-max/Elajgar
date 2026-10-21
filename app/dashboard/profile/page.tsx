@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Bell, Droplet, Activity, User, Shield, LogOut, Pencil, ChevronLeft, Phone, Verified } from 'lucide-react';
-import { cn, toPersianDigits } from '@/lib/utils';
+import { cn, normalizeDigits, toPersianDigits } from '@/lib/utils';
 import { ADMIN_PATH } from '@/lib/admin-path';
 import { motion } from 'motion/react';
 import { useStore } from '../../../lib/store';
@@ -679,7 +679,14 @@ function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="profile-age">سن</label>
-                    <input id="profile-age" type="number" value={age} onChange={(e) => setAge(e.target.value)} className="input" />
+                    <input
+                        id="profile-age"
+                        type="text"
+                        inputMode="numeric"
+                        value={age}
+                        onChange={(e) => setAge(normalizeDigits(e.target.value))}
+                        className="input"
+                    />
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="profile-gender">جنسیت</label>
@@ -690,11 +697,25 @@ function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="profile-height">قد (سانتی‌متر)</label>
-                    <input id="profile-height" type="number" value={height} onChange={(e) => setHeight(e.target.value)} className="input" />
+                    <input
+                        id="profile-height"
+                        type="text"
+                        inputMode="numeric"
+                        value={height}
+                        onChange={(e) => setHeight(normalizeDigits(e.target.value))}
+                        className="input"
+                    />
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="profile-weight">وزن (کیلوگرم)</label>
-                    <input id="profile-weight" type="number" value={weight} onChange={(e) => setWeight(e.target.value)} className="input" />
+                    <input
+                        id="profile-weight"
+                        type="text"
+                        inputMode="numeric"
+                        value={weight}
+                        onChange={(e) => setWeight(normalizeDigits(e.target.value))}
+                        className="input"
+                    />
                 </div>
             </div>
             <div>
