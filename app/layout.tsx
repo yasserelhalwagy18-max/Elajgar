@@ -6,7 +6,7 @@ import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistratio
 import './globals.css';
 
 const APP_TITLE = 'علاج‌گر';
-const APP_DESCRIPTION = 'برنامه هوشمند ارزیابی درد و سلامت مفاصل و عضلات';
+const APP_DESCRIPTION = 'برنامه ارزیابی درد و سلامت مفاصل و عضلات';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
