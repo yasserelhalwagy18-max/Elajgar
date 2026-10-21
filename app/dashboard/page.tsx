@@ -681,23 +681,86 @@ export default function DashboardIndex() {
                 <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col">
                         <label htmlFor="daily-sleep-hours" className="block text-xs font-bold mb-1 text-on-surface-variant">ساعت خواب</label>
-                        <input id="daily-sleep-hours" type="number" step="0.5" min="0" max="24" value={sleepHours} onChange={e => setSleepHours(parseFloat(e.target.value) || 0)} aria-invalid={!!sleepError} className={`input text-center ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
-                        {sleepError && <span className="text-xs text-error mt-1">{sleepError}</span>}
+                        <input
+                            id="daily-sleep-hours"
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            max="24"
+                            value={sleepHours}
+                            onChange={e => setSleepHours(parseFloat(e.target.value) || 0)}
+                            aria-invalid={!!sleepError}
+                            aria-describedby={sleepError ? 'daily-sleep-hours-error' : undefined}
+                            className={`input text-center ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
+                        />
+                        {sleepError && (
+                            <span id="daily-sleep-hours-error" role="alert" className="text-xs text-error mt-1">
+                                {sleepError}
+                            </span>
+                        )}
                     </div>
                     <div className="flex flex-col">
                         <label htmlFor="daily-activity-minutes" className="block text-xs font-bold mb-1 text-on-surface-variant">فعالیت (دقیقه)</label>
-                        <input id="daily-activity-minutes" type="number" min="0" max="1440" value={activityMinutes} onChange={e => setActivityMinutes(parseFloat(e.target.value) || 0)} aria-invalid={!!activityError} className={`input text-center ${activityError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
-                        {activityError && <span className="text-xs text-error mt-1">{activityError}</span>}
+                        <input
+                            id="daily-activity-minutes"
+                            type="number"
+                            min="0"
+                            max="1440"
+                            value={activityMinutes}
+                            onChange={e => setActivityMinutes(parseFloat(e.target.value) || 0)}
+                            aria-invalid={!!activityError}
+                            aria-describedby={activityError ? 'daily-activity-minutes-error' : undefined}
+                            className={`input text-center ${activityError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
+                        />
+                        {activityError && (
+                            <span id="daily-activity-minutes-error" role="alert" className="text-xs text-error mt-1">
+                                {activityError}
+                            </span>
+                        )}
                     </div>
                     <div className="flex flex-col">
                         <label htmlFor="daily-weight" className="block text-xs font-bold mb-1 text-on-surface-variant">وزن امروز (کیلوگرم)</label>
-                        <input id="daily-weight" type="number" step="0.1" min="20" max="300" inputMode="decimal" value={dailyWeight} onChange={e => setDailyWeight(e.target.value)} placeholder={userProfile?.weight ? toPersianDigits(String(userProfile.weight)) : '—'} aria-invalid={!!weightError} className={`input text-center ${weightError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
-                        {weightError && <span className="text-xs text-error mt-1">{weightError}</span>}
+                        <input
+                            id="daily-weight"
+                            type="number"
+                            step="0.1"
+                            min="20"
+                            max="300"
+                            inputMode="decimal"
+                            value={dailyWeight}
+                            onChange={e => setDailyWeight(e.target.value)}
+                            placeholder={userProfile?.weight ? toPersianDigits(String(userProfile.weight)) : '—'}
+                            aria-invalid={!!weightError}
+                            aria-describedby={weightError ? 'daily-weight-error' : undefined}
+                            className={`input text-center ${weightError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
+                        />
+                        {weightError && (
+                            <span id="daily-weight-error" role="alert" className="text-xs text-error mt-1">
+                                {weightError}
+                            </span>
+                        )}
                     </div>
                     <div className="flex flex-col">
                         <label htmlFor="daily-pain" className="block text-xs font-bold mb-1 text-on-surface-variant">شدت درد امروز (۰-۱۰)</label>
-                        <input id="daily-pain" type="number" step="1" min="0" max="10" inputMode="numeric" value={dailyPain} onChange={e => setDailyPain(e.target.value)} placeholder="—" aria-invalid={!!painError} className={`input text-center ${painError ? 'ring-2 ring-error/50 bg-error/5' : ''}`} />
-                        {painError && <span className="text-xs text-error mt-1">{painError}</span>}
+                        <input
+                            id="daily-pain"
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="10"
+                            inputMode="numeric"
+                            value={dailyPain}
+                            onChange={e => setDailyPain(e.target.value)}
+                            placeholder="—"
+                            aria-invalid={!!painError}
+                            aria-describedby={painError ? 'daily-pain-error' : undefined}
+                            className={`input text-center ${painError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
+                        />
+                        {painError && (
+                            <span id="daily-pain-error" role="alert" className="text-xs text-error mt-1">
+                                {painError}
+                            </span>
+                        )}
                     </div>
                 </div>
 
