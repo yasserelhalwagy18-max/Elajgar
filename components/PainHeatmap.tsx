@@ -11,7 +11,18 @@ import { BODY_REGIONS, type BodyRegion } from '@/lib/body-regions';
 type RegionData = BodyRegion;
 const regionsData: RegionData[] = BODY_REGIONS;
 
-export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
+export default function PainHeatmap({
+  view,
+  describedById,
+}: {
+  view: 'front' | 'back';
+  /**
+   * The id of the element that describes this control - the error message
+   * shown when no region is picked. Without it a screen reader user who
+   * failed the step only hears the error, not which list it belongs to.
+   */
+  describedById?: string;
+}) {
   const userProfile = useStore((state) => state.userProfile);
   const toggleRegion = useStore((state) => state.toggleRegion);
   const selectedZones = userProfile?.painZones?.map((z) => z.zone) || [];
@@ -151,7 +162,7 @@ export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
         <p className="text-xs text-on-surface-variant font-medium mb-2 text-center">
           یا ناحیه درد را از فهرست انتخاب کنید
         </p>
-        <ul className="flex flex-wrap gap-2 justify-center">
+        <ul className="flex flex-wrap gap-2 justify-center" aria-describedby={describedById}>
           {activeRegions.map((region) => {
             const isSelected = selectedZones.includes(region.label);
             return (
