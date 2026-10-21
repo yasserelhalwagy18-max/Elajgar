@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionUserId } from '@/lib/session';
+import { normalizeText } from '@/lib/utils';
+
+/**
+ * How many food rows the search scans.
+ *
+ * The food table is a fixed reference list of a few hundred rows, so it is
+ * cheap to compare in memory - and comparing in memory is the only way to
+ * match the Arabic and Persian spellings of the same letter.
+ */
+const SEARCH_SCAN_LIMIT = 1000;
+
+/** How many results a search returns. */
+const SEARCH_RESULT_LIMIT = 20;
 
 export async function GET(request: Request) {
   try {
@@ -24,7 +37,9 @@ export async function GET(request: Request) {
       return NextResponse.json(allFoods);
     }
 
-    if (!q || q.trim() === '') {
+    const needle = normalizeText(q ?? '');
+
+    if (needle === '') {
       // Default to 5 items if query is empty
       const defaultFoods = await prisma.food.findMany({
         take: 5,
@@ -35,14 +50,24 @@ export async function GET(request: Request) {
       return NextResponse.json(defaultFoods);
     }
 
-    const foods = await prisma.food.findMany({
-      where: {
-        name: {
-          contains: q,
-        },
-      },
-      take: 20, // Reasonable limit for search results
+    // The database filter alone is not enough. Persian text reaches the app
+    // with the Arabic spelling of a letter in it all the time - from a
+    // keyboard, from a message pasted out of a chat - and a plain `LIKE`
+    // match silently returns nothing for those.
+    //
+    //   "کباب" (Persian kaf)  -> 6 results
+    //   "كباب" (Arabic kaf)   -> 0 results
+    //
+    // So the query and the food names are both normalised before they are
+    // compared. The table is small and fixed, so the scan is cheap.
+    const candidates = await prisma.food.findMany({
+      take: SEARCH_SCAN_LIMIT,
+      orderBy: { name: 'asc' },
     });
+
+    const foods = candidates
+      .filter((food) => normalizeText(food.name).includes(needle))
+      .slice(0, SEARCH_RESULT_LIMIT);
 
     return NextResponse.json(foods);
   } catch (error) {
