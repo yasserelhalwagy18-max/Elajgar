@@ -270,41 +270,34 @@ export default function DashboardIndex() {
     if (waterConfTimerRef.current) clearTimeout(waterConfTimerRef.current);
     waterConfTimerRef.current = setTimeout(() => setShowWaterConf(false), 2000);
 
-    // Hydration reminder. Notification.requestPermission() is async, so the
-    // permission must be awaited before checking it - reading it synchronously
-    // right after the call always returned 'default' and the first click never
-    // notified.
+    // The hydration reminder fires only if the user already asked for it in
+    // the profile's notification settings.
+    //
+    // It used to ask for the notification permission here, in the middle of
+    // logging a glass of water - a browser prompt in answer to an unrelated
+    // action - and the reminder it scheduled then said "you drank water two
+    // hours ago" five seconds after the water was logged.
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      const scheduleReminder = () => {
-        if (Notification.permission !== 'granted') return;
-        if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
-        notificationTimerRef.current = setTimeout(async () => {
-          // The Notification constructor is desktop-only; mobile browsers
-          // require a service worker registration to show one.
-          const registration =
-            'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+      if (Notification.permission !== 'granted') return;
 
-          if (registration) {
-            await registration.showNotification('وقت آب خوردنه!', {
-              body: 'شما ۲ ساعت پیش آب نوشیدید. برای حفظ سلامتی یک لیوان دیگر بنوشید.',
-              icon: '/icon.svg',
-            });
-          } else {
-            new Notification('وقت آب خوردنه!', {
-              body: 'شما ۲ ساعت پیش آب نوشیدید. برای حفظ سلامتی یک لیوان دیگر بنوشید.',
-              icon: '/icon.svg',
-            });
-          }
-        }, 5000);
-      };
+      if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+      notificationTimerRef.current = setTimeout(async () => {
+        // The Notification constructor is desktop-only; mobile browsers
+        // require a service worker registration to show one.
+        const registration =
+          'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
 
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().then((permission) => {
-          if (permission === 'granted') scheduleReminder();
-        });
-      } else {
-        scheduleReminder();
-      }
+        const options = {
+          body: 'یک لیوان دیگر آب بنوشید تا به هدف امروز برسید.',
+          icon: '/icon.svg',
+        };
+
+        if (registration) {
+          await registration.showNotification('وقت آب خوردنه!', options);
+        } else {
+          new Notification('وقت آب خوردنه!', options);
+        }
+      }, 5000);
     }
   };
 
