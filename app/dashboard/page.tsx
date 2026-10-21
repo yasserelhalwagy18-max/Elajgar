@@ -50,9 +50,12 @@ export default function DashboardIndex() {
 
   // Sleep & Activity Modal state
   const [isSleepModalOpen, setIsSleepModalOpen] = useState(false);
-  const [sleepHours, setSleepHours] = useState<number>(7);
+  // The sleep and activity fields are strings, not numbers. A number state
+  // could not be cleared: `parseFloat(value) || 0` turned an empty field
+  // straight back into `0`, so the user could never replace the number.
+  const [sleepHours, setSleepHours] = useState<string>('7');
   const [sleepQuality, setSleepQuality] = useState<'poor' | 'fair' | 'good'>('fair');
-  const [activityMinutes, setActivityMinutes] = useState<number>(0);
+  const [activityMinutes, setActivityMinutes] = useState<string>('0');
   const [dailyWeight, setDailyWeight] = useState<string>('');
   const [dailyPain, setDailyPain] = useState<string>('');
 
@@ -71,10 +74,19 @@ export default function DashboardIndex() {
 
   // Validation messages are pure derived state - compute them during render
   // instead of driving them from an effect that queues timers.
+  const parsedSleepHours = parseFloat(normalizeDigits(sleepHours));
+  const parsedActivityMinutes = parseFloat(normalizeDigits(activityMinutes));
+
   const sleepError =
-    sleepHours < 0 || sleepHours > 24 ? 'مقدار خواب باید بین ۰ تا ۲۴ باشد' : null;
+    sleepHours.trim() !== '' &&
+    (!Number.isFinite(parsedSleepHours) || parsedSleepHours < 0 || parsedSleepHours > 24)
+      ? 'مقدار خواب باید بین ۰ تا ۲۴ باشد'
+      : null;
   const activityError =
-    activityMinutes < 0 || activityMinutes > 1440
+    activityMinutes.trim() !== '' &&
+    (!Number.isFinite(parsedActivityMinutes) ||
+      parsedActivityMinutes < 0 ||
+      parsedActivityMinutes > 1440)
       ? 'مقدار فعالیت باید بین ۰ تا ۱۴۴۰ باشد'
       : null;
   const weightError =
@@ -297,13 +309,19 @@ export default function DashboardIndex() {
   };
 
   const handleSaveSleepActivity = () => {
-    const parsedWeight = dailyWeight.trim() === '' ? undefined : Number(dailyWeight);
-    const parsedPain = dailyPain.trim() === '' ? undefined : Number(dailyPain);
+    const parsedWeight = dailyWeight.trim() === '' ? undefined : Number(normalizeDigits(dailyWeight));
+    const parsedPain = dailyPain.trim() === '' ? undefined : Number(normalizeDigits(dailyPain));
 
     logDailyMetrics(selectedDate, {
-      sleepHours,
       sleepQuality,
-      activityMinutes,
+      // An empty field means "not recorded", not zero - the same rule the
+      // health score already follows for a day with no data.
+      ...(sleepHours.trim() !== '' && Number.isFinite(parsedSleepHours)
+        ? { sleepHours: parsedSleepHours }
+        : {}),
+      ...(activityMinutes.trim() !== '' && Number.isFinite(parsedActivityMinutes)
+        ? { activityMinutes: parsedActivityMinutes }
+        : {}),
       ...(parsedWeight !== undefined && Number.isFinite(parsedWeight)
         ? { weight: parsedWeight }
         : {}),
@@ -690,7 +708,7 @@ export default function DashboardIndex() {
                             type="text"
                             inputMode="decimal"
                             value={sleepHours}
-                            onChange={e => setSleepHours(parseFloat(normalizeDigits(e.target.value)) || 0)}
+                            onChange={e => setSleepHours(normalizeDigits(e.target.value))}
                             aria-invalid={!!sleepError}
                             aria-describedby={sleepError ? 'daily-sleep-hours-error' : undefined}
                             className={`input text-center ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
@@ -708,7 +726,7 @@ export default function DashboardIndex() {
                             type="text"
                             inputMode="numeric"
                             value={activityMinutes}
-                            onChange={e => setActivityMinutes(parseFloat(normalizeDigits(e.target.value)) || 0)}
+                            onChange={e => setActivityMinutes(normalizeDigits(e.target.value))}
                             aria-invalid={!!activityError}
                             aria-describedby={activityError ? 'daily-activity-minutes-error' : undefined}
                             className={`input text-center ${activityError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
@@ -840,7 +858,7 @@ export default function DashboardIndex() {
                 <input
                     type="checkbox"
                     id="disclaimer-checkbox"
-                    className="w-5 h-5 accent-primary rounded cursor-pointer"
+                    className="w-6 h-6 accent-primary rounded cursor-pointer"
                     checked={disclaimerAccepted}
                     onChange={(e) => setDisclaimerAccepted(e.target.checked)}
                 />

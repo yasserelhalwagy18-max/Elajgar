@@ -257,9 +257,9 @@ export function CorrectionalCalendar() {
                                 return d;
                             })}
                             aria-label="هفته قبل"
-                            className="icon-btn !w-8 !h-8 rounded-full"
+                            className="icon-btn !w-10 !h-10 rounded-full"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-4 h-4" aria-hidden="true" />
                         </button>
                         <span className="text-sm font-bold px-2 whitespace-nowrap">
                             {PERSIAN_MONTHS[monthIndex]} {displayYearFormatter.format(selectedDate)}
@@ -272,9 +272,9 @@ export function CorrectionalCalendar() {
                                 return d;
                             })}
                             aria-label="هفته بعد"
-                            className="icon-btn !w-8 !h-8 rounded-full"
+                            className="icon-btn !w-10 !h-10 rounded-full"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                         </button>
                     </div>
 
@@ -284,17 +284,17 @@ export function CorrectionalCalendar() {
                             type="button"
                             onClick={() => setSelectedDate((prev) => addMonths(prev, -1))}
                             aria-label="ماه قبل"
-                            className="icon-btn !w-8 !h-8 rounded-full"
+                            className="icon-btn !w-10 !h-10 rounded-full"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-4 h-4" aria-hidden="true" />
                         </button>
                         <button
                             type="button"
                             onClick={() => setSelectedDate((prev) => addMonths(prev, 1))}
                             aria-label="ماه بعد"
-                            className="icon-btn !w-8 !h-8 rounded-full"
+                            className="icon-btn !w-10 !h-10 rounded-full"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                         </button>
                     </div>
                 </div>
