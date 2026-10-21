@@ -7,4 +7,8 @@ npm_dev.log
 /generated/prisma
 .env
 .env*.local
+.env.production
 coverage
+
+# The zip that `npm run deploy:zip` makes.
+deploy

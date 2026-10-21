@@ -1,0 +1,30 @@
+# The files Liara must not upload.
+#
+# When this file exists, Liara reads it *instead of* .gitignore and
+# .dockerignore, so everything that should stay on this machine has to be
+# listed here.
+
+node_modules
+.next
+.git
+.gitignore
+.dockerignore
+
+# The real environment files. The variables for the server are set in the
+# Liara console, so the secrets never leave this machine.
+.env
+.env.local
+.env.production
+.env*.local
+
+# The build and the logs.
+coverage
+*.log
+npm_dev.log
+npm_output.log
+tsconfig.tsbuildinfo
+
+# The files that are only needed on this machine.
+docker-compose.yml
+DEPLOY.md
+scripts/_*.mjs
