@@ -82,6 +82,13 @@ export default function ProfilePage() {
     const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
     const [savingPassword, setSavingPassword] = useState(false);
 
+    // Removing the password again, so an account can go back to signing in
+    // with an SMS code only.
+    const [showRemovePassword, setShowRemovePassword] = useState(false);
+    const [removePasswordValue, setRemovePasswordValue] = useState('');
+    const [removePasswordError, setRemovePasswordError] = useState<string | null>(null);
+    const [removingPassword, setRemovingPassword] = useState(false);
+
     useEffect(() => {
         if (!isAuthenticated) return;
 
@@ -143,13 +150,46 @@ export default function ProfilePage() {
         }
     };
 
-    useEffect(() => {
-        // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
-        if (!hasHydrated) return;
-        if (!isAuthenticated) {
-            router.push('/login');
+    /**
+     * Remove the password, so the account goes back to signing in with an
+     * SMS code only.
+     *
+     * The current password is asked for again - the same bar as changing it.
+     */
+    const removePassword = async () => {
+        setRemovePasswordError(null);
+
+        if (!removePasswordValue) {
+            setRemovePasswordError('رمز عبور فعلی را وارد کنید');
+            return;
         }
-    }, [hasHydrated, isAuthenticated, router]);
+
+        setRemovingPassword(true);
+        try {
+            const res = await fetch('/api/auth/clear-password', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword: removePasswordValue }),
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                setHasPassword(false);
+                setCurrentPassword('');
+                setNewPassword('');
+                setRemovePasswordValue('');
+                setShowRemovePassword(false);
+                setPasswordMessage('رمز عبور حذف شد. از این پس فقط با کد تایید وارد می‌شوید.');
+                toast.success('رمز عبور حذف شد');
+            } else {
+                setRemovePasswordError(data.error || 'حذف رمز عبور ناموفق بود');
+            }
+        } catch {
+            setRemovePasswordError('ارتباط با سرور برقرار نشد');
+        } finally {
+            setRemovingPassword(false);
+        }
+    };
 
     if (!mounted) return null;
     if (!hasHydrated || !isAuthenticated) return null;
@@ -189,8 +229,10 @@ export default function ProfilePage() {
         }
     };
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        // The cookie has to be gone before the user is sent to the login
+        // screen, or the server sends them straight back into the app.
+        await logout();
         router.push('/login');
     };
 
@@ -369,6 +411,82 @@ export default function ProfilePage() {
                         {savingPassword ? 'در حال ذخیره...' : hasPassword ? 'تغییر رمز عبور' : 'ذخیره رمز عبور'}
                     </button>
                 </form>
+
+                {/* Going back to signing in with a code only. This used to be
+                    possible only from the command line, so a user who wanted
+                    it had to ask somebody with access to the server. */}
+                {hasPassword && (
+                    <div className="card rounded-3xl p-5 mt-4 flex flex-col gap-3">
+                        <p className="text-sm text-on-surface-variant leading-relaxed">
+                            اگر ترجیح می‌دهید فقط با کد تایید وارد شوید، می‌توانید رمز عبور را حذف کنید.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setRemovePasswordError(null);
+                                setRemovePasswordValue('');
+                                setShowRemovePassword(true);
+                            }}
+                            className="btn btn-secondary w-full py-2.5"
+                        >
+                            <Shield className="w-4 h-4" />
+                            حذف رمز عبور
+                        </button>
+                    </div>
+                )}
+
+                <Modal
+                    open={showRemovePassword}
+                    onClose={() => setShowRemovePassword(false)}
+                    title="حذف رمز عبور"
+                    description="پس از حذف، حساب شما فقط با کد تایید پیامکی وارد می‌شود."
+                    size="sm"
+                    footer={
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => setShowRemovePassword(false)}
+                                className="btn btn-secondary btn-md"
+                                disabled={removingPassword}
+                            >
+                                انصراف
+                            </button>
+                            <button
+                                type="button"
+                                onClick={removePassword}
+                                disabled={removingPassword}
+                                className="btn btn-danger btn-md"
+                            >
+                                {removingPassword ? 'در حال حذف...' : 'حذف رمز عبور'}
+                            </button>
+                        </>
+                    }
+                >
+                    <div className="flex flex-col gap-3">
+                        <p className="text-sm text-on-surface-variant leading-relaxed">
+                            برای امنیت، رمز عبور فعلی را وارد کنید. اگر آن را فراموش کرده‌اید،
+                            از پشتیبانی بخواهید حساب شما را به حالت «فقط کد تایید» برگرداند.
+                        </p>
+                        <div>
+                            <label className="block text-sm font-medium mb-1" htmlFor="remove-current-password">
+                                رمز عبور فعلی
+                            </label>
+                            <input
+                                id="remove-current-password"
+                                type="password"
+                                autoComplete="current-password"
+                                value={removePasswordValue}
+                                onChange={(e) => { setRemovePasswordValue(e.target.value); setRemovePasswordError(null); }}
+                                className={`input text-left ${removePasswordError ? 'border-error' : ''}`}
+                                dir="ltr"
+                                disabled={removingPassword}
+                            />
+                            {removePasswordError && (
+                                <p role="alert" className="text-error text-xs mt-1">{removePasswordError}</p>
+                            )}
+                        </div>
+                    </div>
+                </Modal>
             </section>
 
             <section className="mb-8">

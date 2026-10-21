@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { searchFoods, FoodItem, getAllFoods } from '@/lib/food-service';
 import { Search, Plus, Droplet, Target, Utensils, Check, Sparkles } from 'lucide-react';
@@ -19,7 +18,6 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { MacroBar } from '@/components/ui/MacroBar';
 
 export default function NutritionPage() {
-  const router = useRouter();
   const { isAuthenticated, hasHydrated } = useAuthGuard();
   // The nutrition screen is a top-level route, so it is not covered by the
   // dashboard layout's sync. Without this it would read the targets from the
@@ -200,14 +198,6 @@ export default function NutritionPage() {
     clearAndSetFoods(todayDate, confirmPlan.foods);
     setConfirmPlan(null);
   };
-
-  React.useEffect(() => {
-    // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
-    if (!hasHydrated) return;
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [hasHydrated, isAuthenticated, router]);
 
   // The persisted store hydrates on the client only: wait for the client
   // render so the server and first client render match.

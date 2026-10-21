@@ -55,14 +55,6 @@ export default function EducationPage() {
     // category that is not used does not show up as an empty filter.
     const [tags, setTags] = React.useState<string[]>(['همه']);
 
-    React.useEffect(() => {
-    // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
-    if (!hasHydrated) return;
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [hasHydrated, isAuthenticated, router]);
-
   // The plans, the premium videos and the user's own subscription.
   React.useEffect(() => {
     if (!isAuthenticated) return;

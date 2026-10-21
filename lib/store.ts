@@ -17,13 +17,35 @@ interface AuthState {
   updateUserProfile: (profileUpdates: Partial<UserProfile>) => void;
   setWizardStep: (step: number) => void;
   toggleRegion: (regionId: string) => void;
-  logout: () => void;
+  /**
+   * Sign the user out.
+   *
+   * The session lives in an HTTP-only cookie, so clearing the local store is
+   * not enough - the server would still consider the user signed in. The
+   * cookie is cleared before this resolves, so the caller can send the user
+   * to the login screen only once the server agrees they are signed out.
+   */
+  logout: () => Promise<void>;
   logFood: (date: string, food: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }) => void;
   clearAndSetFoods: (date: string, foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[]) => void;
   addWater: (date: string, amount: number) => void;
   logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number; weight?: number; painIntensity?: number }) => void;
   resetAll: () => void;
   fetchUserFromServer: () => Promise<void>;
+  /**
+   * Ask the server whether the session cookie is still good.
+   *
+   * The cookie lives in the browser and the profile lives in local storage,
+   * so the two can get out of step: clearing the site data leaves the cookie
+   * behind, and the cookie expires while the stored profile stays. The
+   * server is the only one that knows.
+   *
+   * Returns true when the caller is signed in, false when the server says
+   * they are not, and null when the server could not be reached. The last
+   * one must not be read as "signed out" - the cookie may still be good, and
+   * sending the user to the login screen would bounce them straight back.
+   */
+  syncSession: () => Promise<boolean | null>;
   saveUserToServer: (profile?: Partial<UserProfile>) => Promise<boolean>;
 }
 
@@ -182,14 +204,16 @@ export const useStore = create<AuthState>()(
             },
           };
         }),
-      logout: () => {
+      logout: async () => {
         set({ isAuthenticated: false, userProfile: null });
         // The session lives in an HTTP-only cookie, so clearing the local
         // store is not enough - the server would still consider the user
         // signed in.
-        void fetch('/api/auth/logout', { method: 'POST' }).catch((error) => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (error) {
           console.error('Failed to clear the server session:', error);
-        });
+        }
       },
       fetchUserFromServer: async () => {
         try {
@@ -213,6 +237,35 @@ export const useStore = create<AuthState>()(
           }));
         } catch (error) {
           console.error('Failed to fetch user from server:', error);
+        }
+      },
+      syncSession: async () => {
+        try {
+          const res = await fetch('/api/user', { cache: 'no-store' });
+
+          // The server refuses the request, so there is no session.
+          if (res.status === 401) {
+            set({ isAuthenticated: false, userProfile: null });
+            return false;
+          }
+
+          // The server could not answer. The session is neither confirmed
+          // nor refused.
+          if (!res.ok) return null;
+
+          const data = await res.json();
+          set((state) => ({
+            isAuthenticated: true,
+            userProfile: {
+              ...state.userProfile,
+              ...data,
+              dailyLogs: data.dailyLogs?.length ? data.dailyLogs : state.userProfile?.dailyLogs,
+            },
+          }));
+          return true;
+        } catch (error) {
+          console.error('Failed to sync the session:', error);
+          return null;
         }
       },
       saveUserToServer: async (profile) => {

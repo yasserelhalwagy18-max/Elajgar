@@ -28,16 +28,29 @@ export function useStoreHydrated(): boolean {
  * Guard a page behind the authentication check.
  *
  * The redirect only happens once the persisted store has rehydrated.
+ *
+ * The store and the session cookie can get out of step - clearing the site
+ * data leaves the cookie behind, and the cookie outlives the stored profile
+ * - so the server is asked before the user is sent to the login screen. The
+ * server is the only one that knows which of the two is telling the truth.
  */
 export function useAuthGuard() {
   const router = useRouter();
   const isAuthenticated = useStore((state) => state.isAuthenticated);
   const hasHydrated = useStoreHydrated();
+  const syncSession = useStore((state) => state.syncSession);
 
   useEffect(() => {
     if (!hasHydrated) return;
-    if (!isAuthenticated) router.push('/login');
-  }, [hasHydrated, isAuthenticated, router]);
+    if (isAuthenticated) return;
+
+    void syncSession().then((signedIn) => {
+      // `null` means the server could not be reached. Sending the user to
+      // the login screen then would send them straight back, because the
+      // cookie may still be good.
+      if (signedIn === false) router.push('/login');
+    });
+  }, [hasHydrated, isAuthenticated, router, syncSession]);
 
   return { isAuthenticated, hasHydrated };
 }

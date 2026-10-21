@@ -61,8 +61,10 @@ export function AdminSidebar() {
   const logout = useStore((state) => state.logout);
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    // The cookie has to be gone before the user is sent to the login screen,
+    // or the server sends them straight back into the app.
+    await logout();
     router.push('/login');
   };
 

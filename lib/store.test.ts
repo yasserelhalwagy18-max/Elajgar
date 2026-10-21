@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 /**
  * Regression tests for the sign-in flow.
@@ -50,16 +50,67 @@ describe('signIn', () => {
 });
 
 describe('logout', () => {
-  it('clears the profile', () => {
+  it('clears the profile', async () => {
     useStore.setState({
       isAuthenticated: true,
       userProfile: { phoneNumber: '09120000000', weight: 70 },
     });
 
-    useStore.getState().logout();
+    await useStore.getState().logout();
 
     const state = useStore.getState();
     expect(state.isAuthenticated).toBe(false);
     expect(state.userProfile).toBeNull();
+  });
+});
+
+/**
+ * The stored session and the session cookie can get out of step: clearing
+ * the site data leaves the cookie behind, and the cookie expires while the
+ * stored profile stays. The server is the only one that knows which of the
+ * two is telling the truth.
+ */
+describe('syncSession', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('marks the user signed in when the server knows them', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ phoneNumber: '09120000000', role: 'USER' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+
+    const signedIn = await useStore.getState().syncSession();
+
+    expect(signedIn).toBe(true);
+    expect(useStore.getState().isAuthenticated).toBe(true);
+    expect(useStore.getState().userProfile?.phoneNumber).toBe('09120000000');
+  });
+
+  it('marks the user signed out when the server refuses', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
+    ) as unknown as typeof fetch;
+
+    const signedIn = await useStore.getState().syncSession();
+
+    expect(signedIn).toBe(false);
+    expect(useStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('does not sign the user out when the server cannot be reached', async () => {
+    global.fetch = vi.fn(async () => {
+      throw new Error('network down');
+    }) as unknown as typeof fetch;
+
+    const signedIn = await useStore.getState().syncSession();
+
+    // The cookie may still be good, so this must not be read as "signed out".
+    expect(signedIn).toBeNull();
   });
 });

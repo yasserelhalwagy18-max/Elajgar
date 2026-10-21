@@ -10,7 +10,6 @@ import { useAuthGuard } from '@/hooks/use-auth-guard';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { calculateHealthScore } from '@/lib/healthScore';
-import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import {
   calculateNutritionTargets,
@@ -32,7 +31,6 @@ const MEAL_PRESETS = [
 ];
 
 export default function DashboardIndex() {
-  const router = useRouter();
   // Subscribe to individual slices so an unrelated store update (e.g. adding
   // water) does not re-render the whole dashboard.
   const { isAuthenticated, hasHydrated } = useAuthGuard();
@@ -40,14 +38,6 @@ export default function DashboardIndex() {
   const addWater = useStore((state) => state.addWater);
   const logDailyMetrics = useStore((state) => state.logDailyMetrics);
   const logFood = useStore((state) => state.logFood);
-
-  useEffect(() => {
-    // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
-    if (!hasHydrated) return;
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [hasHydrated, isAuthenticated, router]);
 
   const mounted = useMounted();
 
@@ -328,6 +318,24 @@ export default function DashboardIndex() {
     return "وضعیت نامطلوب";
   };
 
+  /**
+   * Take the user to one of the logging cards.
+   *
+   * The empty-day prompt sits above all of them, so a prompt that only
+   * talked about the cards further down the page left the user to hunt for
+   * the buttons. Every shortcut in the prompt scrolls to the card it names
+   * and puts the cursor on the button that does the job, so one more press
+   * is enough.
+   */
+  const scrollToLogSection = (id: string, focusId?: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (focusId) {
+      document.getElementById(focusId)?.focus({ preventScroll: true });
+    }
+  };
+
   const todayLabel = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
     weekday: 'long',
     day: 'numeric',
@@ -472,11 +480,39 @@ export default function DashboardIndex() {
                 </div>
             </motion.div>
 
-            {/* A day with nothing in it gets a prompt instead of a number. */}
+            {/* A day with nothing in it gets a prompt instead of a number.
+                The prompt carries the buttons itself - they used to sit on
+                the cards further down the page, so the instruction pointed
+                at something the user had to go and find. */}
             {!hasDayData && (
-                <p className="text-sm text-on-surface-variant text-center z-10 max-w-sm mt-2">
-                    برای دیدن شاخص سلامت، غذای روز و آب و فعالیت و خواب این روز را ثبت کنید.
-                </p>
+                <div className="z-10 mt-2 w-full max-w-sm flex flex-col items-center gap-4">
+                    <p className="text-sm text-on-surface-variant text-center">
+                        برای دیدن شاخص سلامت، غذای روز و آب و فعالیت و خواب این روز را ثبت کنید.
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => scrollToLogSection('calorie-section', 'log-food-button')}
+                            className="btn btn-primary btn-sm"
+                        >
+                            <Plus className="w-4 h-4" /> ثبت غذا
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollToLogSection('water-section', 'log-water-button')}
+                            className="btn btn-secondary btn-sm"
+                        >
+                            <Droplet className="w-4 h-4" /> ثبت آب
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollToLogSection('sleep-activity-section', 'daily-sleep-hours')}
+                            className="btn btn-secondary btn-sm"
+                        >
+                            <Activity className="w-4 h-4" /> ثبت خواب و فعالیت
+                        </button>
+                    </div>
+                </div>
             )}
         </section>
 
@@ -502,7 +538,7 @@ export default function DashboardIndex() {
         {/* Today's Activity Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Calorie */}
-            <div className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden">
+            <div id="calorie-section" className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" aria-hidden="true"></div>
                  <div className="flex justify-between items-start z-10 w-full">
                     <div>
@@ -544,6 +580,7 @@ export default function DashboardIndex() {
                     <div className="flex flex-col items-center justify-center z-10 py-2 gap-3">
                         <span className="text-on-surface-variant font-medium">کالری ثبت نشده</span>
                         <button
+                            id="log-food-button"
                             type="button"
                             onClick={() => setIsLogModalOpen(true)}
                             className="btn btn-primary btn-md"
@@ -561,7 +598,7 @@ export default function DashboardIndex() {
             </div>
 
             {/* Hydration */}
-            <div className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col relative overflow-hidden min-h-[160px]">
+            <div id="water-section" className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col relative overflow-hidden min-h-[160px]">
                 <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-water/10 to-transparent blur-sm" aria-hidden="true"></div>
                 <div className="flex justify-between items-start z-10 w-full mb-2">
                     <div>
@@ -586,6 +623,7 @@ export default function DashboardIndex() {
                 {/* The action sits in its own row so it can never overlap the chart. */}
                 <div className="flex justify-end z-10 mt-2">
                     <button
+                        id="log-water-button"
                         type="button"
                         onClick={handleDrinkWater}
                         className="btn btn-primary btn-sm"
@@ -624,13 +662,7 @@ export default function DashboardIndex() {
                         <span className="text-on-surface-variant font-medium">فعالیتی ثبت نشده</span>
                         <button
                             type="button"
-                            onClick={() => {
-                                const el = document.getElementById('sleep-activity-section');
-                                if (el) {
-                                  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                  el.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
-                                }
-                            }}
+                            onClick={() => scrollToLogSection('sleep-activity-section', 'daily-sleep-hours')}
                             className="btn btn-primary btn-md"
                         >
                             <Activity className="w-4 h-4" /> ثبت خواب و فعالیت

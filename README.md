@@ -209,7 +209,9 @@ production. Check this list before the real launch:
       npm run admin:delete 09121512173
       ```
       and change the admin's password from **Profile → Password**. If you
-      would rather keep the account but take away its password:
+      would rather keep the account but take away its password, the user can
+      do it themselves from **Profile → Password → Remove password** - or you
+      can do it from the command line:
       ```bash
       npm run admin:clear-password 09121512173
       ```
