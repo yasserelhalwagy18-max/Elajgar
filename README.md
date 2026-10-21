@@ -180,7 +180,14 @@ npm run admin:promote 09123456789          # grant the role
 node scripts/promote-admin.mjs 09123456789 --revoke   # take it away
 ```
 
-The number has to have signed in at least once, so that the account exists.
+The number does not have to have signed in before - the script creates the
+account if it is not there yet.
+The password can be set from the command line too - useful for a test
+account, and for an account that has to work before the first SMS:
+
+```bash
+npm run admin:set-password 09123456789 13474393
+```
 
 What the panel covers:
 
@@ -203,10 +210,10 @@ Development accounts and the development admin path are **not** for
 production. Check this list before the real launch:
 
 - [ ] **Delete the test accounts.** The accounts created for development -
-      the admin `09369913228` and the test user `09121512173` - both have the
+      the admin `09121512173` and the test user `09369913228` - both have the
       password `13474393`. Remove the test user with:
       ```bash
-      npm run admin:delete 09121512173
+      npm run admin:delete 09369913228
       ```
       and change the admin's password from **Profile → Password**. If you
       would rather keep the account but take away its password, the user can

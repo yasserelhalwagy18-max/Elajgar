@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
-    "clean": "next clean",
+    "clean": "rm -rf .next",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -19,6 +19,7 @@
     "icons:generate": "node scripts/generate-icons.mjs",
     "admin:promote": "node scripts/promote-admin.mjs",
     "admin:delete": "node scripts/promote-admin.mjs --delete",
+    "admin:set-password": "node scripts/promote-admin.mjs --set-password",
     "admin:clear-password": "node scripts/promote-admin.mjs --clear-password",
     "deploy:zip": "node scripts/liara-deploy.mjs"
   },
