@@ -325,9 +325,9 @@ export default function NutritionPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="جستجوی غذا"
-                className="input pr-11"
+                className="input pe-11"
             />
-            <Search className="w-5 h-5 text-on-surface-variant absolute top-1/2 right-3 transform -translate-y-1/2 pointer-events-none" />
+            <Search className="w-5 h-5 text-on-surface-variant absolute top-1/2 end-3 transform -translate-y-1/2 pointer-events-none" aria-hidden="true" />
         </div>
 
         <div className="max-h-72 overflow-y-auto ps-2 pe-1 custom-scrollbar flex flex-col gap-2">
@@ -400,7 +400,7 @@ export default function NutritionPage() {
 
       {/* Water Tracker */}
       <section className="card p-6 rounded-3xl mb-6 relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-32 h-32 bg-water/10 rounded-full blur-2xl" aria-hidden="true"></div>
+         <div className="absolute top-0 start-0 w-32 h-32 bg-water/10 rounded-full blur-2xl" aria-hidden="true"></div>
          <div className="flex justify-between items-center mb-6 relative z-10 gap-3">
             <div>
                 <h2 className="font-bold text-lg flex items-center gap-2">

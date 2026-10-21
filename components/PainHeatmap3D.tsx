@@ -289,7 +289,7 @@ export default function PainHeatmap3D({
                 </div>
             )}
 
-            <div className="absolute bottom-4 right-4 pointer-events-none">
+            <div className="absolute bottom-4 end-4 pointer-events-none">
                 <div className="text-xs text-white/80 bg-on-surface/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
                     برای چرخش مدل را بکشید
                 </div>

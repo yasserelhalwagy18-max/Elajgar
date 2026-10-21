@@ -104,7 +104,7 @@ export function SmartAnalysis() {
 
   return (
     <div className="mb-8 card p-6 rounded-3xl border-2 border-error/20 bg-error/5 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 rounded-full blur-2xl" aria-hidden="true" />
+      <div className="absolute top-0 start-0 w-32 h-32 bg-error/10 rounded-full blur-2xl" aria-hidden="true" />
 
       <div className="flex items-center gap-3 mb-4 z-10 relative">
         <div className="p-2 bg-error/20 rounded-xl text-error">
