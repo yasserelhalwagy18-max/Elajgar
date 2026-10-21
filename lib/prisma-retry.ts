@@ -27,6 +27,7 @@ export const TRANSIENT_CONNECTION_ERRORS = new Set([
   'P1017', // Server has closed the connection
   'P2024', // Timed out fetching a new connection from the connection pool
   'P2028', // Transaction API error: unable to start a transaction
+  'P2034', // Write conflict or deadlock - the transaction should be retried
 ]);
 
 /**
@@ -95,38 +96,52 @@ export function createResilientOperation(
  *    checks `promise[Symbol.toStringTag] === 'PrismaPromise'` before it
  *    accepts a query as part of `prisma.$transaction([...])`, and a plain
  *    promise fails that check with "All elements of the array need to be
- *    Prisma Client promises". The original promise is therefore used as the
- *    prototype, so the tag and `requestTransaction` are kept.
+ *    Prisma Client promises". The wrapper therefore carries the tag itself
+ *    and forwards `requestTransaction` to the original.
  *
- * 2. The retry has to wrap the *execution* of the query, not the delivery
+ * 2. The original promise must not be created until it is needed. Prisma
+ *    starts an interactive transaction the moment `$transaction` is called,
+ *    so creating one only to look at its shape would leave a second
+ *    transaction open - and it would deadlock the real one.
+ *
+ * 3. The retry has to wrap the *execution* of the query, not the delivery
  *    of its result. `await` hands the promise a rejection handler, so a
  *    rejection would be passed straight to that handler and the retry would
  *    never see it. The promise is therefore awaited on its own, and only the
  *    settled value is handed to the caller's handlers.
- *
- * `createPromise` must return a fresh promise each time it is called - that
- * is what makes the retry run the query again.
  */
 export function resilientPromise(
   createPromise: () => Promise<unknown>,
   withReconnect: <T>(operation: () => Promise<T>) => Promise<T>,
 ): unknown {
-  // The first promise is only used as the prototype. A Prisma promise is
-  // lazy, so nothing is sent to the database until it is awaited.
-  const prototype = createPromise();
-  const wrapper = Object.create(prototype) as Record<string | symbol, unknown>;
+  let original: Promise<unknown> | null = null;
+  const getOriginal = () => (original ??= createPromise());
 
-  const run = () => withReconnect(() => createPromise());
-
-  wrapper.then = (onFulfilled?: unknown, onRejected?: unknown) =>
-    run().then(
-      onFulfilled as ((value: unknown) => unknown) | undefined,
-      onRejected as ((reason: unknown) => unknown) | undefined,
-    );
-  wrapper.catch = (onRejected?: unknown) =>
-    run().catch(onRejected as ((reason: unknown) => unknown) | undefined);
-  wrapper.finally = (onFinally?: unknown) =>
-    run().finally(onFinally as (() => void) | undefined);
+  const wrapper: Record<string | symbol, unknown> = {
+    then: (onFulfilled?: unknown, onRejected?: unknown) =>
+      withReconnect(() => getOriginal()).then(
+        onFulfilled as ((value: unknown) => unknown) | undefined,
+        onRejected as ((reason: unknown) => unknown) | undefined,
+      ),
+    catch: (onRejected?: unknown) =>
+      withReconnect(() => getOriginal()).catch(
+        onRejected as ((reason: unknown) => unknown) | undefined,
+      ),
+    finally: (onFinally?: unknown) =>
+      withReconnect(() => getOriginal()).finally(onFinally as (() => void) | undefined),
+    /**
+     * Prisma calls this on every element of `prisma.$transaction([...])` to
+     * hand the query over to the transaction. It has to reach the original
+     * promise, or the query would run outside the transaction.
+     */
+    requestTransaction: (tx: unknown) => {
+      const source = getOriginal() as { requestTransaction?: (t: unknown) => unknown };
+      return source.requestTransaction ? source.requestTransaction(tx) : source;
+    },
+    // Prisma decides whether a query may join an array transaction by
+    // looking at this tag.
+    [Symbol.toStringTag]: 'PrismaPromise',
+  };
 
   return wrapper;
 }

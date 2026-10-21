@@ -206,3 +206,88 @@ describe('/api/user access control', () => {
     expect(call.update.activityLevel).toBe('MODERATE');
   });
 });
+
+/**
+ * The client syncs the *whole* profile, and the profile it holds came from
+ * the server, where the fields a user has not filled in yet are `null`.
+ *
+ * Treating those as invalid made every save fail until the user had filled
+ * in every single field - a new user could not save their profile at all.
+ */
+describe('/api/user null fields', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cookieStore.get.mockReturnValue({ value: 'token' });
+    verifyTokenMock.mockResolvedValue({ userId: 'user_from_session' });
+    prismaMock.user.upsert.mockResolvedValue({ id: 'user_from_session' });
+  });
+
+  const nullFields = [
+    'fullName', 'age', 'gender', 'height', 'weight',
+    'activityLevel', 'jobTitle', 'underlyingDiseases',
+    'medications', 'nutritionGoal',
+  ];
+
+  for (const field of nullFields) {
+    it(`accepts "${field}" being null - it means "clear it"`, async () => {
+      const req = new Request('http://x/api/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: null }),
+      });
+
+      const res = await POST(req);
+
+      expect(res.status).toBe(200);
+      const call = prismaMock.user.upsert.mock.calls[0]![0] as any;
+      expect(call.update).toHaveProperty(field);
+    });
+  }
+
+  it('accepts the whole profile the server hands back', async () => {
+    const serverProfile = {
+      id: 'user_from_session',
+      phoneNumber: '09123456789',
+      fullName: null,
+      age: null,
+      gender: null,
+      height: null,
+      weight: null,
+      activityLevel: null,
+      jobTitle: null,
+      underlyingDiseases: null,
+      medications: null,
+      termsAccepted: false,
+      currentWizardStep: 0,
+      nutritionGoal: null,
+      painRegions: null,
+      painZones: [],
+      questionnaire: null,
+      questionnaireAnswers: null,
+      dailyLogs: [],
+    };
+
+    const req = new Request('http://x/api/user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(serverProfile),
+    });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('still rejects a value that is neither null nor valid', async () => {
+    const req = new Request('http://x/api/user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fullName: 42 }),
+    });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+    expect(prismaMock.user.upsert).not.toHaveBeenCalled();
+  });
+});

@@ -68,7 +68,11 @@
   --radius-3xl: 2rem;
   --radius-4xl: 2.5rem;
 
-  --font-sans: "Vazirmatn", sans-serif;
+  /* The self-hosted Vazirmatn, in its Arabic and Latin subsets. Each one
+     carries its own unicode-range, so the browser fetches the Arabic file
+     for the Persian text and the Latin file for the numbers - see
+     lib/fonts.ts. */
+  --font-sans: var(--font-vazir-arabic), var(--font-vazir-latin), system-ui, sans-serif;
 }
 
 /* ==========================================================================

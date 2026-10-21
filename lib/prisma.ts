@@ -69,6 +69,21 @@ function resilient<TArgs extends unknown[], TResult>(
 }
 
 /**
+ * Wrap `prisma.$transaction`.
+ *
+ * It has to be wrapped differently from a query. Prisma starts the
+ * transaction the moment the method is called - it is not lazy - and it
+ * returns a plain promise rather than a Prisma promise. Wrapping it like a
+ * query would open a second transaction, and the first one would sit there
+ * holding locks until the real one deadlocked against it.
+ */
+function resilientTransaction<TArgs extends unknown[], TResult>(
+  fn: (...args: TArgs) => Promise<TResult>,
+): (...args: TArgs) => Promise<TResult> {
+  return (...args: TArgs) => withReconnect(() => fn(...args));
+}
+
+/**
  * The Prisma client the app uses.
  *
  * Every model and every method is wrapped so that a lost connection is
@@ -85,6 +100,11 @@ const prisma = new Proxy(base, {
       const passthrough = ['$connect', '$disconnect', '$on', '$use', '$extends'];
       if (typeof property === 'string' && passthrough.includes(property)) {
         return value.bind(target);
+      }
+      // `$transaction` starts its transaction eagerly, so it cannot be
+      // wrapped the way a query is.
+      if (property === '$transaction') {
+        return resilientTransaction(value.bind(target));
       }
       return resilient(value.bind(target));
     }

@@ -1,9 +1,7 @@
 import type {Metadata, Viewport} from 'next';
-import { Vazirmatn } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
+import { vazirmatnArabic, vazirmatnLatin } from '@/lib/fonts';
 import './globals.css';
-
-const vazirmatn = Vazirmatn({ subsets: ['arabic', 'latin'], variable: '--font-sans' });
 
 const APP_TITLE = 'علاج‌گر';
 const APP_DESCRIPTION = 'برنامه هوشمند ارزیابی درد و سلامت مفاصل و عضلات';
@@ -34,7 +32,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="fa" dir="rtl">
+    // The font variables go on <html>, not <body>. `--font-sans` is declared
+    // in the `:root` theme block and refers to them, and a custom property
+    // that refers to a variable the element does not have is invalid - so the
+    // whole font stack would collapse to the browser default.
+    <html
+      lang="fa"
+      dir="rtl"
+      className={`${vazirmatnArabic.variable} ${vazirmatnLatin.variable}`}
+    >
       {/* An explicit <head> keeps the title and description where crawlers and
           Lighthouse look for them. Without it Next.js streamed them into the
           end of the <body>. */}
@@ -42,7 +48,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <title>{APP_TITLE}</title>
         <meta name="description" content={APP_DESCRIPTION} />
       </head>
-      <body className={`${vazirmatn.variable} font-sans antialiased bg-surface text-on-surface`} suppressHydrationWarning>
+      <body className="font-sans antialiased bg-surface text-on-surface" suppressHydrationWarning>
         {/* A single `main` landmark per page - screen reader users rely on
             it to jump past the navigation. */}
         <main id="main-content">{children}</main>

@@ -171,6 +171,33 @@ describe('resilientPromise', () => {
     expect(wrapped.requestTransaction(descriptor)).toBe(descriptor);
   });
 
+  it('does not create the original promise until it is needed', () => {
+    // Prisma starts an interactive transaction the moment `$transaction` is
+    // called. Creating one "just to look at it" leaves a second transaction
+    // open, and it deadlocks the real one.
+    const create = vi.fn(() => fakePrismaPromise(async () => 'ok') as unknown as Promise<unknown>);
+    const wrapped = resilientPromise(create, noReconnect);
+
+    expect(create).not.toHaveBeenCalled();
+
+    const promise = wrapped as Promise<string>;
+    void promise.then(() => {});
+
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates the original promise only once, however often it is used', async () => {
+    const create = vi.fn(
+      () => fakePrismaPromise(async () => 'ok') as unknown as Promise<unknown>,
+    );
+    const wrapped = resilientPromise(create, noReconnect) as Promise<string>;
+
+    await wrapped;
+    await wrapped;
+
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
   it('resolves with the value of the original promise', async () => {
     const original = fakePrismaPromise(async () => 'the value');
     const wrapped = resilientPromise(

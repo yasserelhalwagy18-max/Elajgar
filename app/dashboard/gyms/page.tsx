@@ -29,6 +29,39 @@ const CATEGORY_LABELS: Record<string, string> = {
   GENERAL: 'عمومی',
 };
 
+/**
+ * The photo of a gym.
+ *
+ * An admin can set a photo for a gym from the admin panel, and that photo
+ * is what is shown here. When there is none, a placeholder is used - but
+ * that placeholder comes from an external service, which may be blocked on
+ * the visitor's network, so the picture falls back to a plain gradient
+ * rather than leaving a broken image behind.
+ */
+function GymImage({ gym }: { gym: Gym }) {
+  const [failed, setFailed] = React.useState(false);
+  const source = gym.imageUrl || `https://picsum.photos/seed/${gym.id}/600/400`;
+
+  if (failed) {
+    return (
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/20 to-surface-container"
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={source}
+      alt={gym.name}
+      fill
+      className="object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function GymsPage() {
     const router = useRouter();
     const { isAuthenticated, hasHydrated } = useAuthGuard();
@@ -201,13 +234,8 @@ function GymCard({ gym }: { gym: Gym }) {
             </div>
 
             <div className="relative h-48 w-full">
-                <Image
-                    src={`https://picsum.photos/seed/${gym.id}/600/400`}
-                    alt={gym.name}
-                    fill
-                    className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden="true" />
+              <GymImage gym={gym} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden="true" />
                 <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
                     {gym.location}

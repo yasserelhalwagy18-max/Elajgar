@@ -4,23 +4,65 @@ A Next.js app for pain assessment, corrective exercise and nutrition tracking.
 
 ## Run Locally
 
-**Prerequisites:** Node.js 20+, a MySQL database
+**Prerequisites:** Node.js 20+, a MySQL database (Docker, or a MySQL 8
+service installed on the machine)
 
 1. Install dependencies:
    `npm install`
-2. Copy the env template and fill in the values:
+2. Start the database:
+   `docker compose up -d`
+3. Copy the env template and fill in the values:
    `cp .env.exsample .env.local`
-3. Create the tables and generate the client:
+4. Create the tables and generate the client:
    `npm run db:push`
-4. Seed the food database, the gyms and the editorial content:
+5. Seed the food database, the gyms and the editorial content:
    `npm run db:seed`
-5. Run the app:
+6. Run the app:
    `npm run dev`
 
 The Prisma CLI only reads `.env`, while Next.js reads `.env.local` first. The
 `npm run db:*` scripts go through `scripts/prisma.mjs`, which loads
 `.env.local` when it exists and falls back to `.env`, so the same commands work
 locally and on the host.
+
+### The local database
+
+`docker-compose.yml` runs MySQL 8 with the settings the app needs:
+
+- `utf8mb4` with the `utf8mb4_unicode_ci` collation, so the Persian text
+  stores correctly and `contains` searches stay case-insensitive the way they
+  are on a hosted server.
+- A named volume, so the data survives `docker compose down`.
+- A health check, so `db push` is never run against a server that is still
+  starting up.
+
+The container listens on **3307**, because MySQL is often already installed on
+Windows and holds 3306. If you would rather use the MySQL you already have,
+point `DATABASE_URL` at 3306 and skip the container entirely:
+
+```sql
+-- run once, as the MySQL root user
+CREATE DATABASE elajgar CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'elajgar'@'%' IDENTIFIED BY 'elajgar';
+GRANT ALL PRIVILEGES ON elajgar.* TO 'elajgar'@'%';
+```
+
+To start over from an empty database:
+
+```bash
+docker compose down -v && docker compose up -d && npm run db:push && npm run db:seed
+```
+
+### The font
+
+The Vazirmatn font is self-hosted from the `@fontsource/vazirmatn` package
+(see `lib/fonts.ts`). It used to come from Google Fonts, which meant the
+build failed on any machine that could not reach `fonts.googleapis.com` - a
+lot of networks block it, and `next build` treats the failure as an error
+while `next dev` only warns. It also meant every visitor's browser fetched
+the font from Google, which is slow for users on the same kind of network.
+
+Nothing has to be downloaded for a build now.
 
 ## Check that everything is wired up
 
@@ -34,15 +76,17 @@ admin panel, that the Prisma client is up to date, and that the SMS provider
 is reachable and still has credit. It is the fastest way to find out what is
 broken after a deploy or a host migration.
 
-> **Aiven free tier:** the MySQL service is powered off automatically after a
-> period of inactivity. When that happens the app reports "Can't reach
-> database server" and `npm run db:doctor` fails the database check. Log in to
-> the Aiven console, press **Power on** for the service, and run
-> `npm run db:doctor` again.
+> **A hosted free tier can go away.** An Aiven free-tier MySQL, for example,
+> is powered off automatically after a period of inactivity. When that happens
+> the app reports "Can't reach database server" and `npm run db:doctor` fails
+> the database check. Log in to the provider's console, press **Power on** for
+> the service, and run `npm run db:doctor` again.
 >
 > The app repairs its own connection pool when the database comes back, so
 > there is no need to restart it - the first request after the service is
 > powered on takes a few seconds longer, and then everything works again.
+>
+> A local MySQL avoids the whole problem, which is why development uses one.
 
 ## The admin panel
 

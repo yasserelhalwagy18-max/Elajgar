@@ -1,0 +1,45 @@
+# A local MySQL for development.
+#
+#   docker compose up -d      start the database
+#   docker compose down       stop it (the data survives in the volume)
+#   docker compose down -v    stop it and delete the data
+#
+# The connection string that matches this file is in `.env.exsample`:
+#
+#   mysql://elajgar:elajgar@127.0.0.1:3307/elajgar
+#
+# The port is set with MYSQL_PORT in `.env` (default 3307). 3307 rather than
+# 3306 because MySQL is often already installed on Windows and listening on
+# 3306 - two servers cannot share a port.
+services:
+  db:
+    image: mysql:8.0
+    container_name: elajgar-db
+    restart: unless-stopped
+    command:
+      # utf8mb4 is what the app needs for the Persian text. The collation has
+      # to be the case-insensitive one: MySQL 8 defaults to a case-sensitive
+      # collation, and the app's searches rely on `contains` matching
+      # "MP4" against "mp4" the way they do on the hosted database.
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: elajgar-root
+      MYSQL_DATABASE: elajgar
+      MYSQL_USER: elajgar
+      MYSQL_PASSWORD: elajgar
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      # `db push` and the seed must not run before the server accepts
+      # connections, so compose reports the container as healthy only then.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uelajgar", "-pelajgar"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  db-data:

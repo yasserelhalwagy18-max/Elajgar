@@ -102,20 +102,28 @@ const FALSE_WORDS = new Set(['خیر', 'false', 'no', '0']);
 
 class InvalidProfileField extends Error {}
 
-/** The profile fields a client may write to its own account. */
+/**
+ * The profile fields a client may write to its own account.
+ *
+ * Every field but `termsAccepted` is nullable, and `null` means "clear it".
+ * The client syncs the *whole* profile on every change, and the profile it
+ * holds came from the server, where the fields a user has not filled in yet
+ * are `null`. Treating those as invalid would make every save fail until
+ * the user had filled in every single field.
+ */
 interface ProfileFields {
-  fullName?: string;
-  age?: number;
-  gender?: Gender;
-  height?: number;
-  weight?: number;
-  activityLevel?: ActivityLevel;
-  jobTitle?: string;
-  underlyingDiseases?: string[];
-  medications?: string[];
+  fullName?: string | null;
+  age?: number | null;
+  gender?: Gender | null;
+  height?: number | null;
+  weight?: number | null;
+  activityLevel?: ActivityLevel | null;
+  jobTitle?: string | null;
+  underlyingDiseases?: string[] | null;
+  medications?: string[] | null;
   termsAccepted?: boolean;
-  currentWizardStep?: number;
-  nutritionGoal?: NutritionGoal;
+  currentWizardStep?: number | null;
+  nutritionGoal?: NutritionGoal | null;
 }
 
 interface ClientFood {
@@ -147,81 +155,166 @@ interface ClientDailyLog {
 function buildProfileUpdate(body: Record<string, unknown>): ProfileFields {
   const data: ProfileFields = {};
 
+  // `null` means "clear this field" for every nullable column. The client
+  // sends the whole profile, so the fields it has not filled in arrive as
+  // `null` and have to be accepted.
+
   if (body.fullName !== undefined) {
-    if (typeof body.fullName !== 'string') throw new InvalidProfileField('fullName');
-    data.fullName = body.fullName;
+    if (body.fullName === null) data.fullName = null;
+    else if (typeof body.fullName !== 'string') throw new InvalidProfileField('fullName');
+    else data.fullName = body.fullName;
   }
 
   if (body.age !== undefined) {
-    const age = Number(body.age);
-    if (!Number.isInteger(age) || age < 1 || age > 120) throw new InvalidProfileField('age');
-    data.age = age;
+    if (body.age === null) data.age = null;
+    else {
+      const age = Number(body.age);
+      if (!Number.isInteger(age) || age < 1 || age > 120) throw new InvalidProfileField('age');
+      data.age = age;
+    }
   }
 
   if (body.gender !== undefined) {
-    const gender = GENDER_MAP[String(body.gender)];
-    if (!gender) throw new InvalidProfileField('gender');
-    data.gender = gender;
+    if (body.gender === null) data.gender = null;
+    else {
+      const gender = GENDER_MAP[String(body.gender)];
+      if (!gender) throw new InvalidProfileField('gender');
+      data.gender = gender;
+    }
   }
 
   if (body.height !== undefined) {
-    const height = Number(body.height);
-    if (!Number.isFinite(height) || height < 50 || height > 250) throw new InvalidProfileField('height');
-    data.height = height;
+    if (body.height === null) data.height = null;
+    else {
+      const height = Number(body.height);
+      if (!Number.isFinite(height) || height < 50 || height > 250) throw new InvalidProfileField('height');
+      data.height = height;
+    }
   }
 
   if (body.weight !== undefined) {
-    const weight = Number(body.weight);
-    if (!Number.isFinite(weight) || weight < 10 || weight > 300) throw new InvalidProfileField('weight');
-    data.weight = weight;
+    if (body.weight === null) data.weight = null;
+    else {
+      const weight = Number(body.weight);
+      if (!Number.isFinite(weight) || weight < 10 || weight > 300) throw new InvalidProfileField('weight');
+      data.weight = weight;
+    }
   }
 
   if (body.activityLevel !== undefined) {
-    const level = ACTIVITY_LEVEL_MAP[String(body.activityLevel)];
-    if (!level) throw new InvalidProfileField('activityLevel');
-    data.activityLevel = level;
+    if (body.activityLevel === null) data.activityLevel = null;
+    else {
+      const level = ACTIVITY_LEVEL_MAP[String(body.activityLevel)];
+      if (!level) throw new InvalidProfileField('activityLevel');
+      data.activityLevel = level;
+    }
   }
 
   if (body.jobTitle !== undefined) {
-    if (typeof body.jobTitle !== 'string') throw new InvalidProfileField('jobTitle');
-    data.jobTitle = body.jobTitle;
+    if (body.jobTitle === null) data.jobTitle = null;
+    else if (typeof body.jobTitle !== 'string') throw new InvalidProfileField('jobTitle');
+    else data.jobTitle = body.jobTitle;
   }
 
   if (body.underlyingDiseases !== undefined) {
-    if (!Array.isArray(body.underlyingDiseases) || body.underlyingDiseases.some((v) => typeof v !== 'string')) {
-      throw new InvalidProfileField('underlyingDiseases');
+    if (body.underlyingDiseases === null) data.underlyingDiseases = null;
+    else {
+      if (!Array.isArray(body.underlyingDiseases) || body.underlyingDiseases.some((v) => typeof v !== 'string')) {
+        throw new InvalidProfileField('underlyingDiseases');
+      }
+      data.underlyingDiseases = body.underlyingDiseases as string[];
     }
-    data.underlyingDiseases = body.underlyingDiseases as string[];
   }
 
   if (body.medications !== undefined) {
-    if (!Array.isArray(body.medications) || body.medications.some((v) => typeof v !== 'string')) {
-      throw new InvalidProfileField('medications');
+    if (body.medications === null) data.medications = null;
+    else {
+      if (!Array.isArray(body.medications) || body.medications.some((v) => typeof v !== 'string')) {
+        throw new InvalidProfileField('medications');
+      }
+      data.medications = body.medications as string[];
     }
-    data.medications = body.medications as string[];
   }
 
   if (body.termsAccepted !== undefined) {
-    if (typeof body.termsAccepted !== 'boolean') throw new InvalidProfileField('termsAccepted');
-    data.termsAccepted = body.termsAccepted;
+    // The column is not nullable, so `null` means "not accepted yet".
+    if (body.termsAccepted === null) data.termsAccepted = false;
+    else if (typeof body.termsAccepted !== 'boolean') throw new InvalidProfileField('termsAccepted');
+    else data.termsAccepted = body.termsAccepted;
   }
 
   if (body.currentWizardStep !== undefined) {
-    const step = Number(body.currentWizardStep);
-    if (!Number.isInteger(step) || step < 0 || step > 6) throw new InvalidProfileField('currentWizardStep');
-    data.currentWizardStep = step;
+    if (body.currentWizardStep === null) data.currentWizardStep = null;
+    else {
+      const step = Number(body.currentWizardStep);
+      if (!Number.isInteger(step) || step < 0 || step > 6) throw new InvalidProfileField('currentWizardStep');
+      data.currentWizardStep = step;
+    }
   }
 
   if (body.nutritionGoal !== undefined) {
-    const goal = NUTRITION_GOAL_MAP[String(body.nutritionGoal)];
-    if (!goal) throw new InvalidProfileField('nutritionGoal');
-    data.nutritionGoal = goal;
+    if (body.nutritionGoal === null) data.nutritionGoal = null;
+    else {
+      const goal = NUTRITION_GOAL_MAP[String(body.nutritionGoal)];
+      if (!goal) throw new InvalidProfileField('nutritionGoal');
+      data.nutritionGoal = goal;
+    }
   }
 
   return data;
 }
 
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Turn the validated profile into the shape Prisma wants.
+ *
+ * A JSON column can hold SQL NULL, but Prisma has to be told which kind of
+ * null it is: `DbNull` for SQL NULL, `JsonNull` for the JSON value `null`.
+ * A plain `null` is not accepted for a JSON column.
+ */
+function toPrismaProfile(data: ProfileFields): Prisma.UserUncheckedUpdateInput {
+  const { underlyingDiseases, medications, ...rest } = data;
+  const profile = { ...rest } as Prisma.UserUncheckedUpdateInput;
+
+  if (underlyingDiseases !== undefined) {
+    profile.underlyingDiseases = underlyingDiseases === null ? Prisma.DbNull : underlyingDiseases;
+  }
+  if (medications !== undefined) {
+    profile.medications = medications === null ? Prisma.DbNull : medications;
+  }
+
+  return profile;
+}
+
+/**
+ * The same profile, in the shape a create expects.
+ *
+ * A create takes plain values, where an update also takes the "field
+ * operation" objects, so the two shapes are built separately.
+ */
+function toPrismaCreate(data: ProfileFields): Prisma.UserUncheckedCreateInput {
+  const profile: Prisma.UserUncheckedCreateInput = {};
+
+  if (data.fullName !== undefined) profile.fullName = data.fullName;
+  if (data.age !== undefined) profile.age = data.age;
+  if (data.gender !== undefined) profile.gender = data.gender;
+  if (data.height !== undefined) profile.height = data.height;
+  if (data.weight !== undefined) profile.weight = data.weight;
+  if (data.activityLevel !== undefined) profile.activityLevel = data.activityLevel;
+  if (data.jobTitle !== undefined) profile.jobTitle = data.jobTitle;
+  if (data.underlyingDiseases !== undefined) {
+    profile.underlyingDiseases = data.underlyingDiseases === null ? Prisma.DbNull : data.underlyingDiseases;
+  }
+  if (data.medications !== undefined) {
+    profile.medications = data.medications === null ? Prisma.DbNull : data.medications;
+  }
+  if (data.termsAccepted !== undefined) profile.termsAccepted = data.termsAccepted;
+  if (data.currentWizardStep !== undefined) profile.currentWizardStep = data.currentWizardStep;
+  if (data.nutritionGoal !== undefined) profile.nutritionGoal = data.nutritionGoal;
+
+  return profile;
+}
 
 function buildDailyLogs(body: Record<string, unknown>): ClientDailyLog[] {
   if (body.dailyLogs === undefined) return [];
@@ -311,7 +404,10 @@ function toBoolean(value: unknown): boolean | undefined {
 
 function buildQuestionnaire(body: Record<string, unknown>): Prisma.QuestionnaireAnswerUncheckedCreateInput | null {
   if (body.questionnaireAnswers === undefined) return null;
-  if (typeof body.questionnaireAnswers !== 'object' || body.questionnaireAnswers === null) {
+  // `null` is what the server sends for a user who has not answered the
+  // questionnaire. It means "there is nothing to write", not "invalid".
+  if (body.questionnaireAnswers === null) return null;
+  if (typeof body.questionnaireAnswers !== 'object') {
     throw new InvalidProfileField('questionnaireAnswers');
   }
 
@@ -539,12 +635,13 @@ export async function POST(request: Request) {
     // `upsert` on id: the session guarantees the row already exists, but upsert
     // keeps this endpoint working for a user created before the profile fields
     // were migrated in.
-    const update: Prisma.UserUncheckedUpdateInput = { ...data };
-    const create: Prisma.UserUncheckedCreateInput = { id: userId, ...data };
+    const update: Prisma.UserUncheckedUpdateInput = toPrismaProfile(data);
+    const create: Prisma.UserUncheckedCreateInput = { id: userId, ...toPrismaCreate(data) };
 
     if (painRegions !== undefined) {
-      update.painRegions = painRegions as Prisma.InputJsonValue;
-      create.painRegions = painRegions as Prisma.InputJsonValue;
+      const value = painRegions === null ? Prisma.DbNull : (painRegions as Prisma.InputJsonValue);
+      update.painRegions = value;
+      create.painRegions = value;
     }
 
     await prisma.$transaction(async (tx) => {

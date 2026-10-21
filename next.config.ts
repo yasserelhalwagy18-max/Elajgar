@@ -13,8 +13,12 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        // An admin can set any image URL for a gym from the admin panel, so
+        // the optimizer has to be willing to fetch whatever they entered.
+        // Restricting this to a fixed list would make the panel's field
+        // useless for every host that is not on it.
         protocol: 'https',
-        hostname: 'picsum.photos',
+        hostname: '**',
         port: '',
         pathname: '/**', // This allows any path under the hostname
       },

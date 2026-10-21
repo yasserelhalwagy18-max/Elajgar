@@ -23,6 +23,14 @@ npm run build
 
 When finished, a `.next` folder will be created.
 
+The build does not need access to Google Fonts or to any other external
+service: the Vazirmatn font is self-hosted from the `@fontsource/vazirmatn`
+package, so the build works on a host with a restricted network.
+
+If the build reports `Failed to fetch Vazirmatn from Google Fonts`, the app
+is still running an older copy of `app/layout.tsx` - see `lib/fonts.ts` for
+how the font is loaded now.
+
 ## 3. Files to Upload
 
 Zip (do not include `node_modules`):
@@ -50,13 +58,19 @@ On your host, set these environment variables (via cPanel "Setup Node.js App" en
 The `DATABASE_URL` format is:
 
 ```
-mysql://USERNAME:PASSWORD@localhost:3306/DATABASENAME?connection_limit=10
+mysql://USERNAME:PASSWORD@HOST:PORT/DATABASENAME?sslmode=REQUIRED&connection_limit=10&connect_timeout=30
 ```
 
-Keep `connection_limit` in the URL. Aiven's free tier allows only 20
+Keep `connection_limit` in the URL. A hosted free tier may allow only 20
 concurrent connections per MySQL service, while Prisma's default pool size is
 (CPU cores × 2 + 1) - on a shared host that is more than the database
 accepts, and the app fails with "too many connections".
+
+`connect_timeout` is in seconds. Prisma's default is 5, which is not enough
+for a managed service that was just powered on and is still starting up.
+
+`sslmode=REQUIRED` is for a hosted server that uses TLS. A local MySQL does
+not need it.
 
 If you want to use PostgreSQL (e.g. Supabase, Neon) you must change
 `provider` in `prisma/schema.prisma` to `postgresql` **and** use a PostgreSQL
@@ -98,12 +112,12 @@ It verifies the environment variables, the database connection, that the schema
 matches `prisma/schema.prisma`, that an admin account exists, that the Prisma
 client is up to date, and that the SMS provider still has credit.
 
-> **Aiven free tier:** the MySQL service is powered off automatically after a
-> period of inactivity. The symptom is `Can't reach database server`, or
-> `npm run db:doctor` failing the database check. Log in to the Aiven console,
-> press **Power on** for the service, wait for it to start, and run
-> `npm run db:doctor` again. Nothing in the data is lost — the service comes
-> back with all of it.
+> **A hosted free tier can go away.** An Aiven free-tier MySQL, for example,
+> is powered off automatically after a period of inactivity. The symptom is
+> `Can't reach database server`, or `npm run db:doctor` failing the database
+> check. Log in to the provider's console, press **Power on** for the service,
+> wait for it to start, and run `npm run db:doctor` again. Nothing in the data
+> is lost — the service comes back with all of it.
 >
 > You do not have to restart the app after that: the connection pool is
 > repaired automatically the first time a query fails, so the first request
