@@ -3,7 +3,8 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import { useStore } from '@/lib/store';
-import { toDateKey, toPersianDigits } from '@/lib/utils';
+import { formatNumber, toDateKey, toPersianDigits } from '@/lib/utils';
+import { ChartDataTable } from '@/components/ui/ChartDataTable';
 
 export default function HydrationChart() {
     const svgRef = useRef<SVGSVGElement>(null);
@@ -196,14 +197,24 @@ export default function HydrationChart() {
     }
 
     return (
-        <div
-            ref={wrapperRef}
-            className="w-full h-[150px] mt-4 flex items-center justify-center relative"
-            dir="ltr"
-            role="img"
-            aria-label="نمودار مصرف آب هفت روز گذشته"
-        >
-            <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="none"></svg>
+        <div className="w-full mt-4">
+            <div
+                ref={wrapperRef}
+                className="w-full h-[150px] flex items-center justify-center relative"
+                dir="ltr"
+                role="img"
+                aria-label="نمودار مصرف آب هفت روز گذشته"
+            >
+                <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="none"></svg>
+            </div>
+            {/* The chart itself carries no numbers for a screen reader, and the
+                tooltip can only be reached with a pointer. The table is the
+                text alternative. */}
+            <ChartDataTable
+                caption="نقاط داده نمودار مصرف آب هفت روز گذشته"
+                columns={['روز', 'آب (لیتر)']}
+                rows={activeData.map((d) => [d.day, formatNumber(d.amount)])}
+            />
         </div>
     );
 }

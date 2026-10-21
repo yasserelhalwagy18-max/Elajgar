@@ -7,8 +7,9 @@ import {
   BarChart, Bar, AreaChart, Area
 } from 'recharts';
 import { DailyHealthData, buildHealthDataFromLogs } from '@/lib/healthScore';
+import { ChartDataTable } from '@/components/ui/ChartDataTable';
 import { useStore } from '@/lib/store';
-import { toPersianDigits } from '@/lib/utils';
+import { formatNumber, toPersianDigits } from '@/lib/utils';
 
 const chartTooltipStyle = {
   borderRadius: '16px',
@@ -95,12 +96,12 @@ export default function ProgressReport() {
           {/* Weight Trend */}
           <figure className="card p-6 rounded-3xl">
             <figcaption className="font-bold text-lg mb-4 text-on-surface">روند وزن (کیلوگرم)</figcaption>
-            <div className="h-64 w-full" dir="ltr" role="img" aria-label="نمودار روند وزن">
+            <div className="h-64 w-full" dir="ltr">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis domain={weightDomain} tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={weightDomain} tick={{ fill: '#475569', fontSize: 12 }} tickFormatter={(v: number) => formatNumber(v)} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={chartTooltipStyle}
                     labelStyle={{ fontWeight: 'bold', color: 'var(--color-primary)' }}
@@ -110,17 +111,25 @@ export default function ProgressReport() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+            <ChartDataTable
+              caption="نقاط داده نمودار روند وزن"
+              columns={['تاریخ', 'وزن (کیلوگرم)']}
+              rows={rtlData.map((d) => [
+                d.date,
+                d.weight === null ? 'ثبت نشده' : formatNumber(d.weight),
+              ])}
+            />
           </figure>
 
           {/* BMI Trend */}
           <figure className="card p-6 rounded-3xl">
             <figcaption className="font-bold text-lg mb-4 text-on-surface">شاخص توده بدنی (BMI)</figcaption>
-            <div className="h-48 w-full" dir="ltr" role="img" aria-label="نمودار شاخص توده بدنی">
+            <div className="h-48 w-full" dir="ltr">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis domain={bmiDomain} tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={bmiDomain} tick={{ fill: '#475569', fontSize: 12 }} tickFormatter={(v: number) => formatNumber(v)} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={chartTooltipStyle}
                     labelStyle={{ fontWeight: 'bold', color: 'var(--color-secondary)' }}
@@ -130,12 +139,20 @@ export default function ProgressReport() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+            <ChartDataTable
+              caption="نقاط داده نمودار شاخص توده بدنی"
+              columns={['تاریخ', 'شاخص توده بدنی']}
+              rows={rtlData.map((d) => [
+                d.date,
+                d.bmi === null ? 'ثبت نشده' : formatNumber(d.bmi),
+              ])}
+            />
           </figure>
 
           {/* Pain Intensity */}
           <figure className="card p-6 rounded-3xl">
             <figcaption className="font-bold text-lg mb-4 text-on-surface">شدت درد (۰-۱۰)</figcaption>
-            <div className="h-64 w-full" dir="ltr" role="img" aria-label="نمودار شدت درد">
+            <div className="h-64 w-full" dir="ltr">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
@@ -146,7 +163,7 @@ export default function ProgressReport() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[0, 10]} tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 10]} tick={{ fill: '#475569', fontSize: 12 }} tickFormatter={(v: number) => formatNumber(v)} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={chartTooltipStyle}
                     formatter={(value: any) => [toPersianDigits(value), 'شدت درد']}
@@ -155,6 +172,14 @@ export default function ProgressReport() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+            <ChartDataTable
+              caption="نقاط داده نمودار شدت درد"
+              columns={['تاریخ', 'شدت درد (۰ تا ۱۰)']}
+              rows={rtlData.map((d) => [
+                d.date,
+                d.pain === null ? 'ثبت نشده' : formatNumber(d.pain),
+              ])}
+            />
           </figure>
 
           {/* Grid for Activity and Calories/Water */}
@@ -162,12 +187,12 @@ export default function ProgressReport() {
             {/* Physical Activity */}
             <figure className="card p-6 rounded-3xl">
               <figcaption className="font-bold text-lg mb-4 text-on-surface">فعالیت فیزیکی (دقیقه)</figcaption>
-              <div className="h-48 w-full" dir="ltr" role="img" aria-label="نمودار فعالیت فیزیکی">
+              <div className="h-48 w-full" dir="ltr">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: '#475569', fontSize: 12 }} tickFormatter={(v: number) => formatNumber(v)} axisLine={false} tickLine={false} />
                     <Tooltip
                       cursor={{ fill: 'rgba(37,99,235,0.08)' }}
                       contentStyle={chartTooltipStyle}
@@ -177,18 +202,26 @@ export default function ProgressReport() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              <ChartDataTable
+                caption="نقاط داده نمودار فعالیت فیزیکی"
+                columns={['تاریخ', 'فعالیت (دقیقه)']}
+                rows={rtlData.map((d) => [
+                  d.date,
+                  d.activity === null ? 'ثبت نشده' : formatNumber(d.activity),
+                ])}
+              />
             </figure>
 
             {/* Calories & Water Combo (Using Line and Bar) */}
             <figure className="card p-6 rounded-3xl">
               <figcaption className="font-bold text-lg mb-4 text-on-surface">کالری و آب</figcaption>
-              <div className="h-48 w-full" dir="ltr" role="img" aria-label="نمودار کالری و آب">
+              <div className="h-48 w-full" dir="ltr">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="left" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, 4]} />
+                    <YAxis yAxisId="left" tick={{ fill: '#475569', fontSize: 12 }} tickFormatter={(v: number) => formatNumber(v)} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fill: '#475569', fontSize: 12 }} tickFormatter={(v: number) => formatNumber(v)} axisLine={false} tickLine={false} domain={[0, 4]} />
                     <Tooltip
                       contentStyle={chartTooltipStyle}
                       formatter={(value: any, name: any) => [
@@ -201,6 +234,15 @@ export default function ProgressReport() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+              <ChartDataTable
+                caption="نقاط داده نمودار کالری و آب"
+                columns={['تاریخ', 'کالری', 'آب (لیتر)']}
+                rows={rtlData.map((d) => [
+                  d.date,
+                  d.calories === null ? 'ثبت نشده' : formatNumber(d.calories),
+                  d.water === null ? 'ثبت نشده' : formatNumber(d.water),
+                ])}
+              />
             </figure>
           </div>
         </>
