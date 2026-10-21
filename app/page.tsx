@@ -9,8 +9,15 @@ import { cn, toPersianDigits } from '@/lib/utils';
 
 const BRAND = 'علاج‌گر';
 
+/** The controls inside the mobile menu overlay. */
+const MOBILE_MENU_FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
 export default function LandingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const mobileMenuRef = React.useRef<HTMLDivElement>(null);
+  /** The button that opened the menu, so focus can go back to it. */
+  const menuButtonRef = React.useRef<HTMLButtonElement>(null);
 
   // The numbers on this page come from the database. They used to be typed
   // in by hand, which meant the page claimed there were 24 foods while the
@@ -57,9 +64,58 @@ export default function LandingPage() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isMobileMenuOpen]);
 
+  // Move focus into the menu when it opens, and back to the button that
+  // opened it when it closes.
+  React.useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const node = mobileMenuRef.current;
+    const first = node?.querySelector<HTMLElement>(MOBILE_MENU_FOCUSABLE);
+    first?.focus();
+
+    // The button is copied out of the ref now: by the time the cleanup runs,
+    // the ref may already point somewhere else.
+    const opener = menuButtonRef.current;
+    return () => {
+      opener?.focus();
+    };
+  }, [isMobileMenuOpen]);
+
+  /** Keep Tab inside the open menu. */
+  const handleMobileMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Tab') return;
+    const node = mobileMenuRef.current;
+    if (!node) return;
+
+    const focusables = Array.from(node.querySelectorAll<HTMLElement>(MOBILE_MENU_FOCUSABLE)).filter(
+      (el) => el.offsetParent !== null
+    );
+    if (focusables.length === 0) {
+      event.preventDefault();
+      return;
+    }
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return (
     <div className="max-w-[1280px] mx-auto px-6 py-8 md:px-16 pb-24 md:pb-8 relative">
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay
+
+          It is a dialog, so it behaves like one: focus moves into it when it
+          opens, Tab is trapped inside it while it is open, Escape closes it
+          and focus returns to the button that opened it. Before this, the
+          overlay carried `aria-modal="true"` and a close button but no trap,
+          so a keyboard user could tab straight out of it into the page
+          behind. */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -70,6 +126,8 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            ref={mobileMenuRef}
+            onKeyDown={handleMobileMenuKeyDown}
             className="fixed inset-0 z-[100] bg-surface/90 backdrop-blur-md flex flex-col items-center justify-center"
           >
             <button
@@ -78,7 +136,7 @@ export default function LandingPage() {
               aria-label="بستن منو"
               className="absolute top-6 end-6 icon-btn"
             >
-              <X className="w-8 h-8" />
+              <X className="w-8 h-8" aria-hidden="true" />
             </button>
             <div className="flex flex-col gap-8 text-2xl font-bold text-center">
               <Link href="#services" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">اکوسیستم</Link>
@@ -110,13 +168,14 @@ export default function LandingPage() {
         {/* Mobile Hamburger */}
         <button
           type="button"
+          ref={menuButtonRef}
           onClick={() => setIsMobileMenuOpen(true)}
           aria-label="باز کردن منو"
           aria-expanded={isMobileMenuOpen}
           aria-controls="mobile-menu"
           className="md:hidden icon-btn"
         >
-          <Menu className="w-6 h-6" />
+          <Menu className="w-6 h-6" aria-hidden="true" />
         </button>
       </nav>
 
