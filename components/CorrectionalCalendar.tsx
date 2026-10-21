@@ -54,6 +54,15 @@ const displayDayFormatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { day:
 const displayYearFormatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric' });
 
 const weekdayFormatter = new Intl.DateTimeFormat('fa-IR', { weekday: 'short' });
+/**
+ * The single-letter form of the weekday.
+ *
+ * The short form in Persian is still the whole word ("چهارشنبه"), and seven of
+ * them do not fit across a phone-width card: the first label was clipped at
+ * the edge of the card. The narrow form is one letter, which is what a
+ * Persian week strip uses anyway.
+ */
+const weekdayNarrowFormatter = new Intl.DateTimeFormat('fa-IR', { weekday: 'narrow' });
 
 /** A Persian month is never longer than 31 days - the guard keeps a broken
  *  calendar lookup from turning into an infinite loop. */
@@ -208,7 +217,7 @@ export function CorrectionalCalendar() {
     // The visible week - the seven days that contain the selected day.
     const week = useMemo(() => {
         const start = startOfWeek(selectedDate);
-        const days: { key: string; label: string; weekday: string; date: Date }[] = [];
+        const days: { key: string; label: string; weekday: string; weekdayShort: string; date: Date }[] = [];
         for (let i = 0; i < 7; i++) {
             const date = new Date(start);
             date.setDate(start.getDate() + i);
@@ -216,6 +225,7 @@ export function CorrectionalCalendar() {
                 key: toDateKey(date),
                 label: displayDayFormatter.format(date),
                 weekday: weekdayFormatter.format(date),
+                weekdayShort: weekdayNarrowFormatter.format(date),
                 date,
             });
         }
@@ -310,7 +320,7 @@ export function CorrectionalCalendar() {
 
                         return (
                             <div key={day.key} className="flex flex-col items-center gap-2">
-                                <span className="text-xs font-bold text-on-surface-variant">{day.weekday}</span>
+                                <span className="text-xs font-bold text-on-surface-variant">{day.weekdayShort}</span>
                                 <button
                                     type="button"
                                     onClick={() => setSelectedDate(day.date)}
