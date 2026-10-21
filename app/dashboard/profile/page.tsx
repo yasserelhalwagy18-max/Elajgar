@@ -73,6 +73,14 @@ export default function ProfilePage() {
     // how long it is left.
     const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
 
+    // Whether the user has a password, and the form to set or change it.
+    const [hasPassword, setHasPassword] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+    const [savingPassword, setSavingPassword] = useState(false);
+
     useEffect(() => {
         if (!isAuthenticated) return;
 
@@ -85,8 +93,54 @@ export default function ProfilePage() {
                 if ((error as Error)?.name === 'AbortError') return;
             });
 
+        // The API answers whether a password is set, so the section can say
+        // "set a password" or "change it".
+        fetch('/api/user', { signal: controller.signal, cache: 'no-store' })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => setHasPassword(Boolean(data?.hasPassword)))
+            .catch((error) => {
+                if ((error as Error)?.name === 'AbortError') return;
+            });
+
         return () => controller.abort();
     }, [isAuthenticated]);
+
+    const savePassword = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setPasswordError(null);
+        setPasswordMessage(null);
+
+        if (newPassword.length < 8) {
+            setPasswordError('رمز عبور باید حداقل ۸ کاراکتر باشد');
+            return;
+        }
+
+        setSavingPassword(true);
+        try {
+            const res = await fetch('/api/auth/set-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    password: newPassword,
+                    ...(hasPassword ? { currentPassword } : {}),
+                }),
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                setHasPassword(true);
+                setCurrentPassword('');
+                setNewPassword('');
+                setPasswordMessage('رمز عبور ذخیره شد. از این پس می‌توانید با آن وارد شوید.');
+            } else {
+                setPasswordError(data.error || 'ذخیره رمز عبور ناموفق بود');
+            }
+        } catch {
+            setPasswordError('ارتباط با سرور برقرار نشد');
+        } finally {
+            setSavingPassword(false);
+        }
+    };
 
     useEffect(() => {
         // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
@@ -251,6 +305,69 @@ export default function ProfilePage() {
                         اعلان‌ها در تنظیمات مرورگر مسدود شده‌اند. برای فعال‌سازی، آن‌ها را از تنظیمات سایت اجازه دهید.
                   </p>
                 )}
+            </section>
+
+            <section className="mb-8" id="password">
+                <h3 className="font-bold text-lg mb-4 text-on-surface px-2">رمز عبور</h3>
+                <form onSubmit={savePassword} className="card rounded-3xl p-5 flex flex-col gap-4">
+                    <p className="text-sm text-on-surface-variant">
+                        {hasPassword
+                            ? 'با رمز عبور وارد می‌شوید و دیگر منتظر پیامک نمی‌مانید. برای تغییر آن، رمز فعلی را وارد کنید.'
+                            : 'برای ورودهای بعدی یک رمز عبور بسازید تا دیگر منتظر پیامک نمانید. این کار اختیاری است.'}
+                    </p>
+
+                    {hasPassword && (
+                        <div>
+                            <label className="block text-sm font-medium mb-1" htmlFor="current-password">
+                                رمز عبور فعلی
+                            </label>
+                            <input
+                                id="current-password"
+                                type="password"
+                                autoComplete="current-password"
+                                value={currentPassword}
+                                onChange={(e) => { setCurrentPassword(e.target.value); setPasswordError(null); }}
+                                className={`input text-left ${passwordError ? 'border-error' : ''}`}
+                                dir="ltr"
+                                disabled={savingPassword}
+                            />
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1" htmlFor="new-password">
+                            {hasPassword ? 'رمز عبور جدید' : 'رمز عبور جدید'}
+                        </label>
+                        <input
+                            id="new-password"
+                            type="password"
+                            autoComplete="new-password"
+                            value={newPassword}
+                            onChange={(e) => { setNewPassword(e.target.value); setPasswordError(null); }}
+                            placeholder="حداقل ۸ کاراکتر"
+                            className={`input text-left ${passwordError ? 'border-error' : ''}`}
+                            dir="ltr"
+                            minLength={8}
+                            required
+                            disabled={savingPassword}
+                        />
+                    </div>
+
+                    {passwordError && (
+                        <p role="alert" className="text-error text-xs">{passwordError}</p>
+                    )}
+                    {passwordMessage && (
+                        <p role="status" className="text-success text-xs">{passwordMessage}</p>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={savingPassword}
+                        className="btn btn-primary w-full py-2.5"
+                    >
+                        {savingPassword ? 'در حال ذخیره...' : hasPassword ? 'تغییر رمز عبور' : 'ذخیره رمز عبور'}
+                    </button>
+                </form>
             </section>
 
             <section className="mb-8">

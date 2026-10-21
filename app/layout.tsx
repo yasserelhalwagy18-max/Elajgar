@@ -1,6 +1,7 @@
 import type {Metadata, Viewport} from 'next';
 import { Toaster } from 'react-hot-toast';
 import { vazirmatnArabic, vazirmatnLatin } from '@/lib/fonts';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
 
 const APP_TITLE = 'علاج‌گر';
@@ -9,6 +10,13 @@ const APP_DESCRIPTION = 'برنامه هوشمند ارزیابی درد و سل
 export const metadata: Metadata = {
   manifest: '/manifest.json',
   applicationName: APP_TITLE,
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   appleWebApp: {
     capable: true,
     title: APP_TITLE,
@@ -63,6 +71,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
             }
           }}
         />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

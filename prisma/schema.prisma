@@ -93,6 +93,12 @@ model User {
   accounts Account[]
   sessions Session[]
 
+  /// The user's password, when they have set one.
+  ///
+  /// A user signs in with an SMS code the first time, and may then set a
+  /// password so they do not have to wait for a code every time.
+  password HashedPassword?
+
   // Relations to other models
   painZones       PainZone[]
   questionnaire   QuestionnaireAnswer?
@@ -488,4 +494,19 @@ model OtpCode {
 enum Role {
   USER
   ADMIN
+}
+
+/// A user's password.
+///
+/// It lives in its own table so that it cannot leak by accident: a query that
+/// returns a user has to ask for this relation explicitly, and only the
+/// password check ever does.
+model HashedPassword {
+  userId String @unique
+  /// The salted hash, in the format `scrypt$N$r$p$salt$hash`.
+  hash   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

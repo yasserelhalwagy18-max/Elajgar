@@ -516,6 +516,9 @@ export async function GET() {
       select: {
         ...USER_SELECT,
         questionnaire: true,
+        // Only to know *whether* a password is set. The hash itself is never
+        // sent anywhere.
+        password: { select: { hash: true } },
         dailyLogs: {
           orderBy: { date: 'asc' },
           include: { foods: true },
@@ -526,6 +529,11 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    // The hash is read only to know *whether* a password is set. It is
+    // taken out of the record here, so that it can never end up in the
+    // response - `serializeUser` spreads the whole record.
+    const { password, ...safeUser } = user;
 
     const dailyLogs = (user.dailyLogs ?? []).map((log) => ({
       date: log.date.toISOString().slice(0, 10),
@@ -568,10 +576,13 @@ export async function GET() {
     const nutritionConfig = await getNutritionConfig();
 
     return NextResponse.json({
-      ...serializeUser(user),
+      ...serializeUser(safeUser),
       painZones: Array.isArray(user.painRegions) ? user.painRegions : [],
       dailyLogs,
       questionnaireAnswers: questionnaire,
+      // Whether the user can sign in with a password, so the app can offer
+      // it on the login screen and in the profile.
+      hasPassword: Boolean(password),
       healthWeights,
       nutritionConfig,
     });

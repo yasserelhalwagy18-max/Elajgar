@@ -64,6 +64,68 @@ the font from Google, which is slow for users on the same kind of network.
 
 Nothing has to be downloaded for a build now.
 
+## Signing in
+
+There are three ways in:
+
+- **An SMS code.** This is how everybody signs in the first time, and it is
+  the only way to get an account.
+- **A password.** After the first sign-in the app offers to create one, so
+  from then on the user can sign in without waiting for a message. The
+  password can be set or changed in **Profile → Password**.
+- **The SMS code, again.** The password is optional - the code always works.
+
+The password is stored as a `scrypt` hash in its own table, never next to
+the user record, so it cannot leak into a query that returns a user. Signing
+in with a password is rate limited, and an unknown number and a wrong
+password give exactly the same answer, so the form cannot be used to find
+out which phone numbers have an account.
+
+> **On Windows, stop the app before `npm run db:generate`.** The Prisma query
+> engine is a `.dll` that the running process holds open, so the generate
+> fails with `EPERM: operation not permitted, rename ... query_engine-*.dll`.
+> The fix is to stop the dev server (or the app on the host) and run it again.
+> `npm run db:doctor` tells you when the generated client has fallen behind
+> the schema.
+
+## The PWA
+
+The app can be installed on a phone and opens like a normal app.
+
+- `public/manifest.json` - the name, the colours and the icons.
+- `public/icon.svg` - the source of the icons. The PNGs the manifest points
+  at are generated from it with `npm run icons:generate`.
+- `public/sw.js` - the service worker.
+- `public/offline.html` - the page shown when there is no connection.
+
+**Nothing that belongs to a user is ever cached.** The API answers with the
+caller's own health record, so the worker sends every `/api/` request to the
+network and stores nothing. The pages are not cached either. What is cached
+is the static files - the ones Next.js serves with a content hash in their
+name - and the icons, so the app opens and shows its shell with no
+connection.
+
+The worker is only registered in a production build, so it cannot serve an
+old build while Next.js is making a new one during development. To try it
+locally:
+
+```bash
+npm run build && npm start
+```
+
+Then open the site in Chrome and use **Install app** in the address bar.
+
+> **A note on `output: 'standalone'`:** the standalone server does not
+> copy `public/` or `.next/static/` for you. If you ever run
+> `node .next/standalone/server.js` instead of `npm start`, copy them across
+> first, or the icons, the service worker and the offline page will be
+> missing:
+>
+> ```bash
+> cp -r public .next/standalone/
+> cp -r .next/static .next/standalone/.next/
+> ```
+
 ## Check that everything is wired up
 
 ```bash
@@ -89,7 +151,6 @@ broken after a deploy or a host migration.
 > A local MySQL avoids the whole problem, which is why development uses one.
 
 ## The admin panel
-
 `/admin` is the control panel. It needs an account with the `ADMIN` role -
 there is no way to become an admin through the app, so it is provisioned out
 of band:

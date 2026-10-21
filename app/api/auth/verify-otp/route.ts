@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { SignJWT } from 'jose';
-import { cookies } from 'next/headers';
-import { getEncodedSecret } from '@/lib/auth';
-import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from '@/lib/session';
+import { issueSession } from '@/lib/session';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import { codesMatch, isValidOtpFormat, OTP_MAX_VERIFY_ATTEMPTS } from '@/lib/otp';
 
@@ -105,23 +102,9 @@ export async function POST(request: Request) {
       create: { phoneNumber, lastLoginAt: new Date() },
     });
 
-    // Generate JWT token
-    const encodedSecret = getEncodedSecret();
-    const token = await new SignJWT({ userId: user.id, phoneNumber: user.phoneNumber })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('7d') // Session expires in 7 days
-      .sign(encodedSecret);
-
-    // Set JWT in HTTP-only cookie
-    const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: SESSION_MAX_AGE_SECONDS,
-      path: '/',
-    });
+    // Sign the user in. The same session is issued by the password login, so
+    // the two ways of signing in are interchangeable from here on.
+    await issueSession(user.id, user.phoneNumber);
 
     return NextResponse.json({ success: true });
   } catch (error) {

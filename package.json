@@ -16,6 +16,7 @@
     "db:studio": "node scripts/prisma.mjs studio",
     "db:seed": "node scripts/prisma.mjs db seed",
     "db:doctor": "node scripts/doctor.mjs",
+    "icons:generate": "node scripts/generate-icons.mjs",
     "admin:promote": "node scripts/promote-admin.mjs"
   },
   "dependencies": {
