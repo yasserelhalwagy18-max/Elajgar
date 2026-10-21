@@ -2,7 +2,6 @@
 
 import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { useFrame } from '@react-three/fiber';
 import { Html, Center, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import {
@@ -243,12 +242,24 @@ export default function PainHeatmap3D({
     const hasData = painData.some((region) => region.percentage > 0);
 
     return (
-        <div className="w-full relative rounded-3xl overflow-hidden card" style={{ height }}>
+        <div className="w-full relative">
+            <div className="w-full relative rounded-3xl overflow-hidden card" style={{ height }}>
             <Canvas
                 shadows
                 camera={{ position: [0, 0, 4], fov: 45 }}
                 gl={{ alpha: true, antialias: true }}
                 style={{ background: 'transparent' }}
+                // A device without WebGL gets a sentence instead of a blank
+                // rectangle. The table below carries the same numbers, so
+                // nothing is lost.
+                fallback={
+                    <div className="flex h-full items-center justify-center p-6 text-center">
+                        <p className="text-sm text-on-surface-variant">
+                            نمایش سه‌بعدی روی این دستگاه پشتیبانی نمی‌شود. توزیع ناحیه‌های
+                            درد در جدول زیر آمده است.
+                        </p>
+                    </div>
+                }
             >
                 <SceneLighting />
                 <OrbitControls
@@ -290,8 +301,59 @@ export default function PainHeatmap3D({
             )}
 
             <div className="absolute bottom-4 end-4 pointer-events-none">
-                <div className="text-xs text-white/80 bg-on-surface/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                {/* `bg-on-surface/80` instead of `/60`: the hint is white text
+                    on the panel, and at 60% the contrast was 3.66:1. */}
+                <div className="text-xs text-white bg-on-surface/80 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
                     برای چرخش مدل را بکشید
+                </div>
+            </div>
+            </div>
+
+            {/* The text alternative.
+                The distribution was only reachable by hovering a marker on a
+                WebGL canvas: a screen reader, a keyboard and a finger on a
+                glass panel all got nothing. The table carries the same
+                numbers as real text. */}
+            <div className="mt-4 card rounded-3xl p-4">
+                <h3 className="font-bold text-on-surface mb-1">توزیع ناحیه‌های درد</h3>
+                <p className="text-xs text-on-surface-variant mb-3">
+                    {toPersianDigits(painData.filter((region) => region.percentage > 0).length)} ناحیه از{' '}
+                    {toPersianDigits(painData.length)} ناحیه، درد گزارش‌شده دارند.
+                </p>
+                <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-xs border-collapse">
+                        <caption className="sr-only">
+                            تعداد و درصد کاربرانی که درد را در هر ناحیه گزارش کرده‌اند
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" className="text-start font-bold text-on-surface border-b border-outline-variant px-2 py-1.5">
+                                    ناحیه
+                                </th>
+                                <th scope="col" className="text-start font-bold text-on-surface border-b border-outline-variant px-2 py-1.5">
+                                    کاربران
+                                </th>
+                                <th scope="col" className="text-start font-bold text-on-surface border-b border-outline-variant px-2 py-1.5">
+                                    درصد
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {painData.map((region) => (
+                                <tr key={region.id} className="even:bg-surface-variant/40">
+                                    <th scope="row" className="text-start font-medium text-on-surface px-2 py-1.5">
+                                        {region.label}
+                                    </th>
+                                    <td className="px-2 py-1.5 text-on-surface-variant tabular-nums">
+                                        {toPersianDigits(region.count ?? 0)}
+                                    </td>
+                                    <td className="px-2 py-1.5 text-on-surface-variant tabular-nums">
+                                        {toPersianDigits(region.percentage)}٪
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
