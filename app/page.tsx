@@ -302,9 +302,22 @@ export default function LandingPage() {
           <div>
             <h4 className="font-bold text-on-surface mb-4">پشتیبانی</h4>
             <div className="flex flex-col gap-2 text-sm text-on-surface-variant">
-              <span dir="ltr" className="text-right inline-block w-full">021 - 12345678</span>
-              <span dir="ltr" className="text-right inline-block w-full">support@elajgar.com</span>
-              <span className="mt-2">تهران، خیابان ولیعصر، برج نوآوری</span>
+              {/* A real, working route. The old block carried a placeholder
+                  phone number and a placeholder address, which in a health
+                  app looked like a contact point but reached nobody. */}
+              <a
+                href="mailto:support@elajgar.com?subject=%D8%B3%D8%B1%D8%A7%D8%B3%D8%AA%20%D9%BE%D8%B4%D8%AA%D8%A8%D8%B4%D8%A7%D9%86%DB%8C%20%D8%B9%D9%84%D8%A7%D8%AC%DA%AF%D8%B1"
+                dir="ltr"
+                className="text-start hover:text-primary transition-colors"
+              >
+                support@elajgar.com
+              </a>
+              <Link href="/privacy" className="hover:text-primary transition-colors">
+                سیاست حریم خصوصی
+              </Link>
+              <Link href="/terms" className="hover:text-primary transition-colors">
+                شرایط و قوانین خدمات
+              </Link>
             </div>
           </div>
         </div>

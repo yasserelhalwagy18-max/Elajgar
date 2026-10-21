@@ -304,6 +304,18 @@ export default function ProfilePage() {
                         </span>
                         <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
                     </a>
+                    {/* The support route the privacy policy points the user to.
+                        A real link, so it always opens a mail client. */}
+                    <a
+                        href="mailto:support@elajgar.com?subject=%D8%B3%D8%B1%D8%A7%D8%B3%D8%AA%20%D9%BE%D8%B4%D8%AA%D8%A8%D8%B4%D8%A7%D9%86%DB%8C%20%D8%B9%D9%84%D8%A7%D8%AC%DA%AF%D8%B1"
+                        className="w-full bg-surface-container p-4 flex items-center justify-between hover:bg-surface-variant/60 transition-colors"
+                    >
+                        <span className="flex items-center gap-4">
+                            <Shield className="w-5 h-5 text-on-surface-variant" />
+                            <span className="font-bold text-on-surface text-sm">پشتیبانی و درخواست حذف حساب</span>
+                        </span>
+                        <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
+                    </a>
                 </div>
             </section>
 
