@@ -174,7 +174,7 @@ export default function PainHeatmap({
                   className={cn(
                     'px-3 py-2 rounded-full text-xs font-bold border transition-colors',
                     isSelected
-                      ? 'bg-error/10 text-error border-error/30'
+                      ? 'bg-error/10 text-error-strong border-error/30'
                       : 'bg-surface-container text-on-surface-variant border-outline-variant hover:border-primary hover:text-primary'
                   )}
                 >

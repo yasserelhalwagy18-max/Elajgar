@@ -24,9 +24,12 @@
   --color-on-tertiary-container: #7c2d12;
 
   /* Hydration - a dedicated accent so water reads as its own category
-     instead of borrowing a raw `blue-500`. */
-  --color-water: #0284c7;
-  --color-water-hover: #0369a1;
+     instead of borrowing a raw `blue-500`.
+     `#0284c7` only reached 4.10:1 with white text on it, so the accent was
+     darkened to the next step of the same hue: white on `#0369a1` is 4.95:1
+     and still passes for large text. */
+  --color-water: #0369a1;
+  --color-water-hover: #075985;
   --color-water-container: #e0f2fe;
 
   /* Neutrals */
@@ -52,6 +55,9 @@
   --color-warning: #b45309;
   --color-on-warning: #ffffff;
   --color-warning-container: #fef3c7;
+  /* A darker step of the same hue for text on a tinted background
+     (`bg-warning/10`), where plain `warning` only reaches ~4.4:1. */
+  --color-warning-strong: #92400e;
 
   --color-success: #15803d;
   --color-on-success: #ffffff;

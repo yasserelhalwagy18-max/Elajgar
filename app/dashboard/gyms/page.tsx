@@ -236,7 +236,11 @@ function GymCard({ gym }: { gym: Gym }) {
             <div className="relative h-48 w-full">
               <GymImage gym={gym} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden="true" />
-                <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
+                {/* A dark scrim instead of a white tint: the badge sits on top of
+                    a gym photo, and a white tint over a light photo left the
+                    white label below 4.5:1. `bg-black/60` keeps the text at
+                    5.7:1 or better no matter what the photo looks like. */}
+                <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 border border-white/20">
                     <MapPin className="w-3 h-3" />
                     {gym.location}
                 </div>
@@ -256,7 +260,7 @@ function GymCard({ gym }: { gym: Gym }) {
                         {categoryLabel}
                     </span>
                     {gym.isPremium && (
-                        <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
+                        <span className="text-xs font-bold bg-primary/10 text-primary-dark px-2.5 py-1 rounded-md">
                             ویژه
                         </span>
                     )}

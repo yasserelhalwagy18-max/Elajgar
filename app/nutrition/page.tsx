@@ -412,7 +412,7 @@ export default function NutritionPage() {
                     aria-pressed={userProfile?.nutritionGoal === goal}
                     className={`flex justify-between items-center p-4 rounded-xl border transition-all ${
                         userProfile?.nutritionGoal === goal
-                            ? 'border-primary bg-primary/10 text-primary font-bold'
+                            ? 'border-primary bg-primary/10 text-primary-dark font-bold'
                             : 'border-outline-variant bg-surface-container text-on-surface hover:border-primary/40'
                     }`}
                 >

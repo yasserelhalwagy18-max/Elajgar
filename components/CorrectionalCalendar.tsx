@@ -379,12 +379,12 @@ export function CorrectionalCalendar() {
                                         </button>
                                     )}
                                     {currentSession.status === 'completed' && (
-                                        <div className="bg-primary/10 text-primary text-sm font-bold px-4 py-2 rounded-xl flex items-center gap-1 border border-primary/20">
+                                        <div className="bg-primary/10 text-primary-dark text-sm font-bold px-4 py-2 rounded-xl flex items-center gap-1 border border-primary/20">
                                             <Check className="w-4 h-4" /> انجام شده
                                         </div>
                                     )}
                                     {currentSession.status === 'skipped' && (
-                                        <div className="bg-error/10 text-error text-sm font-bold px-4 py-2 rounded-xl flex items-center gap-1 border border-error/20">
+                                        <div className="bg-error/10 text-error-strong text-sm font-bold px-4 py-2 rounded-xl flex items-center gap-1 border border-error/20">
                                             <X className="w-4 h-4" /> از دست رفته
                                         </div>
                                     )}
