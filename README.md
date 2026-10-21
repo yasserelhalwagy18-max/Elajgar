@@ -1,22 +1,70 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Elajgar (علاج‌گر)
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/e8f0ab4b-5af2-46be-ad3d-ccae83b54dd5
+A Next.js app for pain assessment, corrective exercise and nutrition tracking.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js 20+, a MySQL database
 
 1. Install dependencies:
    `npm install`
-2. Copy the `.env.example` file to `.env.local`:
-   `cp .env.example .env.local`
-3. Set `DATABASE_URL` and `JWT_SECRET` in `.env.local`.
-4. Run the app:
+2. Copy the env template and fill in the values:
+   `cp .env.exsample .env.local`
+3. Create the tables and generate the client:
+   `npm run db:push`
+4. Seed the food database, the gyms and the editorial content:
+   `npm run db:seed`
+5. Run the app:
    `npm run dev`
+
+The Prisma CLI only reads `.env`, while Next.js reads `.env.local` first. The
+`npm run db:*` scripts go through `scripts/prisma.mjs`, which loads
+`.env.local` when it exists and falls back to `.env`, so the same commands work
+locally and on the host.
+
+## The admin panel
+
+`/admin` is the control panel. It needs an account with the `ADMIN` role -
+there is no way to become an admin through the app, so it is provisioned out
+of band:
+
+```bash
+ADMIN_PHONE=09123456789 npm run db:seed
+```
+
+The seed creates the account if it does not exist and gives it the role. For a
+deployment that is already running, promote an existing user instead:
+
+```bash
+npm run admin:promote 09123456789          # grant the role
+node scripts/promote-admin.mjs 09123456789 --revoke   # take it away
+```
+
+The number has to have signed in at least once, so that the account exists.
+
+What the panel covers:
+
+| Section | What it manages |
+| --- | --- |
+| `/admin` | Overview: user counts, the pain distribution across all users, the signup trend |
+| `/admin/users` | Every user: role, active state, the record, the risk level |
+| `/admin/gyms` | The partner gyms in the health network |
+| `/admin/foods` | The food database the nutrition screen searches |
+| `/admin/content` | Articles, exercises and videos |
+| `/admin/settings` | The health score weights and the daily targets |
+| `/admin/audit` | Every change an admin made, with the actor and the time |
+
+The settings are stored in the database and read by the health score, so a
+change applies to every user rather than to one browser.
+
+## Tests
+
+```bash
+npm test          # the whole suite
+npm run lint      # eslint
+```
+
+## Deploying
+
+See [howto.md](./howto.md) for the cPanel deployment steps and
+[CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md) for the server configuration.

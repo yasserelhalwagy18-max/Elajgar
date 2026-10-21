@@ -7,7 +7,7 @@ import { verifyToken } from '@/lib/auth';
  * the client, but the client-side check is trivially bypassed - this is the
  * server-side half.
  */
-const PROTECTED_PREFIXES = ['/dashboard', '/wizard', '/nutrition', '/admin'];
+const PROTECTED_PREFIXES = ['/dashboard', '/wizard', '/nutrition', '/admin', '/checkout'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

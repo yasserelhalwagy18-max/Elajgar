@@ -1,3 +1,6 @@
+import type { HealthScoreWeights } from '@/lib/healthScore';
+import type { NutritionConfig } from '@/lib/nutrition-targets';
+
 export interface UserProfile {
   id?: string;
   phoneNumber?: string;
@@ -11,6 +14,22 @@ export interface UserProfile {
   underlyingDiseases?: string[];
   medications?: string[];
   termsAccepted?: boolean;
+  /** The account role. Only admins can open the admin panel. */
+  role?: 'USER' | 'ADMIN';
+  /**
+   * The global weights of the health score, as set by an admin.
+   *
+   * The server sends these with the profile so the score the client shows
+   * uses the same weights the server would.
+   */
+  healthWeights?: HealthScoreWeights;
+  /**
+   * The global nutrition configuration, as set by an admin.
+   *
+   * The daily calorie, macro and water targets are calculated from it, so
+   * the nutrition screen and the dashboard agree with each other.
+   */
+  nutritionConfig?: NutritionConfig;
   /** A body region the user reported pain in. */
   painZones?: { zone: string; intensity: number; type: string }[];
   questionnaireAnswers?: {

@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Bell, Droplet, Activity, User, Shield, LogOut, Pencil, ChevronLeft, Phone } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, Droplet, Activity, User, Shield, LogOut, Pencil, ChevronLeft, Phone, Verified } from 'lucide-react';
 import { cn, toPersianDigits } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { useStore } from '../../../lib/store';
@@ -14,6 +15,16 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 
 const NOTIFICATIONS_KEY = 'elajgar-notifications';
+
+interface SubscriptionState {
+    isActive: boolean;
+    subscription: {
+        status: string;
+        startedAt: string;
+        expiresAt: string;
+        plan: { key: string; title: string; price: number };
+    } | null;
+}
 
 interface NotificationPrefs {
   hydration: boolean;
@@ -57,6 +68,25 @@ export default function ProfilePage() {
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const mounted = useMounted();
+
+    // The user's own subscription, so the page can show what they have and
+    // how long it is left.
+    const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const controller = new AbortController();
+
+        fetch('/api/subscription', { signal: controller.signal, cache: 'no-store' })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => setSubscription(data))
+            .catch((error) => {
+                if ((error as Error)?.name === 'AbortError') return;
+            });
+
+        return () => controller.abort();
+    }, [isAuthenticated]);
 
     useEffect(() => {
         // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
@@ -134,6 +164,18 @@ export default function ProfilePage() {
             <section className="mb-8">
                 <h3 className="font-bold text-lg mb-4 text-on-surface px-2">حساب کاربری</h3>
                 <div className="card rounded-3xl overflow-hidden flex flex-col gap-px bg-outline-variant/20">
+                    {userProfile?.role === 'ADMIN' && (
+                        <Link
+                            href="/admin"
+                            className="w-full bg-surface-container p-4 flex items-center justify-between hover:bg-surface-variant/60 transition-colors"
+                        >
+                            <span className="flex items-center gap-4">
+                                <Shield className="w-5 h-5 text-primary" />
+                                <span className="font-bold text-on-surface text-sm">پنل مدیریت</span>
+                            </span>
+                            <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
+                        </Link>
+                    )}
                     <button
                         type="button"
                         onClick={() => setShowEditProfile(true)}
@@ -208,6 +250,67 @@ export default function ProfilePage() {
                     <p className="text-xs text-on-surface-variant mt-2 px-2">
                         اعلان‌ها در تنظیمات مرورگر مسدود شده‌اند. برای فعال‌سازی، آن‌ها را از تنظیمات سایت اجازه دهید.
                   </p>
+                )}
+            </section>
+
+            <section className="mb-8">
+                <h3 className="font-bold text-lg mb-4 text-on-surface px-2">اشتراک</h3>
+                {subscription?.subscription ? (
+                    <div className="card rounded-3xl p-5 flex flex-col gap-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                                    <Verified className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-on-surface text-sm">
+                                        {subscription.subscription.plan.title}
+                                    </p>
+                                    <p className="text-xs text-on-surface-variant">
+                                        {subscription.isActive ? 'اشتراک فعال' : 'اشتراک منقضی شده'}
+                                    </p>
+                                </div>
+                            </div>
+                            <span
+                                className={cn(
+                                    'px-3 py-1 text-xs font-bold rounded-full',
+                                    subscription.isActive
+                                        ? 'bg-success-container text-success'
+                                        : 'bg-warning/10 text-warning'
+                                )}
+                            >
+                                {subscription.isActive ? 'فعال' : 'منقضی شده'}
+                            </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                            <span className="text-on-surface-variant">اعتبار تا</span>
+                            <span className="font-bold text-on-surface">
+                                {new Intl.DateTimeFormat('fa-IR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                }).format(new Date(subscription.subscription.expiresAt))}
+                            </span>
+                        </div>
+
+                        <Link
+                            href="/dashboard/education"
+                            className="btn btn-primary btn-md w-full"
+                        >
+                            {subscription.isActive ? 'مشاهده محتوای ویژه' : 'تمدید اشتراک'}
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="card rounded-3xl p-5 flex flex-col gap-4">
+                        <p className="text-sm text-on-surface-variant leading-relaxed">
+                            شما اشتراک فعالی ندارید. با فعال‌کردن اشتراک، همه ویدیوهای تخصصی و
+                            برنامه تمرینی اختصاصی برای شما باز می‌شود.
+                        </p>
+                        <Link href="/dashboard/education" className="btn btn-secondary btn-md w-full">
+                            مشاهده پلن‌ها
+                        </Link>
+                    </div>
                 )}
             </section>
 

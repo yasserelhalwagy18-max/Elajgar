@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { randomInt } from 'crypto';
 import prisma from '@/lib/prisma';
-import { sendOtpSms } from '@/lib/sms';
+import { sendOtpSms, smsFailureMessage } from '@/lib/sms';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import {
   OTP_MAX_SENDS,
@@ -23,7 +23,11 @@ export async function POST(request: Request) {
 
     // --- Rate limiting ---------------------------------------------------
     // Layer 1: per source IP, to blunt SMS bombing across many numbers.
-    const ipLimit = rateLimit(`otp-send:ip:${clientIp(request.headers)}`, 10, OTP_SEND_WINDOW_MS);
+    // The counter is only incremented for a message that actually went out
+    // (see below): a server that cannot send at all would otherwise burn
+    // the user's whole budget with every click.
+    const ipKey = `otp-send:ip:${clientIp(request.headers)}`;
+    const ipLimit = rateLimit(ipKey, 10, OTP_SEND_WINDOW_MS, { consume: false });
     if (!ipLimit.allowed) {
       return NextResponse.json(
         { error: 'تعداد درخواست‌ها زیاد است. لطفاً بعداً تلاش کنید' },
@@ -75,16 +79,21 @@ export async function POST(request: Request) {
       await sendOtpSms(phoneNumber, code);
     } catch (smsError) {
       console.error('Error sending OTP SMS:', smsError);
+
       // Don't leave a usable code behind if the SMS never went out
       await prisma.otpCode.update({
         where: { id: otpRecord.id },
         data: { consumed: true },
       });
+
       return NextResponse.json(
-        { error: 'ارسال پیامک با خطا مواجه شد. لطفاً دوباره تلاش کنید' },
+        { error: smsFailureMessage(smsError) },
         { status: 502 }
       );
     }
+
+    // The message went out, so this request counts against the IP budget.
+    rateLimit(ipKey, 10, OTP_SEND_WINDOW_MS, { consume: true });
 
     return NextResponse.json({ success: true });
   } catch (error) {

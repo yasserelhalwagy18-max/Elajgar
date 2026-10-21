@@ -24,7 +24,11 @@ export default function ProgressReport() {
 
   const chartData = useMemo(() => {
     const days = timeRange === '7' ? 7 : 30;
-    return buildHealthDataFromLogs(userProfile, days);
+    // The weights come from the global settings an admin controls, so the
+    // score here matches the score the server would compute.
+    return buildHealthDataFromLogs(userProfile, days, {
+      weights: userProfile?.healthWeights,
+    });
   }, [timeRange, userProfile]);
 
   const { data, hasEnoughData } = chartData;

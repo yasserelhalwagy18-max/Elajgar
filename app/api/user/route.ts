@@ -9,6 +9,7 @@ import {
 } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { getSessionUserId } from '@/lib/session';
+import { getHealthScoreWeights, getNutritionConfig } from '@/lib/settings';
 
 /**
  * The client stores gender/activityLevel in lower case, while Prisma models
@@ -462,11 +463,21 @@ export async function GET() {
         }
       : null;
 
+    // The health score weights are global and set by an admin. They travel
+    // with the profile so the score the client renders uses exactly the
+    // weights the server would use.
+    const healthWeights = await getHealthScoreWeights();
+    // The same goes for the nutrition targets: the calculation used to be
+    // written out twice on the client, and an admin could not change it.
+    const nutritionConfig = await getNutritionConfig();
+
     return NextResponse.json({
       ...serializeUser(user),
       painZones: Array.isArray(user.painRegions) ? user.painRegions : [],
       dailyLogs,
       questionnaireAnswers: questionnaire,
+      healthWeights,
+      nutritionConfig,
     });
   } catch (error) {
     console.error('Error fetching user:', error);

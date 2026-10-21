@@ -5,12 +5,47 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, HeartPulse, Lock, Waves, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toPersianDigits } from '@/lib/utils';
 
 const BRAND = 'علاج‌گر';
 
 export default function LandingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  // The numbers on this page come from the database. They used to be typed
+  // in by hand, which meant the page claimed there were 24 foods while the
+  // database held more than two hundred.
+  const [stats, setStats] = React.useState({
+    gyms: 0,
+    foods: 0,
+    articles: 0,
+    exercises: 0,
+    users: 0,
+    plans: 0,
+    bestDiscount: 0,
+  });
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    async function load() {
+      try {
+        const res = await fetch('/api/stats', {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setStats((previous) => ({ ...previous, ...data }));
+      } catch (error) {
+        if ((error as Error)?.name === 'AbortError') return;
+      }
+    }
+
+    void load();
+    return () => controller.abort();
+  }, []);
 
   // Close the mobile menu with Escape.
   React.useEffect(() => {
@@ -185,12 +220,19 @@ export default function LandingPage() {
                 desc="ارزیابی هوشمند و سنجش دقیق درد با استفاده از الگوریتم‌های پیشرفته."
                 icon={HeartPulse}
             />
+            {/* These two unlock with a subscription. When there is no plan on
+                sale they stay "coming soon" - the state comes from the
+                database, not from a hard-coded ribbon. */}
             <HubCard
+                available={stats.plans > 0}
+                href={stats.plans > 0 ? '/login' : undefined}
                 title="برنامه تمرینات اصلاحی"
                 desc="برنامه‌های تمرینی شخصی‌سازی شده بر اساس ارزیابی‌های اولیه."
                 icon={Lock}
             />
             <HubCard
+                available={stats.plans > 0}
+                href={stats.plans > 0 ? '/login' : undefined}
                 title="آب‌درمانی تخصصی"
                 desc="پروتکل‌های درمانی در آب برای تسریع روند بهبودی مفاصل."
                 icon={Waves}
@@ -198,14 +240,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Section - the numbers come from the database */}
       <section id="stats" className="mb-24 px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { value: '۱۲', label: 'مرحله ارزیابی' },
-            { value: '۲۴', label: 'نوع غذا' },
+            { value: toPersianDigits(stats.foods), label: 'نوع غذا' },
             { value: '۰–۱۰۰', label: 'امتیاز سلامت' },
-            { value: '۴', label: 'باشگاه شریک' },
+            { value: toPersianDigits(stats.gyms), label: 'باشگاه شریک' },
+            { value: toPersianDigits(stats.articles), label: 'مطلب آموزشی' },
           ].map((stat) => (
             <div key={stat.label} className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
               <span className="text-4xl font-black text-primary mb-2" dir="ltr">{stat.value}</span>
@@ -230,7 +272,7 @@ export default function LandingPage() {
            </div>
            <div className="relative z-10 flex flex-col items-center justify-center bg-white/15 backdrop-blur-md p-8 rounded-3xl border border-white/30">
               <span className="text-sm text-white/90 mb-1 tracking-widest font-bold">تخفیف ویژه</span>
-              <span className="text-6xl font-black drop-shadow-md">۴۰٪</span>
+              <span className="text-6xl font-black drop-shadow-md">{toPersianDigits(stats.bestDiscount)}٪</span>
               <Link href="/login" className="btn mt-6 bg-surface-container text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl text-center">
                 دریافت پیشنهاد
               </Link>
@@ -280,12 +322,15 @@ export default function LandingPage() {
 
 function HubCard({
   active = false,
+  available = false,
   title,
   desc,
   icon: Icon,
   href,
 }: {
   active?: boolean;
+  /** The feature is available (there is a plan on sale). */
+  available?: boolean;
   title: string;
   desc: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -300,7 +345,7 @@ function HubCard({
                    never overlaps the card copy. */
                 <div className="absolute inset-0 bg-surface/35 backdrop-blur-[1px] z-20">
                     <span className="absolute top-4 left-4 text-xs font-bold text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant shadow-sm">
-                        به زودی
+                        {available ? 'با اشتراک ویژه' : 'به زودی'}
                     </span>
                 </div>
             )}
@@ -329,10 +374,12 @@ function HubCard({
         "bg-surface-container border border-outline-variant card p-8 rounded-3xl relative overflow-hidden group transition-all duration-300",
         active
             ? "border-2 border-primary shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer"
-            : "opacity-90 cursor-not-allowed"
+            : available
+              ? "opacity-90 hover:-translate-y-1 cursor-pointer"
+              : "opacity-90 cursor-not-allowed"
     );
 
-    if (!active || !href) {
+    if (!href) {
         return <div className={cardClass}>{content}</div>;
     }
 

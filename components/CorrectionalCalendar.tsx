@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Check, Clock, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -17,7 +17,14 @@ interface Session {
     status: SessionStatus;
 }
 
-const SESSION_TEMPLATES: { offset: number; text: string; status: SessionStatus }[] = [
+/** A step of the daily program, as it comes from the database. */
+interface SessionTemplate {
+    offset: number;
+    text: string;
+    status: SessionStatus;
+}
+
+const DEFAULT_SESSION_TEMPLATES: SessionTemplate[] = [
     { offset: -4, text: 'تمرینات گردن', status: 'completed' },
     { offset: -3, text: 'حرکات اصلاحی کمر', status: 'completed' },
     { offset: -2, text: 'مدیتیشن', status: 'skipped' },
@@ -144,17 +151,54 @@ export function CorrectionalCalendar() {
 
     const [selectedDate, setSelectedDate] = useState<Date>(today);
 
-    const [sessions, setSessions] = useState<Session[]>(() =>
-        SESSION_TEMPLATES.map((template, index) => {
-            const date = new Date(today);
-            date.setDate(today.getDate() + template.offset);
-            return {
-                id: index + 1,
-                date: toDateKey(date),
-                text: template.text,
-                status: template.status,
-            };
-        })
+    // The program steps come from the database, so an admin can change the
+    // daily routine from the panel.
+    const [templates, setTemplates] = useState<SessionTemplate[]>(DEFAULT_SESSION_TEMPLATES);
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        async function load() {
+            try {
+                const res = await fetch('/api/content/program', {
+                    signal: controller.signal,
+                    cache: 'no-store',
+                });
+                if (!res.ok) return;
+
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    setTemplates(data);
+                }
+            } catch (error) {
+                if ((error as Error)?.name === 'AbortError') return;
+            }
+        }
+
+        void load();
+        return () => controller.abort();
+    }, []);
+
+    // The status the user set for a day, on top of the program. Keeping the
+    // overrides separate means the sessions can be derived instead of being
+    // copied into state whenever the program changes.
+    const [statusOverrides, setStatusOverrides] = useState<Record<string, SessionStatus>>({});
+
+    const sessions = useMemo<Session[]>(
+        () =>
+            templates.map((template, index) => {
+                const date = new Date(today);
+                date.setDate(today.getDate() + template.offset);
+                const key = toDateKey(date);
+
+                return {
+                    id: index + 1,
+                    date: key,
+                    text: template.text,
+                    status: statusOverrides[key] ?? template.status,
+                };
+            }),
+        [templates, statusOverrides, today],
     );
 
     const selectedKey = toDateKey(selectedDate);
@@ -324,11 +368,10 @@ export function CorrectionalCalendar() {
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                setSessions((prev) =>
-                                                    prev.map((s) =>
-                                                        s.date === selectedKey ? { ...s, status: 'completed' } : s
-                                                    )
-                                                );
+                                                setStatusOverrides((prev) => ({
+                                                    ...prev,
+                                                    [selectedKey]: 'completed',
+                                                }));
                                             }}
                                             className="btn btn-primary btn-sm shadow-md"
                                         >

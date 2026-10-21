@@ -9,6 +9,11 @@ import { BottomNav } from '@/components/bottom-nav';
 import { toDateKey, toPersianDigits, formatNumber } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { useProfileSync } from '@/hooks/use-profile-sync';
+import {
+  calculateNutritionTargets,
+  DEFAULT_NUTRITION_CONFIG,
+} from '@/lib/nutrition-targets';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { MacroBar } from '@/components/ui/MacroBar';
@@ -16,6 +21,10 @@ import { MacroBar } from '@/components/ui/MacroBar';
 export default function NutritionPage() {
   const router = useRouter();
   const { isAuthenticated, hasHydrated } = useAuthGuard();
+  // The nutrition screen is a top-level route, so it is not covered by the
+  // dashboard layout's sync. Without this it would read the targets from the
+  // persisted store and never see a change an admin made to the settings.
+  useProfileSync();
   const userProfile = useStore((state) => state.userProfile);
   const updateUserProfile = useStore((state) => state.updateUserProfile);
   const logFood = useStore((state) => state.logFood);
@@ -36,65 +45,25 @@ export default function NutritionPage() {
   const todayDate = toDateKey();
   const todayLog = userProfile?.dailyLogs?.find((log) => log.date === todayDate) || { foods: [], waterIntake: 0 };
 
-  // Nutrition calculations (Mifflin-St Jeor)
-  const calculateRequirements = () => {
-    let bmr = 2000; // default fallback
-    if (userProfile?.weight && userProfile?.height && userProfile?.age && userProfile?.gender) {
-      if (userProfile.gender === 'male') {
-        bmr = 10 * userProfile.weight + 6.25 * userProfile.height - 5 * userProfile.age + 5;
-      } else {
-        bmr = 10 * userProfile.weight + 6.25 * userProfile.height - 5 * userProfile.age - 161;
-      }
-    }
+  // Nutrition calculations (Mifflin-St Jeor). The calculation lives in one
+  // place - `lib/nutrition-targets.ts` - so this screen and the dashboard can
+  // never disagree, and an admin can change the numbers.
+  const nutritionConfig = userProfile?.nutritionConfig ?? DEFAULT_NUTRITION_CONFIG;
 
-    // Activity multiplier
-    let multiplier = 1.2; // sedentary
-    if (userProfile?.activityLevel === 'light') multiplier = 1.375;
-    else if (userProfile?.activityLevel === 'moderate') multiplier = 1.55;
-    else if (userProfile?.activityLevel === 'active') multiplier = 1.725;
-
-    let tdee = bmr * multiplier;
-
-    // Apply goal modifier
-    if (userProfile?.nutritionGoal === 'کاهش وزن') {
-      tdee -= 500;
-    } else if (userProfile?.nutritionGoal === 'افزایش وزن') {
-      tdee += 500;
-    } else if (userProfile?.nutritionGoal === 'سلامت عمومی') {
-      tdee += 0;
-    }
-
-    const targetCalories = Math.round(tdee);
-
-    // Macro ratios (Balanced preset: 30% Protein, 40% Carbs, 30% Fat)
-    // 1g Protein = 4 kcal, 1g Carbs = 4 kcal, 1g Fat = 9 kcal
-    let targetProtein = Math.round((targetCalories * 0.3) / 4);
-    let targetCarbs = Math.round((targetCalories * 0.4) / 4);
-    let targetFat = Math.round((targetCalories * 0.3) / 9);
-
-    if (userProfile?.nutritionGoal === 'کاهش وزن') {
-       // High protein, lower carb for weight loss
-       targetProtein = Math.round((targetCalories * 0.4) / 4);
-       targetCarbs = Math.round((targetCalories * 0.3) / 4);
-    } else if (userProfile?.nutritionGoal === 'افزایش وزن') {
-       // Higher carb for weight gain
-       targetCarbs = Math.round((targetCalories * 0.5) / 4);
-       targetProtein = Math.round((targetCalories * 0.25) / 4);
-       targetFat = Math.round((targetCalories * 0.25) / 9);
-    } else if (userProfile?.nutritionGoal === 'سلامت عمومی') {
-       // Explicit balanced macros for general health
-       targetProtein = Math.round((targetCalories * 0.3) / 4);
-       targetCarbs = Math.round((targetCalories * 0.4) / 4);
-       targetFat = Math.round((targetCalories * 0.3) / 9);
-    }
-
-    return { targetCalories, targetProtein, targetCarbs, targetFat };
-  };
-
-  const { targetCalories, targetProtein, targetCarbs, targetFat } = calculateRequirements();
-
-  // Water requirements: 30-35ml per kg of body weight
-  const waterTarget = userProfile?.weight ? Math.round(userProfile.weight * 30) : 2000;
+  const {
+    calories: targetCalories,
+    protein: targetProtein,
+    carbs: targetCarbs,
+    fat: targetFat,
+    waterMl: waterTarget,
+  } = calculateNutritionTargets(nutritionConfig, {
+    weight: userProfile?.weight,
+    height: userProfile?.height,
+    age: userProfile?.age,
+    gender: userProfile?.gender,
+    activityLevel: userProfile?.activityLevel,
+    nutritionGoal: userProfile?.nutritionGoal,
+  });
   const waterGlasses = Math.ceil(waterTarget / 250);
 
   // Current intake

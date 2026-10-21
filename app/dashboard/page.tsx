@@ -12,6 +12,10 @@ import Link from 'next/link';
 import { calculateHealthScore } from '@/lib/healthScore';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import {
+  calculateNutritionTargets,
+  DEFAULT_NUTRITION_CONFIG,
+} from '@/lib/nutrition-targets';
 import { Modal } from '@/components/ui/Modal';
 import { MacroBar } from '@/components/ui/MacroBar';
 
@@ -126,7 +130,20 @@ export default function DashboardIndex() {
   }, []);
 
   // Calculations
-  const waterTarget = userProfile?.weight ? Math.round(userProfile.weight * 30) : 2000;
+  // The nutrition targets come from the shared calculation, so this screen
+  // and the nutrition screen always agree.
+  const nutritionConfig = userProfile?.nutritionConfig ?? DEFAULT_NUTRITION_CONFIG;
+
+  const { calories: targetCalories, protein: targetProtein, carbs: targetCarbs, fat: targetFat, waterMl: waterTarget } =
+    calculateNutritionTargets(nutritionConfig, {
+      weight: userProfile?.weight,
+      height: userProfile?.height,
+      age: userProfile?.age,
+      gender: userProfile?.gender,
+      activityLevel: userProfile?.activityLevel,
+      nutritionGoal: userProfile?.nutritionGoal,
+    });
+
   const waterAmountMl = dayLog.waterIntake || 0;
   const waterAmountLiters = (waterAmountMl / 1000).toFixed(1);
 
@@ -134,43 +151,6 @@ export default function DashboardIndex() {
   const consumedProtein = dayLog.foods?.reduce((acc: number, food: any) => acc + food.protein, 0) || 0;
   const consumedCarbs = dayLog.foods?.reduce((acc: number, food: any) => acc + food.carbs, 0) || 0;
   const consumedFat = dayLog.foods?.reduce((acc: number, food: any) => acc + food.fat, 0) || 0;
-
-  // Target calories
-  let targetCalories = 2000;
-  let targetProtein = Math.round((targetCalories * 0.3) / 4);
-  let targetCarbs = Math.round((targetCalories * 0.4) / 4);
-  let targetFat = Math.round((targetCalories * 0.3) / 9);
-  if (userProfile?.weight && userProfile?.height && userProfile?.age && userProfile?.gender) {
-    let bmr = userProfile.gender === 'male'
-      ? 10 * userProfile.weight + 6.25 * userProfile.height - 5 * userProfile.age + 5
-      : 10 * userProfile.weight + 6.25 * userProfile.height - 5 * userProfile.age - 161;
-
-    let multiplier = 1.2;
-    if (userProfile?.activityLevel === 'light') multiplier = 1.375;
-    else if (userProfile?.activityLevel === 'moderate') multiplier = 1.55;
-    else if (userProfile?.activityLevel === 'active') multiplier = 1.725;
-
-    let tdee = bmr * multiplier;
-    if (userProfile?.nutritionGoal === 'کاهش وزن') tdee -= 500;
-    else if (userProfile?.nutritionGoal === 'افزایش وزن') tdee += 500;
-
-    targetCalories = Math.round(tdee);
-
-    // Macro split follows the goal, matching the nutrition screen.
-    if (userProfile?.nutritionGoal === 'کاهش وزن') {
-      targetProtein = Math.round((targetCalories * 0.4) / 4);
-      targetCarbs = Math.round((targetCalories * 0.3) / 4);
-      targetFat = Math.round((targetCalories * 0.3) / 9);
-    } else if (userProfile?.nutritionGoal === 'افزایش وزن') {
-      targetProtein = Math.round((targetCalories * 0.25) / 4);
-      targetCarbs = Math.round((targetCalories * 0.5) / 4);
-      targetFat = Math.round((targetCalories * 0.25) / 9);
-    } else {
-      targetProtein = Math.round((targetCalories * 0.3) / 4);
-      targetCarbs = Math.round((targetCalories * 0.4) / 4);
-      targetFat = Math.round((targetCalories * 0.3) / 9);
-    }
-  }
 
   const weight = userProfile?.weight || 0;
   const bmi = (userProfile?.weight && userProfile?.height) ? parseFloat((userProfile.weight / Math.pow(userProfile.height / 100, 2)).toFixed(1)) : 0;
@@ -198,6 +178,8 @@ export default function DashboardIndex() {
   const targetScore = calculateHealthScore({
     ...healthData,
     targets: { calories: targetCalories, water: waterTarget / 1000 },
+    // The component weights are global and set by an admin.
+    weights: userProfile?.healthWeights,
   });
   const count = useMotionValue(0);
   // Render the score with Persian digits, matching the rest of the UI.

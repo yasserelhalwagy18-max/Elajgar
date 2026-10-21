@@ -71,9 +71,13 @@ On the host terminal (inside your project folder, after activating the Node.js e
 
 ```bash
 npm install --production
-npx prisma generate
-npx prisma db push
+npm run db:generate
+npm run db:push
 ```
+
+These scripts load `.env.local` when it exists and `.env` otherwise, so they
+pick up the `DATABASE_URL` you created above. The plain `npx prisma` command
+only reads `.env`, which is why the scripts go through `scripts/prisma.mjs`.
 
 `prisma db push` creates the database tables from your schema. Run it again
 after any change to `prisma/schema.prisma` — it only applies the difference
@@ -84,8 +88,32 @@ and never drops data.
 The food search needs rows in the `Food` table:
 
 ```bash
-npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
+npm run db:seed
 ```
+
+The seed also writes the partner gyms, the editorial content (articles,
+exercises) and the default health-score settings.
+
+### Create an admin account
+
+The admin panel is at `/admin`. It needs an account with the `ADMIN` role, and
+there is no way to get that role through the app - the OTP login always
+creates a regular user. Provision it with the seed:
+
+```bash
+ADMIN_PHONE=09123456789 npm run db:seed
+```
+
+Set `ADMIN_PHONE` (or `ADMIN_PHONES` for several admins) in `.env` so the
+seed picks it up on every run.
+
+For a database that is already seeded, promote an existing user instead:
+
+```bash
+npm run admin:promote 09123456789
+```
+
+The user must have signed in at least once, so that the account exists.
 
 ## 6. Start the Application
 

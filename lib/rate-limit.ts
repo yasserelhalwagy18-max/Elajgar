@@ -31,7 +31,33 @@ export interface RateLimitResult {
   retryAfter: number;
 }
 
-export function rateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
+export interface RateLimitOptions {
+  /**
+   * Whether the call counts against the budget.
+   *
+   * `false` checks the bucket without recording a hit. It is used when the
+   * request may still fail for a reason that is not the caller's fault - a
+   * server that cannot reach the SMS provider, for example - so the counter
+   * is only bumped once the request actually succeeded.
+   */
+  consume?: boolean;
+}
+
+/**
+ * Rate limit a key.
+ *
+ * This is intentionally dependency-free. It is a *best-effort* layer: in a
+ * multi-instance deployment each instance keeps its own counters, so the
+ * authoritative limit for a given phone number is the database-backed check in
+ * the OTP routes. Use this to blunt broad abuse (SMS bombing from one source).
+ */
+export function rateLimit(
+  key: string,
+  limit: number,
+  windowMs: number,
+  options: RateLimitOptions = {},
+): RateLimitResult {
+  const consume = options.consume ?? true;
   const now = Date.now();
   sweep(now);
 
@@ -44,8 +70,11 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
     return { allowed: false, retryAfter: Math.max(1, Math.ceil((oldest + windowMs - now) / 1000)) };
   }
 
-  bucket.timestamps.push(now);
-  buckets.set(key, bucket);
+  if (consume) {
+    bucket.timestamps.push(now);
+    buckets.set(key, bucket);
+  }
+
   return { allowed: true, retryAfter: 0 };
 }
 

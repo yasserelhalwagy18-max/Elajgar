@@ -1,273 +1,292 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Users, Filter, UploadCloud, Settings, LogOut, ActivitySquare } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import * as React from 'react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import { useStore } from '@/lib/store';
-import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { Modal } from '@/components/ui/Modal';
-import toast from 'react-hot-toast';
+import {
+  Activity,
+  BookOpen,
+  Dumbbell,
+  TrendingUp,
+  UserPlus,
+  Users,
+  Utensils,
+  AlertTriangle,
+} from 'lucide-react';
+import { AdminPageHeader, StatCard, StatusPill } from '@/components/admin/AdminUI';
+import { toPersianDigits } from '@/lib/utils';
 
 const PainHeatmap3D = dynamic(() => import('@/components/PainHeatmap3D'), { ssr: false });
 
-export default function AdminPage() {
-    const router = useRouter();
-    const { logout: logoutStore } = useStore();
-    const { isAuthenticated, hasHydrated } = useAuthGuard();
+interface StatsResponse {
+  counts: {
+    users: {
+      total: number;
+      active: number;
+      admins: number;
+      newThisWeek: number;
+      withPain: number;
+    };
+    gyms: number;
+    foods: number;
+    articles: { total: number; published: number };
+    exercises: number;
+    videos: number;
+    plans: number;
+    dailyLogsThisWeek: number;
+  };
+  pain: {
+    usersWithPain: number;
+    highIntensityUsers: number;
+    regions: Array<{ id: string; label: string; count: number; percentage: number }>;
+  };
+  signupTrend: Array<{ date: string; count: number }>;
+}
 
-    const [activeItem, setActiveItem] = useState('نمای کلی');
+/**
+ * The admin overview.
+ *
+ * Every figure comes from `/api/admin/stats`, which aggregates the database.
+ * The panel used to render a hardcoded table of three made-up users and a
+ * hardcoded pain distribution.
+ */
+export default function AdminOverviewPage() {
+  const [stats, setStats] = React.useState<StatsResponse | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-    // Weights State
-    const [bmiMultiplier, setBmiMultiplier] = useState(1.2);
-    const [activityIndex, setActivityIndex] = useState(0.85);
-    const [showSuccessMsg, setShowSuccessMsg] = useState(false);
+  React.useEffect(() => {
+    const controller = new AbortController();
 
-    // Modal State
-    const [modalData, setModalData] = useState<any>(null);
+    // The fetch is started inside the effect, but the first state update
+    // happens after the await - setting state synchronously in the effect
+    // body would trigger a second render before anything was fetched.
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/stats', {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        const body = await res.json().catch(() => null);
 
-    // File Input Ref
-    const fileInputRef = useRef<HTMLInputElement>(null);
+        if (controller.signal.aborted) return;
 
-    React.useEffect(() => {
-        // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
-        if (!hasHydrated) return;
-        if (!isAuthenticated) {
-            router.push('/login');
+        if (!res.ok) {
+          setError(body?.error ?? 'خطا در دریافت آمار');
+          return;
         }
-    }, [hasHydrated, isAuthenticated, router]);
 
-    if (!hasHydrated || !isAuthenticated) return null;
+        setStats(body as StatsResponse);
+        setError(null);
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+        setError('ارتباط با سرور برقرار نشد');
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    })();
 
-    const handleLogout = () => {
-        logoutStore();
-        router.push('/login');
-    };
+    return () => controller.abort();
+  }, []);
 
-    const handleApplyWeights = () => {
-        const weights = { bmiMultiplier, activityIndex };
-        localStorage.setItem('elajgar-health-weights', JSON.stringify(weights));
-        setShowSuccessMsg(true);
-        toast.success('تنظیمات ذخیره شد');
-        setTimeout(() => setShowSuccessMsg(false), 3000);
-    };
-
-    const handleFileClick = (e: React.MouseEvent) => {
-        if (e.target !== fileInputRef.current && fileInputRef.current) {
-            fileInputRef.current.click();
-        }
-    };
+  if (error) {
     return (
-        <div className="flex min-h-screen bg-surface">
-            {/* Sidebar */}
-            <aside className="w-72 bg-surface-container border-e border-outline-variant card rounded-none flex flex-col pt-10 pb-6 sticky top-0 h-screen hidden md:flex">
-                <div className="px-8 mb-10">
-                    <h1 className="text-2xl font-black text-primary mb-1">مدیریت علاج‌گر</h1>
-                    <p className="text-sm font-bold text-on-surface-variant">کنترل سیستم</p>
+      <>
+        <AdminPageHeader title="نمای کلی" />
+        <div className="card p-8 rounded-3xl text-error font-bold">{error}</div>
+      </>
+    );
+  }
+
+  const counts = stats?.counts;
+  const maxSignup = Math.max(1, ...(stats?.signupTrend.map((day) => day.count) ?? [1]));
+
+  return (
+    <>
+      <AdminPageHeader
+        title="نمای کلی"
+        description="وضعیت زنده سامانه: کاربران، محتوا و گزارش‌های درد."
+        actions={
+          <Link href="/admin/users" className="btn btn-primary btn-md">
+            <Users className="w-4 h-4" />
+            مدیریت کاربران
+          </Link>
+        }
+      />
+
+      {/* Counts */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          label="کل کاربران"
+          value={toPersianDigits(counts?.users.total ?? 0)}
+          hint={`${toPersianDigits(counts?.users.active ?? 0)} کاربر فعال`}
+          icon={<Users className="w-5 h-5 text-primary" />}
+        />
+        <StatCard
+          label="ثبت‌نام این هفته"
+          value={toPersianDigits(counts?.users.newThisWeek ?? 0)}
+          hint="کاربر جدید در ۷ روز گذشته"
+          icon={<UserPlus className="w-5 h-5 text-success" />}
+        />
+        <StatCard
+          label="باشگاه‌های شریک"
+          value={toPersianDigits(counts?.gyms ?? 0)}
+          hint="مجموعه‌های فعال در شبکه"
+          icon={<Dumbbell className="w-5 h-5 text-secondary" />}
+        />
+        <StatCard
+          label="بانک غذا"
+          value={toPersianDigits(counts?.foods ?? 0)}
+          hint="ماده غذایی ثبت‌شده"
+          icon={<Utensils className="w-5 h-5 text-tertiary" />}
+        />
+      </section>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          label="مطالب آموزشی"
+          value={toPersianDigits(counts?.articles.total ?? 0)}
+          hint={`${toPersianDigits(counts?.articles.published ?? 0)} مطلب منتشر شده`}
+          icon={<BookOpen className="w-5 h-5 text-primary" />}
+        />
+        <StatCard
+          label="تمارین"
+          value={toPersianDigits(counts?.exercises ?? 0)}
+          hint="برنامه تمرینی ثبت‌شده"
+          icon={<Activity className="w-5 h-5 text-success" />}
+        />
+        <StatCard
+          label="ویدیوها"
+          value={toPersianDigits(counts?.videos ?? 0)}
+          hint="محتوای ویدیویی"
+          icon={<BookOpen className="w-5 h-5 text-secondary" />}
+        />
+        <StatCard
+          label="سوابق ثبت‌شده این هفته"
+          value={toPersianDigits(counts?.dailyLogsThisWeek ?? 0)}
+          hint="گزارش روزانه کاربران"
+          icon={<TrendingUp className="w-5 h-5 text-tertiary" />}
+        />
+      </section>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Pain distribution */}
+        <section className="xl:col-span-1 card p-6 rounded-3xl flex flex-col">
+          <h3 className="text-lg font-bold flex items-center gap-3 mb-2">
+            <Activity className="w-5 h-5 text-primary" />
+            مناطق درد گزارش‌شده
+          </h3>
+          <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
+            {stats
+              ? `${toPersianDigits(stats.pain.usersWithPain)} کاربر حداقل یک ناحیه درد ثبت کرده‌اند.`
+              : 'در حال بارگذاری آمار...'}
+          </p>
+
+          <div className="flex-1 bg-surface-variant/40 rounded-2xl border border-outline-variant overflow-hidden">
+            <PainHeatmap3D regions={stats?.pain.regions ?? []} height={420} />
+          </div>
+        </section>
+
+        {/* Signup trend */}
+        <section className="xl:col-span-2 card p-6 rounded-3xl">
+          <h3 className="text-lg font-bold flex items-center gap-3 mb-6">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            ثبت‌نام‌های هفت روز گذشته
+          </h3>
+
+          <div className="flex items-end gap-2 h-40" role="img" aria-label="نمودار ثبت‌نام هفت روز گذشته">
+            {(stats?.signupTrend ?? []).map((day) => {
+              const height = Math.round((day.count / maxSignup) * 100);
+              return (
+                <div key={day.date} className="flex-1 flex flex-col items-center gap-2">
+                  <span className="text-xs font-bold text-on-surface-variant">
+                    {toPersianDigits(day.count)}
+                  </span>
+                  <div
+                    className="w-full rounded-t-xl bg-primary/80 min-h-[4px] transition-all"
+                    style={{ height: `${Math.max(height, day.count > 0 ? 8 : 4)}%` }}
+                  />
+                  <span className="text-[10px] text-on-surface-variant text-center leading-tight">
+                    {new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'short' }).format(
+                      new Date(day.date),
+                    )}
+                  </span>
                 </div>
+              );
+            })}
+          </div>
 
-                <nav className="flex-1 flex flex-col gap-2">
-                    <NavItem icon={Filter} label="نمای کلی" active={activeItem === 'نمای کلی'} onClick={() => setActiveItem('نمای کلی')} />
-                    <NavItem icon={Users} label="فهرست کاربران" active={activeItem === 'فهرست کاربران'} onClick={() => setActiveItem('فهرست کاربران')} />
-                    <NavItem icon={Settings} label="ویرایش فرمول‌ها" active={activeItem === 'ویرایش فرمول‌ها'} onClick={() => setActiveItem('ویرایش فرمول‌ها')} />
-                    <NavItem icon={UploadCloud} label="ورود محتوا" active={activeItem === 'ورود محتوا'} onClick={() => setActiveItem('ورود محتوا')} />
-                </nav>
+          {isLoading && !stats && (
+            <p className="text-center text-sm text-on-surface-variant mt-4">در حال بارگذاری...</p>
+          )}
+        </section>
 
-                <div className="px-8 mt-auto">
-                    <button type="button" onClick={handleLogout} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-on-surface-variant hover:bg-surface-variant/50 w-full transition-colors font-bold">
-                        <LogOut className="w-5 h-5" /> خروج
-                    </button>
+        {/* Region breakdown */}
+        <section className="xl:col-span-2 card p-6 rounded-3xl">
+          <h3 className="text-lg font-bold mb-6">تفکیک نواحی درد</h3>
+
+          <div className="space-y-3">
+            {(stats?.pain.regions ?? []).map((region) => (
+              <div key={region.id} className="flex items-center gap-3">
+                <span className="text-xs font-bold text-on-surface-variant w-20 shrink-0 truncate">
+                  {region.label}
+                </span>
+                <div className="flex-1 h-2 rounded-full bg-surface-variant overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${Math.min(100, region.percentage)}%` }}
+                  />
                 </div>
-            </aside>
+                <span className="text-xs font-bold text-on-surface w-16 text-end shrink-0">
+                  {toPersianDigits(region.count)} کاربر
+                </span>
+              </div>
+            ))}
+          </div>
 
-            {/* Main Content */}
-            <div className="flex-1 p-6 sm:p-10 overflow-y-auto">
-                <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-10">
-                    <h2 className="text-3xl font-extrabold text-on-surface">نمای کلی داشبورد</h2>
-                    <input
-                        type="search"
-                        placeholder="جستجوی سوابق..."
-                        aria-label="جستجوی سوابق"
-                        className="input ps-4 pe-12 w-full sm:w-80 text-sm"
-                    />
-                </header>
-
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
-                    {/* Pain Heatmap */}
-                    <section className="xl:col-span-1 card p-8 rounded-3xl flex flex-col">
-                        <h3 className="text-xl font-bold flex items-center gap-3 mb-4">
-                            <ActivitySquare className="w-6 h-6 text-primary" />
-                            مناطق درد گزارش‌شده
-                        </h3>
-                        <p className="text-sm text-on-surface-variant mb-6">توزیع زنده مناطق درد در میان کاربران فعال.</p>
-                        <div className="flex-1 bg-surface-variant/40 rounded-2xl border border-outline-variant overflow-hidden relative">
-                            <PainHeatmap3D />
-                        </div>
-                    </section>
-
-                    {/* Data Table */}
-                    <section className="xl:col-span-2 card p-8 rounded-3xl flex flex-col">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-xl font-bold flex items-center gap-3">
-                                <Users className="w-6 h-6 text-primary" />
-                                فهرست کاربران و گزارش‌ها
-                            </h3>
-                        </div>
-
-                        <div className="flex-1 overflow-hidden rounded-2xl border border-outline-variant bg-surface-container">
-                            <table className="w-full">
-                                <thead className="bg-surface-variant/50 text-on-surface-variant text-sm border-b border-outline-variant">
-                                    <tr>
-                                        <th className="p-4 font-semibold text-start">شناسه</th>
-                                        <th className="p-4 font-semibold text-start">کاربر</th>
-                                        <th className="p-4 font-semibold text-start">وضعیت</th>
-                                        <th className="p-4 font-semibold text-start">سطح ریسک</th>
-                                        <th className="p-4 font-semibold text-center">عملیات</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-outline-variant/20">
-                                    <TableRow id="#1042" name="علی رضایی" status="فعال" risk="کم" onView={(data: any) => setModalData(data)} />
-                                    <TableRow id="#1043" name="سارا احمدی" status="علامت‌گذاری‌شده" risk="بالا" isHighRisk onView={(data: any) => setModalData(data)} />
-                                    <TableRow id="#1044" name="محمد ک." status="در انتظار" risk="متوسط" onView={(data: any) => setModalData(data)} />
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    {/* Weights Matrix */}
-                    <section className="card p-8 rounded-3xl flex flex-col">
-                        <h3 className="text-xl font-bold flex items-center gap-3 mb-8">
-                            <Settings className="w-6 h-6 text-primary" />
-                            وزن‌های الگوریتم
-                        </h3>
-
-                        <div className="space-y-6 flex-1">
-                            <div>
-                                <label className="block text-sm font-bold text-on-surface-variant mb-2" htmlFor="admin-bmi">ضریب BMI</label>
-                                <input
-                                    id="admin-bmi"
-                                    type="number"
-                                    value={bmiMultiplier}
-                                    onChange={(e) => setBmiMultiplier(parseFloat(e.target.value))}
-                                    step={0.1}
-                                    className="input font-mono"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-on-surface-variant mb-2" htmlFor="admin-activity">شاخص فعالیت</label>
-                                <input
-                                    id="admin-activity"
-                                    type="number"
-                                    value={activityIndex}
-                                    onChange={(e) => setActivityIndex(parseFloat(e.target.value))}
-                                    step={0.05}
-                                    className="input font-mono"
-                                />
-                            </div>
-                        </div>
-
-                        <button type="button" onClick={handleApplyWeights} className="btn btn-primary w-full py-4 font-bold mt-8">اعمال تغییرات</button>
-                        {showSuccessMsg && (
-                            <p className="text-sm text-success mt-2 text-center font-bold">تنظیمات ذخیره شد ✓</p>
-                        )}
-                    </section>
-
-                    <section className="xl:col-span-2 card p-8 rounded-3xl flex flex-col min-h-[400px]">
-                        <h3 className="text-xl font-bold flex items-center gap-3 mb-8">
-                           <UploadCloud className="w-6 h-6 text-primary" />
-                           بارگذاری محتوا
-                        </h3>
-
-                        <div onClick={handleFileClick} className="flex-1 border-2 border-dashed border-primary/30 rounded-2xl bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors">
-                            <input type="file" ref={fileInputRef} className="hidden" onClick={(e) => e.stopPropagation()} />
-                            <UploadCloud className="w-12 h-12 text-primary mb-4" />
-                            <p className="font-bold text-on-surface mb-2">فایل‌ها را اینجا رها کنید</p>
-                            <span className="text-sm text-on-surface-variant">ویدیو یا نگاشت JSON</span>
-                        </div>
-                    </section>
-                </div>
+          {stats && stats.pain.highIntensityUsers > 0 && (
+            <div className="mt-6 p-4 rounded-2xl bg-warning/10 border border-warning/20 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                {toPersianDigits(stats.pain.highIntensityUsers)} کاربر شدت درد ۷ یا بالاتر گزارش کرده‌اند و
+                بهتر است پیگیری شوند.
+              </p>
             </div>
+          )}
+        </section>
 
-            {/* Row Data Modal */}
-            <Modal
-                open={!!modalData}
-                onClose={() => setModalData(null)}
-                title="داده‌های رکورد"
-                size="lg"
-            >
-                <pre dir="ltr" className="bg-surface p-6 rounded-2xl text-sm font-mono overflow-auto max-h-[60vh] text-on-surface-variant text-left">
-                    {JSON.stringify(modalData, null, 2)}
-                </pre>
-            </Modal>
-        </div>
-    );
-}
+        {/* Quick links */}
+        <section className="card p-6 rounded-3xl">
+          <h3 className="text-lg font-bold mb-4">دسترسی سریع</h3>
+          <div className="flex flex-col gap-2">
+            {[
+              { href: '/admin/users', label: 'فهرست کاربران و گزارش‌ها' },
+              { href: '/admin/gyms', label: 'مدیریت باشگاه‌های شریک' },
+              { href: '/admin/foods', label: 'ویرایش بانک غذا' },
+              { href: '/admin/content', label: 'محتوای آموزشی و تمرینات' },
+              { href: '/admin/settings', label: 'وزن‌های الگوریتم سلامت' },
+              { href: '/admin/audit', label: 'گزارش تغییرات مدیران' },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center justify-between px-4 py-3 rounded-2xl bg-surface-variant/40 hover:bg-surface-variant transition-colors text-sm font-bold text-on-surface"
+              >
+                {link.label}
+                <span className="text-primary">←</span>
+              </Link>
+            ))}
+          </div>
 
-function NavItem({
-    icon: Icon,
-    label,
-    active = false,
-    onClick,
-}: {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    active?: boolean;
-    onClick: () => void;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-current={active ? 'page' : undefined}
-            className={cn(
-                "flex items-center gap-4 px-8 py-4 me-4 rounded-e-full cursor-pointer transition-all duration-300 text-start",
-                active ? "bg-secondary-container text-on-secondary-container font-black" : "text-on-surface-variant hover:bg-surface-variant hover:-translate-x-1 font-bold"
-            )}
-        >
-            <Icon className="w-5 h-5 me-2" />
-            {label}
-        </button>
-    );
-}
-
-function TableRow({
-    id,
-    name,
-    status,
-    risk,
-    isHighRisk = false,
-    onView,
-}: {
-    id: string;
-    name: string;
-    status: string;
-    risk: string;
-    isHighRisk?: boolean;
-    onView: (data: { id: string; name: string; status: string; risk: string; isHighRisk: boolean }) => void;
-}) {
-    return (
-        <tr className="hover:bg-surface-variant/50 transition-colors">
-            <td className="p-4 font-mono text-sm text-outline">{id}</td>
-            <td className="p-4 font-bold">{name}</td>
-            <td className="p-4">
-                <span className={cn(
-                    "px-3 py-1 text-xs font-bold rounded-full",
-                    status === 'فعال' ? "bg-success-container text-success" :
-                    status === 'علامت‌گذاری‌شده' ? "bg-error/10 text-error border border-error/20" : "bg-surface-variant text-on-surface-variant"
-                )}>{status}</span>
-            </td>
-            <td className={cn("p-4 font-bold", isHighRisk ? "text-error" : "text-on-surface")}>{risk}</td>
-            <td className="p-4 text-center">
-                <button
-                    type="button"
-                    onClick={() => onView({ id, name, status, risk, isHighRisk })}
-                    className="text-primary font-bold text-sm hover:underline"
-                >
-                    مشاهده
-                </button>
-            </td>
-        </tr>
-    );
+          {counts && counts.users.admins > 0 && (
+            <div className="mt-6 pt-4 border-t border-outline-variant/30">
+              <StatusPill tone="primary">
+                {toPersianDigits(counts.users.admins)} مدیر فعال
+              </StatusPill>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
 }

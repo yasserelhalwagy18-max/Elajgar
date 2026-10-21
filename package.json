@@ -10,7 +10,12 @@
     "clean": "next clean",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:generate": "node scripts/prisma.mjs generate",
+    "db:push": "node scripts/prisma.mjs db push",
+    "db:studio": "node scripts/prisma.mjs studio",
+    "db:seed": "node scripts/prisma.mjs db seed",
+    "admin:promote": "node scripts/promote-admin.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

@@ -6,6 +6,14 @@ interface AuthState {
   isAuthenticated: boolean;
   userProfile: Partial<UserProfile> | null;
   setAuthenticated: (status: boolean) => void;
+  /**
+   * Start a session for a phone number.
+   *
+   * The profile is replaced rather than merged: the persisted store still
+   * holds the previous user's data, and merging it into the new session
+   * would show - and then upload - somebody else's profile.
+   */
+  signIn: (phoneNumber: string) => void;
   updateUserProfile: (profileUpdates: Partial<UserProfile>) => void;
   setWizardStep: (step: number) => void;
   toggleRegion: (regionId: string) => void;
@@ -25,6 +33,12 @@ export const useStore = create<AuthState>()(
       isAuthenticated: false,
       userProfile: null,
       setAuthenticated: (status) => set({ isAuthenticated: status }),
+      signIn: (phoneNumber) =>
+        set({
+          isAuthenticated: true,
+          // The previous user's profile is dropped, not merged.
+          userProfile: { phoneNumber },
+        }),
       updateUserProfile: (profileUpdates) =>
         set((state) => ({
           userProfile: {

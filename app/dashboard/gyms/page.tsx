@@ -29,8 +29,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   GENERAL: 'عمومی',
 };
 
-const FILTERS = ['همه', 'یوگا', 'استخر', 'کراس‌فیت'];
-
 export default function GymsPage() {
     const router = useRouter();
     const { isAuthenticated, hasHydrated } = useAuthGuard();
@@ -67,6 +65,14 @@ export default function GymsPage() {
         load();
         return () => controller.abort();
     }, []);
+
+    // The filter rail lists the categories that actually exist. It used to be
+    // a hardcoded list of four, which left two of the five categories
+    // unreachable.
+    const filters = React.useMemo(() => {
+        const categories = Array.from(new Set(gyms.map((gym) => gym.category)));
+        return ['همه', ...categories.map((category) => CATEGORY_LABELS[category] ?? category)];
+    }, [gyms]);
 
     const filteredGyms = React.useMemo(() => {
         const query = normalizeText(searchQuery);
@@ -136,7 +142,7 @@ export default function GymsPage() {
 
             {/* Filters */}
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-4 mb-2 mt-4 rail-fade">
-                {FILTERS.map(filter => (
+                {filters.map(filter => (
                     <button
                         key={filter}
                         type="button"

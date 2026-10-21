@@ -1,5 +1,9 @@
-import { GymCategory } from '@prisma/client';
-import { PrismaClient } from '@prisma/client';
+import { DifficultyLevel, GymCategory, PrismaClient, Role } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+import {
+  seedArticles as articleSeeds,
+  seedExercises as exerciseSeeds,
+} from '../lib/education-content';
 
 const prisma = new PrismaClient();
 
@@ -291,6 +295,328 @@ async function seedGyms() {
   console.log(`Finished seeding ${count} gyms.`);
 }
 
+/**
+ * The video library.
+ *
+ * `exerciseTitle` links a video to the exercise it belongs to. The premium
+ * ones are what the paywall in the education section hides.
+ */
+const seedVideos = [
+  {
+    title: 'آموزش کشش همسترینگ با ویدیو',
+    url: 'https://cdn.elajgar.com/videos/hamstring-stretch.mp4',
+    level: DifficultyLevel.BEGINNER,
+    durationInMinutes: 5,
+    isPremium: false,
+    exerciseTitle: 'کشش همسترینگ',
+    associatedPainTags: ['back', 'کمر'],
+  },
+  {
+    title: 'تمرین گربه-گاو برای کمر',
+    url: 'https://cdn.elajgar.com/videos/cat-cow.mp4',
+    level: DifficultyLevel.BEGINNER,
+    durationInMinutes: 4,
+    isPremium: false,
+    exerciseTitle: 'کشش گربه-گاو',
+    associatedPainTags: ['back', 'کمر'],
+  },
+  {
+    title: 'برنامه تخصصی تقویت هسته مرکزی',
+    url: 'https://cdn.elajgar.com/videos/core-strength.mp4',
+    level: DifficultyLevel.INTERMEDIATE,
+    durationInMinutes: 12,
+    isPremium: true,
+    exerciseTitle: 'تقویت هسته مرکزی',
+    associatedPainTags: ['back', 'کمر', 'pelvis', 'لگن'],
+  },
+  {
+    title: 'پروتکل آب‌درمانی برای زانو',
+    url: 'https://cdn.elajgar.com/videos/aquatic-knee.mp4',
+    level: DifficultyLevel.INTERMEDIATE,
+    durationInMinutes: 15,
+    isPremium: true,
+    exerciseTitle: 'راه رفتن در آب',
+    associatedPainTags: ['knee', 'زانو'],
+  },
+  {
+    title: 'اصلاح قوز کمر در ۸ دقیقه',
+    url: 'https://cdn.elajgar.com/videos/posture-fix.mp4',
+    level: DifficultyLevel.BEGINNER,
+    durationInMinutes: 8,
+    isPremium: true,
+    exerciseTitle: 'اصلاح قوز کمر',
+    associatedPainTags: ['neck', 'گردن', 'shoulder', 'شانه'],
+  },
+];
+
+async function seedVideosTable() {
+  console.log('Start seeding videos...');
+  let count = 0;
+
+  for (const video of seedVideos) {
+    const data = {
+      title: video.title,
+      url: video.url,
+      level: video.level,
+      durationInMinutes: video.durationInMinutes,
+      isPremium: video.isPremium,
+      isPublished: true,
+      associatedPainTags: video.associatedPainTags,
+    };
+
+    const existing = await prisma.videoContent.findFirst({ where: { title: video.title } });
+
+    const record = existing
+      ? await prisma.videoContent.update({ where: { id: existing.id }, data })
+      : await prisma.videoContent.create({ data });
+
+    // Link the video to its exercise, when there is one.
+    const exercise = await prisma.exercise.findFirst({ where: { title: video.exerciseTitle } });
+    if (exercise) {
+      await prisma.exercise.update({
+        where: { id: exercise.id },
+        data: { videoContentId: record.id },
+      });
+    }
+
+    count++;
+  }
+
+  console.log(`Finished seeding ${count} videos.`);
+}
+
+/**
+ * The admin accounts.
+ *
+ * There is no way to become an admin through the app: the OTP login always
+ * creates a `USER`. So the accounts have to be provisioned out of band, and
+ * this is the supported way to do it.
+ *
+ * `ADMIN_PHONE` is a single number; `ADMIN_PHONES` is a comma separated list
+ * for teams with more than one admin. The number must be in the same format
+ * the login form sends, e.g. `09123456789` or `+989123456789`.
+ */
+function adminPhoneNumbers(): string[] {
+  const raw = [process.env.ADMIN_PHONE, process.env.ADMIN_PHONES]
+    .filter(Boolean)
+    .join(',');
+
+  return Array.from(
+    new Set(
+      raw
+        .split(',')
+        .map((phone) => phone.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+async function seedAdmins() {
+  const phones = adminPhoneNumbers();
+
+  if (phones.length === 0) {
+    console.warn(
+      '\n⚠️  No admin was created. Set ADMIN_PHONE (or ADMIN_PHONES) before seeding\n' +
+        '   to grant access to /admin, for example:\n' +
+        '   ADMIN_PHONE=09123456789 npm run db:seed\n',
+    );
+    return;
+  }
+
+  for (const phoneNumber of phones) {
+    const user = await prisma.user.upsert({
+      where: { phoneNumber },
+      update: { role: Role.ADMIN, isActive: true },
+      create: { phoneNumber, role: Role.ADMIN, isActive: true },
+    });
+    console.log(`✔ Admin ready: ${phoneNumber} (${user.id})`);
+  }
+}
+
+async function seedArticles() {
+  console.log('Start seeding articles...');
+  let count = 0;
+
+  for (const [index, article] of articleSeeds.entries()) {
+    await prisma.article.upsert({
+      where: { slug: article.slug },
+      update: {
+        title: article.title,
+        category: article.category,
+        icon: article.icon,
+        readTime: article.readTime,
+        content: article.content,
+        sortOrder: index,
+      },
+      create: {
+        slug: article.slug,
+        title: article.title,
+        category: article.category,
+        icon: article.icon,
+        readTime: article.readTime,
+        content: article.content,
+        sortOrder: index,
+        isPublished: true,
+      },
+    });
+    count++;
+  }
+
+  console.log(`Finished seeding ${count} articles.`);
+}
+
+async function seedExercises() {
+  console.log('Start seeding exercises...');
+  let count = 0;
+
+  for (const [index, exercise] of exerciseSeeds.entries()) {
+    // The exercise title is the natural key here - there is no slug column on
+    // the model, and the titles are stable.
+    const existing = await prisma.exercise.findFirst({ where: { title: exercise.title } });
+
+    const data = {
+      description: exercise.description,
+      category: exercise.category,
+      level: exercise.level,
+      durationMinutes: exercise.durationMinutes,
+      sets: exercise.sets,
+      reps: exercise.reps,
+      emoji: exercise.emoji,
+      accent: exercise.accent,
+      targetTags: exercise.targetTags,
+      sortOrder: index,
+    };
+
+    if (existing) {
+      await prisma.exercise.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.exercise.create({ data: { ...data, title: exercise.title } });
+    }
+    count++;
+  }
+
+  console.log(`Finished seeding ${count} exercises.`);
+}
+
+/**
+ * The subscription tiers shown in the premium modal.
+ *
+ * The seed owns the catalogue: it sets which plans exist, what they cost and
+ * whether they are on sale. Re-seeding therefore puts every plan back on
+ * sale - do it once at deployment, then change the flags from the admin
+ * panel.
+ */
+const seedPlans = [
+  {
+    key: 'base',
+    title: 'پایه',
+    price: 99000,
+    description: 'دسترسی محدود به ویدیوها',
+    features: ['ویدیوهای عمومی', 'برنامه تمرینی پایه'],
+    isFeatured: false,
+    durationDays: 30,
+    sortOrder: 0,
+  },
+  {
+    key: 'pro',
+    title: 'حرفه‌ای',
+    price: 199000,
+    description: 'دسترسی کامل + تمرینات اختصاصی',
+    features: ['همه ویدیوها', 'برنامه تمرینی اختصاصی', 'گزارش پیشرفت'],
+    isFeatured: true,
+    durationDays: 30,
+    sortOrder: 1,
+  },
+  {
+    key: 'org',
+    title: 'سازمانی',
+    price: 499000,
+    description: 'پشتیبانی اختصاصی و مشاوره',
+    features: ['همه ویدیوها', 'پشتیبانی اختصاصی', 'مشاوره فردی'],
+    isFeatured: false,
+    durationDays: 90,
+    sortOrder: 2,
+  },
+];
+
+async function seedPlansTable() {
+  console.log('Start seeding plans...');
+  let count = 0;
+
+  for (const plan of seedPlans) {
+    await prisma.plan.upsert({
+      where: { key: plan.key },
+      update: {
+        title: plan.title,
+        price: plan.price,
+        description: plan.description,
+        features: plan.features,
+        isActive: true,
+        isFeatured: plan.isFeatured,
+        durationDays: plan.durationDays,
+        sortOrder: plan.sortOrder,
+      },
+      create: { ...plan, isActive: true },
+    });
+    count++;
+  }
+
+  console.log(`Finished seeding ${count} plans.`);
+}
+
+/**
+ * The default global settings.
+ *
+ * These are the values the health score uses when nothing else is stored.
+ * They are written to the database so an admin can change them from the
+ * panel and have the change apply to every user.
+ */
+const defaultSettings: Record<string, Prisma.InputJsonValue> = {
+  'health.targets': { calories: 2000, water: 2 },
+  'health.weights': {
+    bmi: 20,
+    activity: 20,
+    sleep: 15,
+    water: 15,
+    calories: 15,
+    pain: 15,
+  },
+  'nutrition.config': {
+    waterPerKgMl: 30,
+    defaultWaterMl: 2000,
+    calorieAdjust: { maintain: 0, cut: -500, bulk: 500 },
+    macros: {
+      maintain: { protein: 30, carbs: 40, fat: 30 },
+      cut: { protein: 40, carbs: 30, fat: 30 },
+      bulk: { protein: 25, carbs: 50, fat: 25 },
+    },
+  },
+  'program.steps': [
+    { offset: -4, text: 'تمرینات گردن', status: 'completed' },
+    { offset: -3, text: 'حرکات اصلاحی کمر', status: 'completed' },
+    { offset: -2, text: 'مدیتیشن', status: 'skipped' },
+    { offset: -1, text: 'تمرینات گردن', status: 'pending' },
+    { offset: 0, text: 'حرکات اصلاحی کمر', status: 'pending' },
+  ],
+};
+
+async function seedSettings() {
+  console.log('Start seeding settings...');
+  let count = 0;
+
+  for (const [key, value] of Object.entries(defaultSettings)) {
+    // `upsert` would overwrite an admin's change on every re-seed, so only
+    // insert the key when it is missing.
+    const existing = await prisma.appSetting.findUnique({ where: { key } });
+    if (!existing) {
+      await prisma.appSetting.create({ data: { key, value } });
+      count++;
+    }
+  }
+
+  console.log(`Finished seeding ${count} new setting(s).`);
+}
+
 async function main() {
   await seedGyms();
   console.log('Start seeding foods...');
@@ -316,6 +642,13 @@ async function main() {
     count++;
   }
   console.log(`Finished seeding ${count} foods.`);
+
+  await seedArticles();
+  await seedExercises();
+  await seedVideosTable();
+  await seedPlansTable();
+  await seedSettings();
+  await seedAdmins();
 }
 
 main()

@@ -30,6 +30,10 @@ const prismaMock = {
   questionnaireAnswer: {
     upsert: vi.fn(),
   },
+  /** The global health-score weights an admin controls. */
+  appSetting: {
+    findMany: vi.fn(async () => []),
+  },
   /** Run the callback with the mock itself as the transaction client. */
   $transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => fn(prismaMock)),
 };

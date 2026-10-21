@@ -63,8 +63,11 @@ export function useProfileSync(): { isLoaded: boolean } {
   }, [isAuthenticated, fetchUserFromServer]);
 
   // Push local changes to the server, debounced.
+  // Nothing is pushed before the initial pull has finished: the first render
+  // still holds the persisted copy, and sending that would overwrite whatever
+  // the server has in the meantime.
   useEffect(() => {
-    if (!isAuthenticated || !userProfile) return;
+    if (!isAuthenticated || !userProfile || !isLoaded) return;
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(push, SAVE_DEBOUNCE_MS);
@@ -72,7 +75,7 @@ export function useProfileSync(): { isLoaded: boolean } {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [isAuthenticated, userProfile, push]);
+  }, [isAuthenticated, userProfile, isLoaded, push]);
 
   // Flush pending changes when the tab is hidden or closed.
   useEffect(() => {

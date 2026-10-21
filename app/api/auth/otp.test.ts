@@ -24,7 +24,13 @@ const prismaMock = {
 vi.mock('@/lib/prisma', () => ({ default: prismaMock }));
 
 const sendOtpSmsMock = vi.fn();
-vi.mock('@/lib/sms', () => ({ sendOtpSms: sendOtpSmsMock }));
+const smsFailureMessageMock = vi.fn(
+  () => 'ارسال پیامک با خطا مواجه شد. لطفاً دوباره تلاش کنید',
+);
+vi.mock('@/lib/sms', () => ({
+  sendOtpSms: sendOtpSmsMock,
+  smsFailureMessage: smsFailureMessageMock,
+}));
 
 const cookieSet = vi.fn();
 vi.mock('next/headers', () => ({
@@ -59,6 +65,7 @@ beforeEach(() => {
   prismaMock.otpCode.update.mockResolvedValue({});
   prismaMock.user.upsert.mockResolvedValue({ id: 'user_1', phoneNumber: PHONE });
   sendOtpSmsMock.mockResolvedValue(undefined);
+  smsFailureMessageMock.mockReturnValue('ارسال پیامک با خطا مواجه شد. لطفاً دوباره تلاش کنید');
 });
 
 describe('send-otp rate limiting', () => {
@@ -124,6 +131,23 @@ describe('send-otp rate limiting', () => {
         data: { consumed: true },
       })
     );
+  });
+
+  it('answers with the provider-specific message', async () => {
+    smsFailureMessageMock.mockReturnValueOnce('پیامک ارسال نشد: تنظیمات سرویس پیامک روی سرور کامل نیست.');
+    sendOtpSmsMock.mockRejectedValue(new Error('not configured'));
+
+    const res = await sendOtp(
+      new Request('http://x/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: PHONE }),
+      })
+    );
+
+    expect(res.status).toBe(502);
+    const body = await res.json();
+    expect(body.error).toContain('تنظیمات سرویس پیامک');
   });
 });
 

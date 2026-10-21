@@ -1,10 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
-import { Lock, Verified, Check } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Lock, Verified, Check, Play, CreditCard } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber, toPersianDigits } from '@/lib/utils';
 import { CorrectionalCalendar } from '@/components/CorrectionalCalendar';
 import { ExerciseGallery } from '@/components/ExerciseGallery';
 import { SmartAnalysis } from '@/components/SmartAnalysis';
@@ -12,19 +13,49 @@ import { EducationalContent } from '@/components/EducationalContent';
 import { useStore } from '@/lib/store';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
+
+interface Plan {
+  key: string;
+  title: string;
+  price: number;
+  description: string | null;
+  features: string[];
+  isFeatured: boolean;
+  durationDays: number;
+}
+
+interface PremiumVideo {
+  id: string;
+  title: string;
+  url: string;
+  thumbnailUrl: string | null;
+  durationInMinutes: number;
+  isPremium: boolean;
+}
+
+interface SubscriptionState {
+  isActive: boolean;
+  subscription: { plan: { key: string; title: string }; expiresAt: string } | null;
+}
 
 export default function EducationPage() {
     const router = useRouter();
     const { isAuthenticated, hasHydrated } = useAuthGuard();
     const mounted = useMounted();
+    const { setAuthenticated } = useStore();
 
-    const tags = ['همه', 'آب درمانی', 'تغذیه', 'اصلاح وضعیت', 'سلامت مفاصل', 'سبک زندگی'];
-    const [activeTag, setActiveTag] = useState('همه');
-    const [showPremiumModal, setShowPremiumModal] = useState(false);
+    const [activeTag, setActiveTag] = React.useState('همه');
+    const [showPremiumModal, setShowPremiumModal] = React.useState(false);
+    const [plans, setPlans] = React.useState<Plan[]>([]);
+    const [premiumVideos, setPremiumVideos] = React.useState<PremiumVideo[]>([]);
+    const [subscription, setSubscription] = React.useState<SubscriptionState | null>(null);
 
-    useEffect(() => {
+    // The tags come from the articles that are actually published, so a
+    // category that is not used does not show up as an empty filter.
+    const [tags, setTags] = React.useState<string[]>(['همه']);
+
+    React.useEffect(() => {
     // Wait for the persisted store to rehydrate before deciding - see useAuthGuard.
     if (!hasHydrated) return;
     if (!isAuthenticated) {
@@ -32,10 +63,75 @@ export default function EducationPage() {
     }
   }, [hasHydrated, isAuthenticated, router]);
 
-    if (!mounted) return null;
-    if (!hasHydrated || !isAuthenticated) return null;
+  // The plans, the premium videos and the user's own subscription.
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
 
-    return (
+    const controller = new AbortController();
+
+    async function load() {
+      try {
+        const [plansRes, videosRes, subscriptionRes] = await Promise.all([
+          fetch('/api/plans', { signal: controller.signal, cache: 'no-store' }),
+          fetch('/api/content/videos', { signal: controller.signal, cache: 'no-store' }),
+          fetch('/api/subscription', { signal: controller.signal, cache: 'no-store' }),
+        ]);
+
+        if (plansRes.ok) {
+          const data = (await plansRes.json()) as Plan[];
+          setPlans(Array.isArray(data) ? data : []);
+        }
+
+        if (videosRes.ok) {
+          const data = (await videosRes.json()) as PremiumVideo[];
+          setPremiumVideos(Array.isArray(data) ? data : []);
+        }
+
+        if (subscriptionRes.ok) {
+          setSubscription((await subscriptionRes.json()) as SubscriptionState);
+        }
+      } catch (error) {
+        if ((error as Error)?.name === 'AbortError') return;
+      }
+    }
+
+    void load();
+    return () => controller.abort();
+  }, [isAuthenticated]);
+
+  // The category rail, derived from the published articles.
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    async function load() {
+      try {
+        const res = await fetch('/api/content/articles', {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+
+        const articles = (await res.json()) as Array<{ category: string }>;
+        const categories = Array.from(new Set(articles.map((article) => article.category)));
+        setTags(['همه', ...categories]);
+      } catch (error) {
+        if ((error as Error)?.name === 'AbortError') return;
+      }
+    }
+
+    void load();
+    return () => controller.abort();
+  }, []);
+
+  if (!mounted) return null;
+  if (!hasHydrated || !isAuthenticated) return null;
+
+  const hasPremiumAccess = subscription?.isActive ?? false;
+
+  // Only the premium videos belong behind the paywall.
+  const lockedVideos = premiumVideos.filter((video) => video.isPremium);
+
+  return (
         <div className="p-6 pb-28">
             <header className="mb-6 sticky top-0 pt-4 z-40 bg-surface/85 backdrop-blur-md">
                 <h1 className="text-2xl font-bold text-on-surface mb-4">آموزش و تحلیل هوشمند</h1>
@@ -62,82 +158,146 @@ export default function EducationPage() {
             <ExerciseGallery />
             <EducationalContent activeTag={activeTag} />
 
-            {/* Premium Locked Content */}
+            {/* Premium content */}
             <section className="relative mt-8">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Verified className="w-6 h-6 text-tertiary" />
-                    پکیج تخصصی توانبخشی
-                </h2>
+                <div className="flex items-center justify-between gap-4 mb-4">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                        <Verified className="w-6 h-6 text-tertiary" />
+                        پکیج تخصصی توانبخشی
+                    </h2>
+                    {hasPremiumAccess && (
+                        <span className="text-xs font-bold text-success bg-success-container px-3 py-1 rounded-full">
+                            اشتراک فعال شما
+                        </span>
+                    )}
+                </div>
 
                 <div className="card rounded-3xl p-4 relative overflow-hidden min-h-[350px]">
 
-                    {/* Blurred List Items */}
-                    <div className="space-y-4 opacity-50 blur-[4px]" aria-hidden="true">
-                        {[1,2,3].map(i => (
-                             <div key={i} className="flex gap-4 p-2 bg-surface-variant/30 rounded-2xl items-center">
-                                 <div className="w-24 h-16 bg-surface-variant rounded-xl border border-white/20"></div>
-                                 <div className="flex-1 space-y-2">
-                                    <div className="h-4 bg-outline-variant/30 rounded w-3/4"></div>
-                                    <div className="h-3 bg-outline-variant/30 rounded w-1/2"></div>
+                    {/* The real premium videos, blurred until the user subscribes. */}
+                    <div
+                        className={cn('space-y-4', !hasPremiumAccess && 'opacity-50 blur-[4px]')}
+                        aria-hidden={!hasPremiumAccess}
+                    >
+                        {lockedVideos.length > 0 ? (
+                            lockedVideos.map((video) => (
+                                <div key={video.id} className="flex gap-4 p-2 bg-surface-variant/30 rounded-2xl items-center">
+                                    <div className="w-24 h-16 bg-surface-variant rounded-xl border border-white/20 flex items-center justify-center shrink-0">
+                                        <Play className="w-6 h-6 text-on-surface-variant" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-sm text-on-surface truncate">
+                                            {video.title}
+                                        </p>
+                                        <p className="text-xs text-on-surface-variant mt-1">
+                                            {toPersianDigits(video.durationInMinutes)} دقیقه
+                                            {video.isPremium && ' • ویژه'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            [1, 2, 3].map(i => (
+                                 <div key={i} className="flex gap-4 p-2 bg-surface-variant/30 rounded-2xl items-center">
+                                     <div className="w-24 h-16 bg-surface-variant rounded-xl border border-white/20"></div>
+                                     <div className="flex-1 space-y-2">
+                                          <div className="h-4 bg-outline-variant/30 rounded w-3/4"></div>
+                                          <div className="h-3 bg-outline-variant/30 rounded w-1/2"></div>
+                                     </div>
                                  </div>
-                             </div>
-                        ))}
+                            ))
+                        )}
                     </div>
 
-                    {/* Paywall Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center p-6 bg-gradient-to-t from-surface via-surface/80 to-surface/20 z-10 backdrop-blur-[2px]">
-                        <div className="card rounded-3xl p-8 text-center border-t-2 border-secondary-container w-full max-w-sm">
-                            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-                                <Lock className="w-8 h-8 text-white" />
+                    {/* Paywall overlay */}
+                    {!hasPremiumAccess && (
+                        <div className="absolute inset-0 flex items-center justify-center p-6 bg-gradient-to-t from-surface via-surface/80 to-surface/20 z-10 backdrop-blur-[2px]">
+                            <div className="card rounded-3xl p-8 text-center border-t-2 border-secondary-container w-full max-w-sm">
+                                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                                    <Lock className="w-8 h-8 text-white" />
+                                </div>
+                                <h3 className="text-xl font-bold text-on-surface mb-2">دسترسی به پکیج کامل</h3>
+                                <p className="text-sm text-on-surface-variant mb-8 leading-relaxed">
+                                    ویدیوهای تخصصی، برنامه تمرینی اختصاصی و گزارش پیشرفت.
+                                </p>
+                                <button type="button" onClick={() => setShowPremiumModal(true)} className="btn btn-primary w-full py-4 font-bold">
+                                    ارتقا به ویژه و بازگشایی
+                                </button>
                             </div>
-                            <h3 className="text-xl font-bold text-on-surface mb-2">دسترسی به پکیج کامل</h3>
-                            <p className="text-sm text-on-surface-variant mb-8 leading-relaxed">
-                                شامل ۸ ویدیوی تخصصی، برنامه تمرینی اختصاصی و پشتیبانی مستقیم.
-                            </p>
-                            <button type="button" onClick={() => setShowPremiumModal(true)} className="btn btn-primary w-full py-4 font-bold">
-                                ارتقا به ویژه و بازگشایی
-                            </button>
                         </div>
-                    </div>
+                    )}
 
                 </div>
             </section>
 
-            {/* 3-Tier Premium Modal */}
+            {/* The plan picker */}
             <Modal
                 open={showPremiumModal}
                 onClose={() => setShowPremiumModal(false)}
                 title="پلن‌های اشتراک ویژه"
                 size="xl"
             >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Base Tier */}
-                    <div className="card rounded-2xl p-6 relative overflow-hidden flex flex-col border border-outline-variant">
-                        <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
-                        <h3 className="text-lg font-bold text-on-surface mb-2">پایه</h3>
-                        <p className="text-sm text-on-surface-variant mb-4">دسترسی محدود به ویدیوها</p>
-                        <div className="text-xl font-bold text-primary mb-6 mt-auto">۹۹,۰۰۰ <span className="text-sm font-normal text-on-surface-variant">تومان / ماه</span></div>
-                        <button type="button" disabled className="btn btn-secondary btn-md w-full">خرید</button>
+                {plans.length === 0 ? (
+                    <div className="py-10 text-center text-on-surface-variant font-bold">
+                        در حال حاضر پلن فعالی برای خرید وجود ندارد.
                     </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {plans.map((plan) => (
+                            <div
+                                key={plan.key}
+                                className={cn(
+                                    'card rounded-2xl p-6 relative overflow-hidden flex flex-col',
+                                    plan.isFeatured
+                                        ? 'border-2 border-primary shadow-[0_0_15px_rgba(37,99,235,0.2)]'
+                                        : 'border border-outline-variant',
+                                )}
+                            >
+                                {plan.isFeatured && (
+                                    <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">
+                                        پیشنهاد ویژه
+                                    </div>
+                                )}
 
-                    {/* Pro Tier */}
-                    <div className="card rounded-2xl p-6 relative overflow-hidden flex flex-col border-2 border-primary shadow-[0_0_15px_rgba(37,99,235,0.2)]">
-                        <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
-                        <h3 className="text-lg font-bold text-on-surface mb-2 flex items-center gap-2">حرفه‌ای <Verified className="w-4 h-4 text-primary" /></h3>
-                        <p className="text-sm text-on-surface-variant mb-4">دسترسی کامل + تمرینات اختصاصی</p>
-                        <div className="text-xl font-bold text-primary mb-6 mt-auto">۱۹۹,۰۰۰ <span className="text-sm font-normal text-on-surface-variant">تومان / ماه</span></div>
-                        <button type="button" disabled className="btn btn-secondary btn-md w-full">خرید</button>
-                    </div>
+                                <h3 className="text-lg font-bold text-on-surface mb-2 flex items-center gap-2">
+                                    {plan.title}
+                                    {plan.isFeatured && <Verified className="w-4 h-4 text-primary" />}
+                                </h3>
+                                <p className="text-sm text-on-surface-variant mb-4">
+                                    {plan.description ?? 'دسترسی کامل به محتوای ویژه'}
+                                </p>
 
-                    {/* Org Tier */}
-                    <div className="card rounded-2xl p-6 relative overflow-hidden flex flex-col border border-outline-variant">
-                        <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">به زودی</div>
-                        <h3 className="text-lg font-bold text-on-surface mb-2">سازمانی</h3>
-                        <p className="text-sm text-on-surface-variant mb-4">پشتیبانی اختصاصی و مشاوره</p>
-                        <div className="text-xl font-bold text-primary mb-6 mt-auto">۴۹۹,۰۰۰ <span className="text-sm font-normal text-on-surface-variant">تومان / ماه</span></div>
-                        <button type="button" disabled className="btn btn-secondary btn-md w-full">خرید</button>
+                                <div className="text-xl font-bold text-primary mb-6 mt-auto">
+                                    {formatNumber(plan.price)}
+                                    <span className="text-sm font-normal text-on-surface-variant mr-1">تومان / ماه</span>
+                                </div>
+
+                                {plan.features.length > 0 && (
+                                    <ul className="space-y-2 mb-6">
+                                        {plan.features.map((feature) => (
+                                            <li key={feature} className="flex items-start gap-2 text-xs text-on-surface-variant">
+                                                <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                                                {feature}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowPremiumModal(false);
+                                        router.push(`/checkout/${plan.key}`);
+                                    }}
+                                    className={cn('btn w-full', plan.isFeatured ? 'btn-primary' : 'btn-secondary')}
+                                >
+                                    <CreditCard className="w-4 h-4" />
+                                    خرید
+                                </button>
+                            </div>
+                        ))}
                     </div>
-                </div>
+                )}
             </Modal>
         </div>
     );

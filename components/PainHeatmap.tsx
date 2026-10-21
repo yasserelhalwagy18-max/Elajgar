@@ -6,63 +6,10 @@ import Image from 'next/image';
 import { AnimatePresence, motion } from 'motion/react';
 import { useStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { BODY_REGIONS, type BodyRegion } from '@/lib/body-regions';
 
-interface RegionData {
-  id: string;
-  label: string;
-  view: 'front' | 'back';
-  top: string;
-  left: string;
-}
-
-/**
- * Marker positions, as a percentage of the artwork.
- *
- * They were measured against the actual PNGs (`body-front.png` and
- * `body-back.png`, both 1984x2136): the body occupies 1.4%..91.9% of the
- * image height, the head 1.4%..9%, the shoulders ~16%, the waist ~40%, the
- * hips ~48% and the feet ~91%. The old numbers were expressed against a
- * letterboxed container, so the dots floated far above and below the body.
- *
- * Left/right are the *person's* left and right: in the back view the
- * person's left is on the viewer's left, in the front view it is mirrored.
- */
-const regionsData: RegionData[] = [
-  // Front View
-  { id: 'head_front', label: 'سر', view: 'front', top: '4%', left: '50%' },
-  { id: 'neck_front', label: 'گردن', view: 'front', top: '10%', left: '50%' },
-  { id: 'shoulders_front', label: 'شانه‌ها', view: 'front', top: '15%', left: '50%' },
-  { id: 'chest', label: 'قفسه سینه', view: 'front', top: '21%', left: '50%' },
-  { id: 'abdomen', label: 'شکم', view: 'front', top: '31%', left: '50%' },
-  { id: 'pelvis_front', label: 'لگن', view: 'front', top: '46%', left: '50%' },
-  { id: 'elbow_r_front', label: 'آرنج راست', view: 'front', top: '40%', left: '30%' },
-  { id: 'elbow_l_front', label: 'آرنج چپ', view: 'front', top: '40%', left: '70%' },
-  { id: 'wrist_r_front', label: 'مچ دست راست', view: 'front', top: '46%', left: '26%' },
-  { id: 'wrist_l_front', label: 'مچ دست چپ', view: 'front', top: '46%', left: '74%' },
-  { id: 'knee_r_front', label: 'زانو راست', view: 'front', top: '68%', left: '43%' },
-  { id: 'knee_l_front', label: 'زانو چپ', view: 'front', top: '68%', left: '57%' },
-  { id: 'ankle_r_front', label: 'مچ پا راست', view: 'front', top: '88%', left: '44%' },
-  { id: 'ankle_l_front', label: 'مچ پا چپ', view: 'front', top: '88%', left: '56%' },
-
-  // Back View
-  { id: 'head_back', label: 'پشت سر', view: 'back', top: '4%', left: '50%' },
-  { id: 'neck_back', label: 'پشت گردن', view: 'back', top: '10%', left: '50%' },
-  { id: 'shoulder_l_back', label: 'شانه چپ', view: 'back', top: '16%', left: '39%' },
-  { id: 'shoulder_r_back', label: 'شانه راست', view: 'back', top: '16%', left: '61%' },
-  { id: 'upper_back', label: 'پشت (بالا)', view: 'back', top: '24%', left: '50%' },
-  { id: 'lower_back', label: 'کمر', view: 'back', top: '33%', left: '50%' },
-  { id: 'glutes', label: 'باسن', view: 'back', top: '48%', left: '50%' },
-  { id: 'elbow_l_back', label: 'آرنج چپ', view: 'back', top: '40%', left: '30%' },
-  { id: 'elbow_r_back', label: 'آرنج راست', view: 'back', top: '40%', left: '70%' },
-  { id: 'wrist_l_back', label: 'مچ دست چپ', view: 'back', top: '46%', left: '26%' },
-  { id: 'wrist_r_back', label: 'مچ دست راست', view: 'back', top: '46%', left: '74%' },
-  { id: 'hamstring_l', label: 'پشت ران چپ', view: 'back', top: '60%', left: '43%' },
-  { id: 'hamstring_r', label: 'پشت ران راست', view: 'back', top: '60%', left: '57%' },
-  { id: 'calf_l', label: 'ساق پا چپ', view: 'back', top: '75%', left: '43%' },
-  { id: 'calf_r', label: 'ساق پا راست', view: 'back', top: '75%', left: '57%' },
-  { id: 'heel_l', label: 'پاشنه پا چپ', view: 'back', top: '88%', left: '44%' },
-  { id: 'heel_r', label: 'پاشنه پا راست', view: 'back', top: '88%', left: '56%' },
-];
+type RegionData = BodyRegion;
+const regionsData: RegionData[] = BODY_REGIONS;
 
 export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
   const userProfile = useStore((state) => state.userProfile);

@@ -2,11 +2,61 @@
 
 import * as React from 'react';
 import { motion } from 'motion/react';
-import { articles } from '@/lib/education-content';
+import { AlertCircle } from 'lucide-react';
+import { seedArticles } from '@/lib/education-content';
+import { resolveContentIcon } from '@/lib/content-icons';
 import { Modal } from '@/components/ui/Modal';
 
+/** An article as the API returns it. */
+interface Article {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  summary: string | null;
+  content: string[];
+  icon: string;
+  readTime: string | null;
+}
+
+/**
+ * The educational articles.
+ *
+ * The list comes from the database so an admin can publish and edit articles
+ * from the panel. The bundled seed is only a fallback for when the request
+ * fails - it holds the same content the seed wrote, so the section never
+ * renders empty.
+ */
 export function EducationalContent({ activeTag = 'همه' }: { activeTag?: string }) {
-  const [activeArticle, setActiveArticle] = React.useState<typeof articles[0] | null>(null);
+  const [articles, setArticles] = React.useState<Article[]>([]);
+  const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
+  const [activeArticle, setActiveArticle] = React.useState<Article | null>(null);
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    async function load() {
+      try {
+        const res = await fetch('/api/content/articles', {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+
+        if (!res.ok) throw new Error('failed');
+
+        const data = await res.json();
+        setArticles(Array.isArray(data) ? data : []);
+        setStatus('ready');
+      } catch (error) {
+        if ((error as Error)?.name === 'AbortError') return;
+        setArticles(seedArticles as unknown as Article[]);
+        setStatus('error');
+      }
+    }
+
+    void load();
+    return () => controller.abort();
+  }, []);
 
   const filteredArticles = activeTag === 'همه'
     ? articles
@@ -16,21 +66,30 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
     <section className="mb-10">
       <div className="flex justify-between items-end mb-4 px-1">
         <h2 className="text-xl font-bold text-on-surface">محتوای آموزشی</h2>
-        {/* This section already renders every article, so the old "see all"
-            link pointed at the page the user was already on. */}
         <span className="text-sm font-medium text-on-surface-variant">
           {filteredArticles.length.toLocaleString('fa-IR')} مطلب
         </span>
       </div>
 
-      {filteredArticles.length === 0 ? (
+      {status === 'error' && (
+        <div className="mb-4 flex items-center gap-2 p-3 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-on-surface-variant">
+          <AlertCircle className="w-4 h-4 text-warning shrink-0" />
+          نمایش آخرین نسخه ذخیره‌شده محتوا - ارتباط با سرور برقرار نشد.
+        </div>
+      )}
+
+      {status === 'loading' && articles.length === 0 ? (
+        <div className="card p-8 rounded-3xl text-center text-on-surface-variant font-bold">
+          در حال دریافت مطالب...
+        </div>
+      ) : filteredArticles.length === 0 ? (
         <div className="card p-8 rounded-3xl text-center text-on-surface-variant">
           در این دسته هنوز مطلبی منتشر نشده است.
         </div>
       ) : (
         <div className="flex flex-col gap-4">
           {filteredArticles.map((article) => {
-            const Icon = article.icon;
+            const { icon: Icon, color, bg } = resolveContentIcon(article.icon);
             return (
               <motion.button
                 type="button"
@@ -44,21 +103,21 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                   {/* A designed tile instead of a random stock photo: the
                       placeholder service is an external dependency and
                       unrelated photos read as unreliable medical content. */}
-                  <Icon className={`w-8 h-8 ${article.color}`} />
+                  <Icon className={`w-8 h-8 ${color}`} />
                 </div>
 
                 <div className="flex-1 flex flex-col justify-between h-full">
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                      <div className={`p-1 ${article.bg} rounded-md`}>
-                        <Icon className={`w-3 h-3 ${article.color}`} />
+                      <div className={`p-1 ${bg} rounded-md`}>
+                        <Icon className={`w-3 h-3 ${color}`} />
                       </div>
                       <span className="text-xs font-bold text-on-surface-variant">{article.category}</span>
                     </div>
                     <h3 className="font-bold text-sm text-on-surface leading-tight mb-2">{article.title}</h3>
                   </div>
                   <div className="flex items-center text-xs text-on-surface-variant font-medium">
-                    <span>زمان مطالعه: {article.readTime}</span>
+                    <span>زمان مطالعه: {article.readTime ?? '—'}</span>
                   </div>
                 </div>
               </motion.button>
@@ -77,14 +136,16 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
         {activeArticle && (
           <>
             <div className="relative w-full aspect-video bg-surface-variant rounded-2xl overflow-hidden mb-5 flex items-center justify-center">
-              {React.createElement(activeArticle.icon, {
-                className: `w-20 h-20 ${activeArticle.color}`,
+              {React.createElement(resolveContentIcon(activeArticle.icon).icon, {
+                className: `w-20 h-20 ${resolveContentIcon(activeArticle.icon).color}`,
               })}
             </div>
 
             <div className="flex items-center gap-2 mb-3">
-              <div className={`p-1.5 ${activeArticle.bg} rounded-md`}>
-                {React.createElement(activeArticle.icon, { className: `w-4 h-4 ${activeArticle.color}` })}
+              <div className={`p-1.5 ${resolveContentIcon(activeArticle.icon).bg} rounded-md`}>
+                {React.createElement(resolveContentIcon(activeArticle.icon).icon, {
+                  className: `w-4 h-4 ${resolveContentIcon(activeArticle.icon).color}`,
+                })}
               </div>
               <span className="text-xs font-bold text-on-surface-variant">{activeArticle.category}</span>
               <span className="text-xs text-on-surface-variant mr-auto">{activeArticle.readTime} مطالعه</span>

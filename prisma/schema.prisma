@@ -69,6 +69,22 @@ model User {
   nutritionGoal      NutritionGoal?
   role               Role           @default(USER)
 
+  /// Set when the account is deactivated by an admin. A deactivated user can
+  /// still sign in, but the admin panel can exclude them from the active
+  /// counts. Kept separate from `role` so an admin never has to delete a user
+  /// to silence them.
+  isActive           Boolean        @default(true)
+
+  /// Last successful OTP login. Null until the user signs in for the first time.
+  lastLoginAt        DateTime?
+
+  /// When the account was created. Used for the signup trend in the admin
+  /// panel and for the age of a record.
+  createdAt          DateTime      @default(now())
+  /// The default on `updatedAt` lets the column be added to a table that
+  /// already has rows; Prisma still keeps it up to date on every write.
+  updatedAt          DateTime      @default(now()) @updatedAt
+
   /// Body regions the user reported pain in, with intensity and type.
   /// Stored as JSON because the client's region granularity (27 labelled
   /// regions incl. left/right) is finer than the BodySection enum.
@@ -82,6 +98,9 @@ model User {
   questionnaire   QuestionnaireAnswer?
   dailyLogs       DailyLog[]
   painAssessments PainAssessment[]
+  auditLogs       AuditLog[]
+  subscriptions   Subscription[]
+  payments        Payment[]
 }
 
 enum Gender {
@@ -234,8 +253,27 @@ model Exercise {
   id             String        @id @default(cuid())
   title          String
   description    String?
+  /// Free-form category key shown as a chip in the gallery, e.g. "کششی".
+  category       String        @default("کششی")
+  /// Difficulty shown on the card, e.g. "مبتدی" / "متوسط" / "همه".
+  level          String        @default("مبتدی")
+  /// Length of the exercise in minutes. Drives the in-app timer.
+  durationMinutes Int          @default(5)
+  sets           Int           @default(1)
+  reps           Int           @default(1)
+  /// Short label rendered on the card tile.
+  emoji          String        @default("🧘")
+  /// Tailwind gradient classes for the card tile.
+  accent         String        @default("from-primary/70 to-secondary/70")
+  /// Body regions this exercise targets. Used to recommend exercises for the
+  /// pain zones a user reported. JSON because MySQL has no array type.
+  targetTags     Json?
+  isPublished    Boolean       @default(true)
+  sortOrder      Int           @default(0)
   videoContentId String?       @unique
   videoContent   VideoContent? @relation(fields: [videoContentId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model VideoContent {
@@ -247,8 +285,162 @@ model VideoContent {
   associatedPainTags Json? // Was BodySection[]
   durationInMinutes  Int
   level              DifficultyLevel
+  isPublished        Boolean         @default(true)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   exercise Exercise?
+}
+
+/// An editorial article shown in the education section.
+///
+/// The article body is a list of paragraphs, stored as a JSON array of
+/// strings. MySQL has no array type, and a single JSON blob keeps the
+/// paragraph structure intact instead of flattening it into one string.
+model Article {
+  id       String @id @default(cuid())
+  /// URL-safe identifier used for deep links and de-duplication.
+  slug     String @unique
+  title    String
+  /// Category the article is filed under. Matches the tag rail in the UI.
+  category String
+  summary  String?
+  /// The body, one array entry per paragraph.
+  content  Json
+  /// Key of the icon shown on the card - e.g. "droplet", "apple", "activity".
+  /// Stored as a string and resolved to a component in the UI so an admin can
+  /// change it without touching code.
+  icon     String  @default("book")
+  /// Human readable reading time, e.g. "۴ دقیقه".
+  readTime String?
+  image    String?
+  /// Draft articles are hidden from the public education section.
+  isPublished Boolean  @default(true)
+  /// Position within the list. Lower numbers come first.
+  sortOrder   Int      @default(0)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// A key/value store for settings that change how the app behaves.
+///
+/// Used for the algorithm weights and the daily health targets: the health
+/// score reads them from the database, so an admin change applies to every
+/// user and not just to the browser the change was made in.
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// A subscription tier shown in the premium modal.
+model Plan {
+  id          String  @id @default(cuid())
+  /// Stable identifier used by the client, e.g. "base", "pro", "org".
+  key         String  @unique
+  title       String
+  /// Price per month in toman.
+  price       Int     @default(0)
+  description String?
+  /// Bullet points of what the tier includes.
+  features    Json?
+  isActive    Boolean @default(false)
+  /// The plan the landing page and the premium modal highlight.
+  isFeatured  Boolean @default(false)
+  /// How long a subscription of this plan lasts, in days.
+  durationDays Int    @default(30)
+  sortOrder   Int     @default(0)
+
+  subscriptions Subscription[]
+  payments      Payment[]
+}
+
+/// A user's subscription to a plan.
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String
+  planId    String
+  status    SubscriptionStatus @default(ACTIVE)
+  startedAt DateTime           @default(now())
+  /// When the subscription runs out. A subscription past this date is
+  /// treated as expired even while the row still says ACTIVE.
+  expiresAt DateTime
+  /// The payment that paid for it. Unique - a payment activates at most one
+  /// subscription.
+  paymentId String?             @unique
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan    Plan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([planId])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+}
+
+/// A payment for a plan.
+///
+/// The provider is `mock` until a real gateway is wired in: no card data is
+/// ever stored, and the gateway reference is a locally generated id.
+model Payment {
+  id       String        @id @default(cuid())
+  userId   String
+  planId   String
+  /// The amount that was charged, in toman. Stored so a later price change
+  /// does not rewrite the history.
+  amount   Int
+  status   PaymentStatus @default(PENDING)
+  provider String        @default("mock")
+  /// The gateway reference. Unique - it is what the confirmation callback
+  /// matches against.
+  reference String        @unique
+  createdAt DateTime      @default(now())
+  paidAt    DateTime?
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan         Plan          @relation(fields: [planId], references: [id], onDelete: Restrict)
+  subscription Subscription?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// A record of every change an admin made through the panel.
+model AuditLog {
+  id       String   @id @default(cuid())
+  /// The admin who made the change. Null if the account was deleted later.
+  actorId  String?
+  actor    User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  /// "create", "update" or "delete".
+  action   String
+  /// The kind of record that changed, e.g. "gym", "food", "user".
+  entity   String
+  /// The id of the record that changed.
+  entityId String?
+  /// The record before the change. Null for a create.
+  before   Json?
+  /// The record after the change. Null for a delete.
+  after    Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
 }
 
 enum DifficultyLevel {

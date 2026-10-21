@@ -28,6 +28,31 @@ export const DEFAULT_HEALTH_TARGETS: HealthScoreTargets = {
   water: 2.0,
 };
 
+/**
+ * How much each component is worth.
+ *
+ * The defaults match the points each component could award. An admin can
+ * change them from the panel, and the change applies to every user - the
+ * weights live in the database, not in the browser.
+ */
+export interface HealthScoreWeights {
+  bmi: number;
+  activity: number;
+  sleep: number;
+  water: number;
+  calories: number;
+  pain: number;
+}
+
+export const DEFAULT_HEALTH_WEIGHTS: HealthScoreWeights = {
+  bmi: 20,
+  activity: 20,
+  sleep: 15,
+  water: 15,
+  calories: 15,
+  pain: 15,
+};
+
 export interface HealthScoreInput {
   bmi: number;
   activity: number;
@@ -40,6 +65,7 @@ export interface HealthScoreInput {
   /** 0-10. */
   pain: number;
   targets?: Partial<HealthScoreTargets>;
+  weights?: Partial<HealthScoreWeights>;
 }
 
 /**
@@ -52,6 +78,7 @@ export interface HealthScoreInput {
  */
 export function calculateHealthScore(data: HealthScoreInput): number {
   const targets = { ...DEFAULT_HEALTH_TARGETS, ...data.targets };
+  const weights = { ...DEFAULT_HEALTH_WEIGHTS, ...data.weights };
 
   let earned = 0;
   let available = 0;
@@ -60,6 +87,15 @@ export function calculateHealthScore(data: HealthScoreInput): number {
     earned += points;
     available += max;
   };
+
+  /**
+   * Scale a component's raw score (0..rawMax) onto its configured weight.
+   *
+   * The raw score is computed against the component's built-in maximum; the
+   * weight decides how many points that component is worth in total.
+   */
+  const scale = (raw: number, rawMax: number, weight: number) =>
+    rawMax > 0 ? (raw / rawMax) * weight : 0;
 
   // 1. BMI Score (Max 20 points)
   if (data.bmi > 0) {
@@ -76,7 +112,7 @@ export function calculateHealthScore(data: HealthScoreInput): number {
       // Severely underweight or class II+ obesity: 0 points.
       bmiScore = 0;
     }
-    award(bmiScore, 20);
+    award(scale(bmiScore, 20, weights.bmi), weights.bmi);
   }
 
   // 2. Activity Score (Max 20 points) - optimal is 45+ minutes
@@ -91,7 +127,7 @@ export function calculateHealthScore(data: HealthScoreInput): number {
     } else {
       activityScore = 5;
     }
-    award(activityScore, 20);
+    award(scale(activityScore, 20, weights.activity), weights.activity);
   }
 
   // 3. Sleep Score (Max 15 points)
@@ -110,7 +146,7 @@ export function calculateHealthScore(data: HealthScoreInput): number {
       sleepScore += 2;
     }
     // > 9.5h is not rewarded - there is no upper "too much sleep" bonus.
-    award(Math.min(sleepScore, 15), 15);
+    award(scale(Math.min(sleepScore, 15), 15, weights.sleep), weights.sleep);
   }
 
   // 4. Water Score (Max 15 points) - scored against the user's own target
@@ -124,7 +160,7 @@ export function calculateHealthScore(data: HealthScoreInput): number {
     } else if (ratio >= 0.5) {
       waterScore = 5;
     }
-    award(waterScore, 15);
+    award(scale(waterScore, 15, weights.water), weights.water);
   }
 
   // 5. Calories Score (Max 15 points) - scored against the user's own target
@@ -138,17 +174,28 @@ export function calculateHealthScore(data: HealthScoreInput): number {
     } else if (ratio >= 0.6 && ratio <= 1.4) {
       caloriesScore = 5;
     }
-    award(caloriesScore, 15);
+    award(scale(caloriesScore, 15, weights.calories), weights.calories);
   }
 
   // 6. Pain Score (Max 15 points) - inverse relation: 0 pain = 15 pts
   if (Number.isFinite(data.pain) && data.pain >= 0) {
     const painScore = Math.max(0, 15 - data.pain * 1.5);
-    award(painScore, 15);
+    award(scale(painScore, 15, weights.pain), weights.pain);
   }
 
   if (available === 0) return 0;
   return Math.round((earned / available) * 100);
+}
+
+/**
+ * The optional inputs to the scoring functions.
+ *
+ * `weights` come from the global settings an admin controls, `targets` from
+ * the user's own goal.
+ */
+export interface HealthScoreOptions {
+  targets?: Partial<HealthScoreTargets>;
+  weights?: Partial<HealthScoreWeights>;
 }
 
 /**
@@ -160,11 +207,12 @@ export function calculateHealthScore(data: HealthScoreInput): number {
 export function buildHealthDataFromLogs(
   userProfile: Partial<UserProfile> | null,
   days: number,
-  targets?: Partial<HealthScoreTargets>
+  options: HealthScoreOptions = {}
 ): { data: DailyHealthData[]; hasEnoughData: boolean } {
   if (!userProfile) return { data: [], hasEnoughData: false };
 
-  const resolvedTargets = { ...DEFAULT_HEALTH_TARGETS, ...targets };
+  const resolvedTargets = { ...DEFAULT_HEALTH_TARGETS, ...options.targets };
+  const resolvedWeights = { ...DEFAULT_HEALTH_WEIGHTS, ...options.weights };
 
   const profileWeight = userProfile.weight || 0;
   const heightMeters = (userProfile.height || 170) / 100;
@@ -240,6 +288,7 @@ export function buildHealthDataFromLogs(
           calories: calories ?? 0,
           pain: dayPain ?? profilePain ?? 0,
           targets: resolvedTargets,
+          weights: resolvedWeights,
         })
       : null;
 

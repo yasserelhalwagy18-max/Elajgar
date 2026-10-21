@@ -5,33 +5,53 @@ import dynamic from 'next/dynamic';
 import { useFrame } from '@react-three/fiber';
 import { Html, Center, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
+import {
+  BODY_BUCKETS,
+  BODY_BUCKET_LABELS,
+  BODY_BUCKET_POSITIONS,
+  type BodyBucket,
+} from '@/lib/body-regions';
+import { toPersianDigits } from '@/lib/utils';
 
 // Dynamic import for the Canvas to prevent blocking main thread
 const Canvas = dynamic(() => import('@react-three/fiber').then((mod) => mod.Canvas), {
   ssr: false,
 });
 
-interface PainData {
-  id: string;
+export interface PainRegionDatum {
+  /** The coarse region id, e.g. "back". */
+  id: BodyBucket | string;
   label: string;
-  frequency: number;
-  position: [number, number, number];
+  /** The share of users who reported this region, 0-100. */
+  percentage: number;
+  /** How many users reported it. */
+  count?: number;
 }
 
-const painData3D: PainData[] = [
-  { id: 'head', label: 'سر', frequency: 15, position: [0, 0.9, 0.1] },
-  { id: 'neck', label: 'گردن', frequency: 45, position: [0, 0.65, 0.05] },
-  { id: 'shoulders', label: 'شانه‌ها', frequency: 65, position: [0, 0.45, 0.1] },
-  { id: 'chest', label: 'قفسه سینه', frequency: 20, position: [0, 0.25, 0.15] },
-  { id: 'back', label: 'کمر', frequency: 85, position: [0, 0.05, -0.15] },
-  { id: 'arms_l', label: 'دست چپ', frequency: 30, position: [-0.4, 0.1, 0] },
-  { id: 'arms_r', label: 'دست راست', frequency: 30, position: [0.4, 0.1, 0] },
-  { id: 'hips', label: 'لگن', frequency: 40, position: [0, -0.3, 0.1] },
-  { id: 'knees_l', label: 'زانو چپ', frequency: 75, position: [-0.2, -0.8, 0.12] },
-  { id: 'knees_r', label: 'زانو راست', frequency: 70, position: [0.2, -0.8, 0.12] },
-  { id: 'feet_l', label: 'پای چپ', frequency: 25, position: [-0.2, -1.3, 0.1] },
-  { id: 'feet_r', label: 'پای راست', frequency: 25, position: [0.2, -1.3, 0.1] },
-];
+type PositionedRegion = PainRegionDatum & { position: [number, number, number] };
+
+/**
+ * Build the marker list from a distribution.
+ *
+ * The panel passes the real distribution; when there is no data the markers
+ * are all at zero rather than showing made-up numbers.
+ */
+function buildPainData(regions?: PainRegionDatum[]): PositionedRegion[] {
+  if (regions && regions.length > 0) {
+    return regions.map((region) => ({
+      ...region,
+      position: BODY_BUCKET_POSITIONS[region.id as BodyBucket] ?? [0, 0, 0],
+    }));
+  }
+
+  return BODY_BUCKETS.map((bucket) => ({
+    id: bucket,
+    label: BODY_BUCKET_LABELS[bucket],
+    percentage: 0,
+    count: 0,
+    position: BODY_BUCKET_POSITIONS[bucket],
+  }));
+}
 
 function SceneLighting() {
     return (
@@ -144,13 +164,13 @@ function PlaceholderHumanoid() {
     );
 }
 
-function Marker({ data }: { data: PainData }) {
+function Marker({ data }: { data: PositionedRegion }) {
     const [hovered, setHovered] = useState(false);
 
-    const color = useMemo(() => getHeatColor(data.frequency), [data.frequency]);
+    const color = useMemo(() => getHeatColor(data.percentage), [data.percentage]);
 
     // Scale intensity and size slightly on hover
-    const targetIntensity = hovered ? (data.frequency / 100) * 3 + 1 : (data.frequency / 100) * 2;
+    const targetIntensity = hovered ? (data.percentage / 100) * 3 + 1 : (data.percentage / 100) * 2;
     const targetScale = hovered ? 1.3 : 1;
 
     // Restore the cursor if the component unmounts while the marker is hovered.
@@ -196,7 +216,11 @@ function Marker({ data }: { data: PainData }) {
                         <div className="font-bold text-sm mb-1">{data.label}</div>
                         <div className="text-xs text-white/80 flex items-center gap-2">
                             <span>گزارش‌ها:</span>
-                            <span className="font-mono text-white font-bold">{data.frequency}٪</span>
+                            <span className="font-mono text-white font-bold">
+                                {data.count !== undefined
+                                    ? `${toPersianDigits(data.count)} کاربر`
+                                    : `${toPersianDigits(data.percentage)}٪`}
+                            </span>
                         </div>
                     </div>
                 </Html>
@@ -205,9 +229,21 @@ function Marker({ data }: { data: PainData }) {
     );
 }
 
-export default function PainHeatmap3D({ modelUrl }: { modelUrl?: string }) {
+export default function PainHeatmap3D({
+  modelUrl,
+  regions,
+  height = 500,
+}: {
+  modelUrl?: string;
+  /** The regions to draw. Without them every marker is at zero. */
+  regions?: PainRegionDatum[];
+  height?: number;
+}) {
+    const painData = useMemo(() => buildPainData(regions), [regions]);
+    const hasData = painData.some((region) => region.percentage > 0);
+
     return (
-        <div className="w-full h-[500px] relative rounded-3xl overflow-hidden card">
+        <div className="w-full relative rounded-3xl overflow-hidden card" style={{ height }}>
             <Canvas
                 shadows
                 camera={{ position: [0, 0, 4], fov: 45 }}
@@ -237,13 +273,21 @@ export default function PainHeatmap3D({ modelUrl }: { modelUrl?: string }) {
                             )}
 
                             {/* Pain Markers */}
-                            {painData3D.map((data) => (
+                            {painData.map((data) => (
                                 <Marker key={data.id} data={data} />
                             ))}
                         </group>
                     </Center>
                 </Suspense>
             </Canvas>
+
+            {!hasData && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="bg-on-surface/80 backdrop-blur-sm text-white text-sm font-bold px-5 py-3 rounded-2xl text-center">
+                        هنوز هیچ کاربری ناحیه دردی ثبت نکرده است
+                    </div>
+                </div>
+            )}
 
             <div className="absolute bottom-4 right-4 pointer-events-none">
                 <div className="text-xs text-white/80 bg-on-surface/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">

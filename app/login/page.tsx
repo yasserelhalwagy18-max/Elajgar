@@ -19,7 +19,7 @@ function LoginForm() {
   const [resendSeconds, setResendSeconds] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setAuthenticated, updateUserProfile, fetchUserFromServer } = useStore();
+  const { signIn, fetchUserFromServer } = useStore();
 
   // Where to go after a successful login. The middleware sends unauthenticated
   // visitors here with a `next` parameter.
@@ -75,8 +75,10 @@ function LoginForm() {
       const data = await res.json();
 
       if (res.ok) {
-        setAuthenticated(true);
-        updateUserProfile({ phoneNumber });
+        // `signIn` replaces the persisted profile instead of merging into it,
+        // so a second user signing in on the same device never inherits the
+        // first one's data.
+        signIn(phoneNumber);
 
         try {
           await fetchUserFromServer();

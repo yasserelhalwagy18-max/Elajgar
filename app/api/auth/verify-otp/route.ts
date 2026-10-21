@@ -99,8 +99,10 @@ export async function POST(request: Request) {
     // Upsert user
     const user = await prisma.user.upsert({
       where: { phoneNumber },
-      update: {}, // Don't overwrite existing user data on login
-      create: { phoneNumber },
+      // Record the sign-in so the admin panel can show when a user was last
+      // active. The profile itself is never overwritten by a sign-in.
+      update: { lastLoginAt: new Date() },
+      create: { phoneNumber, lastLoginAt: new Date() },
     });
 
     // Generate JWT token
