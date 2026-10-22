@@ -12,7 +12,7 @@ import { useProfileSync } from '@/hooks/use-profile-sync';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { ADMIN_PATH } from '@/lib/admin-path';
-import { WIZARD_LAST_STEP } from '@/lib/wizard';
+import { WIZARD_LAST_STEP, WIZARD_STEP_TITLES } from '@/lib/wizard';
 
 import PainHeatmap from '@/components/PainHeatmap';
 export default function WizardPage() {
@@ -101,6 +101,11 @@ function WizardForm() {
   const formRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Where focus lands when the step changes, and whether navigation has
+  // happened yet - the initial mount must not steal focus.
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const hasNavigatedRef = useRef(false);
+
   useEffect(() => {
     return () => {
       if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
@@ -108,6 +113,15 @@ function WizardForm() {
   }, []);
 
   const step = userProfile?.currentWizardStep || 1;
+
+  // Moving focus onto the step's heading is what makes a screen reader
+  // announce the arrival: without it, «بعدی» was followed by silence. The
+  // very first run (initial mount) must not steal focus, so it is gated on
+  // the first navigation.
+  useEffect(() => {
+    if (!hasNavigatedRef.current) return;
+    stepHeadingRef.current?.focus();
+  }, [step]);
 
   const validateStep = () => {
     const newErrors: Record<string, string> = {};
@@ -167,19 +181,28 @@ function WizardForm() {
   const nextStep = () => {
     if (!validateStep()) return;
 
+    // The step's fields are persisted before leaving it, in either
+    // direction, so nothing typed here can be lost by navigating.
+    saveCurrentStepData();
+    setErrors({});
+    hasNavigatedRef.current = true;
+
     if (step < WIZARD_LAST_STEP) {
-      saveCurrentStepData();
       setWizardStep(step + 1);
     } else {
-      saveCurrentStepData();
       router.push('/dashboard');
     }
   };
 
   const prevStep = () => {
-    if (step > 1) {
-      setWizardStep(step - 1);
-    }
+    if (step <= 1) return;
+
+    // «قبلی» used to discard the draft: the previous step re-seeded its
+    // fields from the profile and coming forward again lost the edit.
+    saveCurrentStepData();
+    setErrors({});
+    hasNavigatedRef.current = true;
+    setWizardStep(step - 1);
   };
 
   const saveCurrentStepData = () => {
@@ -259,6 +282,13 @@ function WizardForm() {
             style={{ width: `${(step / WIZARD_LAST_STEP) * 100}%` }}
           />
         </div>
+
+        {/* Focus target for a step change. It is visually hidden - the badge
+            and the title above already say where we are - but its focus is
+            what lets a screen reader hear the step that was arrived on. */}
+        <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">
+          {`مرحله ${toPersianDigits(step)} از ${toPersianDigits(WIZARD_LAST_STEP)}: ${WIZARD_STEP_TITLES[step] ?? ''}`}
+        </h2>
 
         {/* A minimum height keeps the card from jumping several hundred pixels
             when moving between the short and the long steps. */}

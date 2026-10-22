@@ -7,6 +7,7 @@ import { cn, formatDuration, toPersianDigits } from '@/lib/utils';
 import { useStore } from '@/lib/store';
 import { Modal } from '@/components/ui/Modal';
 import { seedExercises } from '@/lib/education-content';
+import { resolveBucket } from '@/lib/body-regions';
 
 interface Exercise {
   id: string;
@@ -92,14 +93,17 @@ export function ExerciseGallery() {
     const activeExerciseDetails = exercises.find((exercise) => exercise.id === activeVideo);
 
     // Determine recommended exercises based on pain zones
+    // `resolveBucket` understands the region ids stored now and the labels
+    // the older records still carry, so both feed the same categories.
     let recommendedCategoryKeys: string[] = [];
     if (userProfile?.painZones && userProfile.painZones.length > 0) {
         userProfile.painZones.forEach(zone => {
-            if (zone.zone === 'back' || zone.zone === 'کمر') {
+            const bucket = resolveBucket(zone.zone);
+            if (bucket === 'back') {
                 recommendedCategoryKeys.push('تقویتی', 'اصلاحی');
-            } else if (zone.zone === 'neck' || zone.zone === 'گردن') {
+            } else if (bucket === 'neck') {
                 recommendedCategoryKeys.push('اصلاحی', 'کششی');
-            } else if (zone.zone === 'knee' || zone.zone === 'زانو') {
+            } else if (bucket === 'knees_l' || bucket === 'knees_r') {
                 recommendedCategoryKeys.push('آب درمانی', 'کششی');
             }
         });

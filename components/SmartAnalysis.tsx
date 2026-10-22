@@ -4,14 +4,14 @@ import * as React from 'react';
 import { useStore } from '@/lib/store';
 import { AlertCircle, AlertTriangle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import { BODY_REGIONS, type BodyBucket } from '@/lib/body-regions';
+import { resolveBucket, REGION_BY_ID, type BodyBucket } from '@/lib/body-regions';
 
 /**
  * The advice for each family of region.
  *
- * The key is the **bucket**, not the label: the heatmap stores the label
- * ("زانو راست", "شانه چپ", "شانه‌ها"), and a switch on the label missed most
- * of them, so every user fell through to the generic line. The bucket is the
+ * The key is the **bucket**, not the stored key: zones are keyed by region
+ * id, and `resolveBucket` resolves ids - and the pre-v1 labels it used to
+ * hold - to it, so the advice survives both formats. The bucket is the
  * stable grouping the body map already uses.
  *
  * The wording stays deliberately general. This is guidance for the user's own
@@ -32,11 +32,6 @@ const ADVICE_BY_BUCKET: Partial<Record<BodyBucket, string>> = {
 };
 
 const GENERIC_ADVICE = 'مراقب حرکات مربوط به این ناحیه باشید و به آن فشار نیاورید.';
-
-/** The bucket a stored zone label belongs to. */
-function bucketFor(label: string): BodyBucket | undefined {
-  return BODY_REGIONS.find((region) => region.label === label)?.bucket;
-}
 
 export function SmartAnalysis() {
   const userProfile = useStore((state) => state.userProfile);
@@ -65,24 +60,27 @@ export function SmartAnalysis() {
   }
 
   /**
-   * The advice, one line per reported region.
-   *
-   * The region label is looked up in `BODY_REGIONS` so that the advice is
-   * picked by the family the region belongs to, not by an exact string match
-   * on the label - which is what used to make almost every zone fall through
-   * to the generic line.
+   * The advice, one line per reported region, picked by the family the
+   * region belongs to. `resolveBucket` understands both the region ids
+   * stored now and the labels the older records still carry.
    */
   const warnings = painZones.map((zone) => {
-    const bucket = bucketFor(zone.zone);
+    const bucket = resolveBucket(zone.zone);
     return (bucket && ADVICE_BY_BUCKET[bucket]) ?? GENERIC_ADVICE;
   });
 
-  const vulnerableZones = painZones.map((z) => z.zone).join('، ') || 'نامشخص';
+  /*
+   * The user-facing names of the reported regions: a stored id is shown as
+   * its label, so the summary never reads like `wrist_r_front`.
+   */
+  const vulnerableZones = painZones
+    .map((z) => REGION_BY_ID.get(z.zone)?.label ?? z.zone)
+    .join('، ') || 'نامشخص';
 
   // Generate probable causes
   const probableCauses: string[] = [];
 
-  const hasBackPain = painZones.some((z) => bucketFor(z.zone) === 'back');
+  const hasBackPain = painZones.some((z) => resolveBucket(z.zone) === 'back');
   if (
     hasBackPain &&
     userProfile?.questionnaireAnswers?.sittingHoursPerDay &&

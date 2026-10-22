@@ -104,7 +104,10 @@ export default function PainHeatmap({
         <div className="absolute inset-0 w-full h-full">
           <div className="relative w-full h-full">
             {activeRegions.map((region) => {
-              const isSelected = selectedZones.includes(region.label); // we use label for state matching existing logic
+              // Pain state is keyed by region id: labels are duplicated
+              // across the front and back maps ("آرنج راست" exists in both),
+              // and a shared key marked the other view's zone selected too.
+              const isSelected = selectedZones.includes(region.id);
 
               return (
                 <button
@@ -112,7 +115,7 @@ export default function PainHeatmap({
                   type="button"
                   style={{ top: region.top, left: region.left, transform: 'translate(-50%, -50%)' }}
                   className="absolute w-11 h-11 rounded-full flex items-center justify-center transition-transform z-10 hover:scale-110 active:scale-95"
-                  onClick={() => toggleRegion(region.label)}
+                  onClick={() => toggleRegion(region.id)}
                   onMouseEnter={(e) => handleHover(e, region)}
                   onMouseLeave={(e) => handleHover(e, null)}
                   onFocus={() => setHoveredRegion(region)}
@@ -164,12 +167,12 @@ export default function PainHeatmap({
         </p>
         <ul className="flex flex-wrap gap-2 justify-center" aria-describedby={describedById}>
           {activeRegions.map((region) => {
-            const isSelected = selectedZones.includes(region.label);
+            const isSelected = selectedZones.includes(region.id);
             return (
               <li key={`chip-${region.id}`}>
                 <button
                   type="button"
-                  onClick={() => toggleRegion(region.label)}
+                  onClick={() => toggleRegion(region.id)}
                   aria-pressed={isSelected}
                   className={cn(
                     'px-3 py-2 rounded-full text-xs font-bold border transition-colors',

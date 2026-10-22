@@ -58,11 +58,17 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <meta name="description" content={APP_DESCRIPTION} />
       </head>
       <body className="font-sans antialiased bg-surface text-on-surface" suppressHydrationWarning>
-        {/* `reducedMotion="user"` makes every `motion` animation in the app -
-            the wizard's step slides, the dialogs, the health-score count-up -
-            respect the operating system's "reduce motion" setting. The global
-            CSS rule in `globals.css` cannot do this: Motion drives opacity
-            and transform from JavaScript, not from a CSS animation, so the
+        {/* `reducedMotion="user"` makes every declarative `motion` animation
+            in the app - the wizard's step slides, the dialogs, the
+            sparkline transitions - respect the operating system's "reduce
+            motion" setting by freezing their transform and layout changes.
+
+            It cannot reach JavaScript-driven tweens: the health-score
+            count-up is the imperative `animate()` call on the dashboard and
+            checks `useReducedMotion()` itself, and the dial sweep freezes
+            through the same hook. The global CSS rule in `globals.css`
+            cannot do any of this: Motion drives opacity and transform from
+            JavaScript, not from a CSS animation, so the
             `animation-duration: 0.001ms` override never reaches it. */}
         <MotionConfig reducedMotion="user">
           {/* The first Tab press on every page lands here, so a keyboard user

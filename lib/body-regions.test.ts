@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveBucket, BODY_REGIONS, BODY_BUCKETS } from './body-regions';
+import { resolveBucket, migrateZoneKey, REGION_BY_ID, BODY_REGIONS, BODY_BUCKETS } from './body-regions';
 
 describe('resolveBucket', () => {
   it('resolves a region id to its coarse bucket', () => {
@@ -40,6 +40,36 @@ describe('resolveBucket', () => {
   it('gives every registered region a bucket', () => {
     for (const region of BODY_REGIONS) {
       expect(BODY_BUCKETS).toContain(region.bucket);
+    }
+  });
+});
+
+describe('migrateZoneKey', () => {
+  it('turns the labels the v0 store held into region ids', () => {
+    expect(migrateZoneKey('کمر')).toBe('lower_back');
+    expect(migrateZoneKey('قفسه سینه')).toBe('chest');
+    expect(migrateZoneKey('گردن')).toBe('neck_front');
+  });
+
+  it('resolves a label shared by both views to exactly one region', () => {
+    // The front and the back maps reuse the elbow labels; the migration has
+    // to pick a single deterministic region instead of flapping between the
+    // two.
+    expect(migrateZoneKey('آرنج راست')).toBe('elbow_r_front');
+    expect(migrateZoneKey('آرنج چپ')).toBe('elbow_l_front');
+    expect(migrateZoneKey('مچ دست چپ')).toBe('wrist_l_front');
+  });
+
+  it('passes ids and unknown strings through untouched', () => {
+    expect(migrateZoneKey('elbow_r_back')).toBe('elbow_r_back');
+    expect(migrateZoneKey('legacy-with-no-region')).toBe('legacy-with-no-region');
+    expect(migrateZoneKey('')).toBe('');
+    expect(migrateZoneKey(undefined)).toBe('');
+  });
+
+  it('maps every region label onto a known region id', () => {
+    for (const region of BODY_REGIONS) {
+      expect(REGION_BY_ID.get(migrateZoneKey(region.label))).toBeDefined();
     }
   });
 });

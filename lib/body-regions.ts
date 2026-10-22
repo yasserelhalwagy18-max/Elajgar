@@ -97,7 +97,32 @@ export const BODY_BUCKET_LABELS: Record<BodyBucket, string> = {
   feet_r: 'پای راست',
 };
 
-const REGION_BY_ID = new Map(BODY_REGIONS.map((region) => [region.id, region]));
+/** The regions indexed by id - the canonical pain-zone key. */
+export const REGION_BY_ID = new Map(BODY_REGIONS.map((region) => [region.id, region]));
+
+/**
+ * The id each visible label maps to when migrating a pre-v1 store.
+ *
+ * Labels were once the pain-zone key, but the front and back maps share a
+ * few of them ("آرنج راست" exists in both views): the first view that names
+ * the label - the front one - wins the ambiguity, because stored data never
+ * distinguished the two views anyway.
+ */
+const ZONE_ID_BY_LABEL = new Map<string, string>();
+for (const region of BODY_REGIONS) {
+  if (!ZONE_ID_BY_LABEL.has(region.label)) ZONE_ID_BY_LABEL.set(region.label, region.id);
+}
+
+/**
+ * Turn a persisted pain-zone key into a region id.
+ *
+ * Legacy labels resolve to their region's id; ids and unknown strings pass
+ * through untouched.
+ */
+export function migrateZoneKey(zone: string | null | undefined): string {
+  if (!zone) return '';
+  return ZONE_ID_BY_LABEL.get(zone) ?? zone;
+}
 
 /**
  * The body families a region can belong to, before the left/right side is

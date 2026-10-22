@@ -19,6 +19,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { adminDelete, adminPatch, adminRequest } from '@/lib/admin-client';
 import { toPersianDigits } from '@/lib/utils';
 import { ADMIN_PATH } from '@/lib/admin-path';
+import { REGION_BY_ID } from '@/lib/body-regions';
 
 interface UserDetail {
   id: string;
@@ -328,7 +329,9 @@ export default function AdminUserDetailPage() {
                     key={`${zone.zone}-${index}`}
                     className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-surface-variant/40"
                   >
-                    <span className="text-sm font-bold">{zone.zone}</span>
+                    <span className="text-sm font-bold">
+                      {REGION_BY_ID.get(zone.zone)?.label ?? zone.zone}
+                    </span>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-on-surface-variant">{zone.type}</span>
                       <span className="text-sm font-black text-primary">

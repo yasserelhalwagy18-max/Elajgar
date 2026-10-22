@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'motion/react';
+import { motion, useMotionValue, useTransform, animate, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Plus, Droplet, Activity, Scale, Activity as Pulse, Check, User } from 'lucide-react';
 import { cn, toDateKey, toPersianDigits, formatNumber, normalizeDigits } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
@@ -31,6 +31,16 @@ const MEAL_PRESETS = [
   { label: 'میان‌وعده', calories: 150, protein: 5, carbs: 20, fat: 4, icon: '🍎' },
 ];
 
+/**
+ * The status line under the health score, keyed to its bands.
+ */
+const getStatusText = (score: number) => {
+  if (score >= 85) return 'وضعیت عالی است';
+  if (score >= 70) return 'وضعیت خوب است';
+  if (score >= 50) return 'نیاز به توجه';
+  return 'وضعیت نامطلوب';
+};
+
 export default function DashboardIndex() {
   // Subscribe to individual slices so an unrelated store update (e.g. adding
   // water) does not re-render the whole dashboard.
@@ -39,6 +49,9 @@ export default function DashboardIndex() {
   const addWater = useStore((state) => state.addWater);
   const logDailyMetrics = useStore((state) => state.logDailyMetrics);
   const logFood = useStore((state) => state.logFood);
+  // Dates of the daily logs that exist (or were changed) only on this
+  // device and have not been acknowledged by the server yet.
+  const unsyncedLogDates = useStore((state) => state.unsyncedLogDates);
 
   const mounted = useMounted();
 
@@ -207,25 +220,73 @@ export default function DashboardIndex() {
   // Animate the score from its previous value, not from zero - counting up
   // from 0 every time a glass of water was logged made the dial feel broken.
   const previousScoreRef = useRef<number | null>(null);
+  /** Whether the day in the previous run had data - a day that only just
+   *  learned its first entry needs one announcement even if the score did
+   *  not move. */
+  const previousHadDataRef = useRef<boolean>(false);
+
+  // What a screen reader announces about the score. It is set once, when the
+  // value settles: keeping this off the animating numeral means the live
+  // region never stutters through its ~60 intermediate digits.
+  const [scoreAnnouncement, setScoreAnnouncement] = useState('');
+
+  // The imperative `animate()` below is NOT governed by MotionConfig's
+  // `reducedMotion="user"` - that only freezes the declarative transform and
+  // layout animations of `motion` components - so this check is what makes
+  // the count-up honour the "reduce motion" setting.
+  const prefersReducedMotion = useReducedMotion();
+
   useEffect(() => {
     const previous = previousScoreRef.current;
+    const previousHadData = previousHadDataRef.current;
     previousScoreRef.current = targetScore;
+    previousHadDataRef.current = hasDayData;
 
-    if (previous === null) {
+    if (!hasDayData) {
+      // The numeral is hidden for an empty day; parking the tween at zero
+      // means a day that fills in later counts up like a first view. The
+      // settled status below announces the empty-day prompt - no effect
+      // needed for it.
+      count.set(0);
+      return;
+    }
+
+    const announce = () =>
+      setScoreAnnouncement(
+        `شاخص سلامت شما ${toPersianDigits(targetScore)} از ${toPersianDigits(100)}. ${getStatusText(targetScore)}`
+      );
+
+    if (previous !== null && previous === targetScore && previousHadData) {
+      return; // Nothing moved and the day is not newly settled - stay quiet.
+    }
+
+    // Reduced motion: no tween at all - the value jumps straight to its end.
+    if (prefersReducedMotion) {
+      count.set(targetScore);
+      announce();
+      return;
+    }
+
+    if (previous === null || !previousHadData) {
       count.set(0);
     } else if (previous !== targetScore) {
       count.set(previous);
-    } else {
-      return;
     }
 
     const animation = animate(count, targetScore, {
       duration: 1.2,
-      ease: 'easeOut'
+      ease: 'easeOut',
+      onComplete: announce,
     });
 
     return animation.stop;
-  }, [count, targetScore]);
+  }, [count, targetScore, hasDayData, prefersReducedMotion]);
+
+  /** What the score's status region says: the settled value for scored
+   *  days, the prompt for empty ones (there is no tween to wait for). */
+  const scoreAnnouncementText = hasDayData
+    ? scoreAnnouncement
+    : 'هنوز برای این روز چیزی ثبت نشده است';
 
   // Medical Disclaimer logic
   useEffect(() => {
@@ -325,14 +386,6 @@ export default function DashboardIndex() {
     setIsSleepModalOpen(false);
   };
 
-  // Determine status text based on health score
-  const getStatusText = (score: number) => {
-    if (score >= 85) return "وضعیت عالی است";
-    if (score >= 70) return "وضعیت خوب است";
-    if (score >= 50) return "نیاز به توجه";
-    return "وضعیت نامطلوب";
-  };
-
   /**
    * Take the user to one of the logging cards.
    *
@@ -368,6 +421,20 @@ export default function DashboardIndex() {
             <div>
                 <h1 className="text-2xl font-bold text-primary tracking-tight">علاج‌گر</h1>
                 <p className="text-sm text-on-surface-variant">سلام، {userProfile?.fullName?.trim().split(/\s+/)[0] || 'کاربر عزیز'}</p>
+
+                {/* Logging is debounced - a just-made edit rides to the server
+                    fifteen hundred milliseconds later - so the badge makes
+                    the window where a row is device-only visible, instead of
+                    the sync lag being silent. */}
+                {unsyncedLogDates.length > 0 && (
+                    <p
+                        role="status"
+                        className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-surface-variant px-2.5 py-0.5 text-[11px] font-bold text-on-surface-variant"
+                    >
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-pulse" aria-hidden="true" />
+                        در انتظار همگام‌سازی
+                    </p>
+                )}
             </div>
             <Link href="/dashboard/profile" aria-label="پروفایل کاربر" className="w-12 h-12 rounded-full bg-surface-container border border-outline-variant card flex items-center justify-center transition-transform hover:scale-105">
                 {userProfile?.fullName?.trim() ? (
@@ -452,6 +519,13 @@ export default function DashboardIndex() {
                 {hasDayData ? getStatusText(targetScore) : 'هنوز برای این روز چیزی ثبت نشده'}
             </p>
 
+            {/* The settled score - not the animating numeral - is the live
+                region: the numeral updating once per frame would make a
+                screen reader read roughly sixty intermediate digits. */}
+            <p role="status" className="sr-only">
+                {scoreAnnouncementText}
+            </p>
+
             <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -472,14 +546,19 @@ export default function DashboardIndex() {
                             strokeDasharray={2 * Math.PI * 42}
                             initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
                             animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - targetScore / 100) }}
-                            transition={{ duration: 1.2, ease: 'easeOut' }}
+                            // MotionConfig's reducedMotion="user" freezes
+                            // transforms only, so this sweep makes its own
+                            // reduced-motion jump.
+                            transition={prefersReducedMotion ? { duration: 0 } : { duration: 1.2, ease: 'easeOut' }}
                         />
                     </g>
                 </svg>
                 <div className="w-40 h-40 bg-surface-container rounded-full border-4 border-surface-container shadow-2xl flex flex-col items-center justify-center">
                     {hasDayData ? (
                         <>
-                            <motion.span className="text-6xl font-black text-primary" aria-live="polite">
+                            {/* Not a live region - the announcement lives in
+                                the status paragraph above. */}
+                            <motion.span className="text-6xl font-black text-primary">
                                 {roundedCount}
                             </motion.span>
                             <span className="text-sm font-bold text-on-surface-variant">

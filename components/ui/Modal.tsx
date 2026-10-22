@@ -28,7 +28,9 @@ export interface ModalProps {
   size?: ModalSize;
   /** Hide the default close button (for blocking consent dialogs). */
   hideCloseButton?: boolean;
-  /** Clicking the backdrop closes the dialog. */
+  /** Clicking the backdrop or pressing Escape closes the dialog.
+   *  `false` marks a deliberate blocking dialog (the medical disclaimer):
+   *  its own confirm action is then the only way through it. */
   dismissable?: boolean;
   className?: string;
 }
@@ -83,8 +85,13 @@ export function Modal({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
+        // Escape has to respect the same gate as the backdrop: on a
+        // `dismissable={false}` dialog (the blocking medical disclaimer) it
+        // must not close anything, or the acknowledgement gate is bypassed.
+        if (dismissable) {
+          event.preventDefault();
+          onClose();
+        }
         return;
       }
 
@@ -117,7 +124,7 @@ export function Modal({
 
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
+  }, [open, onClose, dismissable]);
 
   // Lock background scrolling while the dialog is open.
   React.useEffect(() => {
