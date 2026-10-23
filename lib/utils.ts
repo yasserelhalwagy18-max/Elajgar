@@ -36,6 +36,11 @@ export function normalizeDigits(input: string): string {
   return input
     .replace(/[۰-۹]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0x06f0 + 0x30))
     .replace(/[٠-٩]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0x0660 + 0x30))
+    // The Arabic decimal mark becomes a Latin dot so `parseFloat` can read
+    // «۱۶۴٫۵» as 164.5, and the Arabic thousands separator is a grouping
+    // mark, not part of the number, so it is dropped.
+    .replace(/\u066B/g, '.')
+    .replace(/\u066C/g, '')
     .replace(/[\s-]/g, '');
 }
 
@@ -55,7 +60,15 @@ export function toPersianDigits(input: string | number): string {
  */
 export function formatNumber(value: number, fractionDigits = 0): string {
   if (!Number.isFinite(value)) return toPersianDigits(0);
-  const fixed = fractionDigits > 0 ? value.toFixed(fractionDigits) : String(Math.round(value));
+  // Fraction digits are capped, then trailing zeros are trimmed: a decimal
+  // measurement keeps its “٫۵” but an integer never renders as «۷۲٫۰».
+  const fixed =
+    fractionDigits > 0
+      ? value
+          .toFixed(fractionDigits)
+          .replace(/(\.\d*?)0+$/, '$1')
+          .replace(/\.$/, '')
+      : String(Math.round(value));
   const [intPart, fracPart] = fixed.split('.');
   const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '٬');
   // The decimal separator is the Arabic one, not a Latin full stop: "۰.۵"

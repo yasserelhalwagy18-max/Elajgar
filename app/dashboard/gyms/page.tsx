@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Search, MapPin, Star, Tag, CheckCircle2, Ticket, X, Percent } from 'lucide-react';
+import { Search, MapPin, Star, Tag, Ticket, X, Percent } from 'lucide-react';
 import { cn, normalizeText, toPersianDigits } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
@@ -213,20 +213,25 @@ export default function GymsPage() {
 }
 
 function GymCard({ gym }: { gym: Gym }) {
-    const [isClaimed, setIsClaimed] = React.useState(false);
     const [isExpanded, setIsExpanded] = React.useState(false);
 
     const detailsId = `gym-details-${gym.id}`;
     const amenities = gym.amenities ?? [];
     const description = amenities.join(' • ');
     const categoryLabel = CATEGORY_LABELS[gym.category] ?? gym.category;
-    const discountCode = `ELAJ-${gym.id.slice(-6).toUpperCase()}`;
     const discountLabel = gym.discountPercentage > 0 ? `${toPersianDigits(gym.discountPercentage)}٪ تخفیف ویژه` : 'عضویت ویژه';
+
+    // There is no discount-code issuance anywhere in the system - the API
+    // has no claim endpoint and the Gym model has no promo-code field - so
+    // the page shows the gym's real discount terms instead of a locally
+    // generated string a gym would never honour. If the gym has no discount
+    // on record, the panel says so plainly rather than inventing one.
+    const hasDiscount = gym.discountPercentage > 0;
 
     return (
         <article className="card rounded-3xl overflow-hidden relative group">
             <div className={cn(
-                "absolute top-4 right-4 z-10 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm",
+                "absolute top-4 end-4 z-10 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm",
                 gym.isPremium ? "bg-surface-container/90 backdrop-blur-md text-primary" : "bg-primary text-white"
             )}>
                 {gym.discountPercentage > 0 ? <Percent className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
@@ -240,7 +245,7 @@ function GymCard({ gym }: { gym: Gym }) {
                     a gym photo, and a white tint over a light photo left the
                     white label below 4.5:1. `bg-black/60` keeps the text at
                     5.7:1 or better no matter what the photo looks like. */}
-                <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 border border-white/20">
+                <div className="absolute bottom-4 end-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 border border-white/20">
                     <MapPin className="w-3 h-3" />
                     {gym.location}
                 </div>
@@ -274,30 +279,26 @@ function GymCard({ gym }: { gym: Gym }) {
 
                 {isExpanded && (
                     <div id={detailsId} className="mb-4 p-4 bg-surface rounded-2xl border border-outline-variant/30">
-                        {isClaimed ? (
-                            <div className="flex flex-col items-center text-center gap-2">
-                                <CheckCircle2 className="w-8 h-8 text-success mb-1" />
-                                <p className="text-sm font-medium text-on-surface-variant">کد تخفیف شما با موفقیت صادر شد!</p>
-                                <div className="bg-surface-container px-6 py-3 rounded-xl border border-dashed border-primary text-primary font-mono font-bold text-lg mt-2 w-full select-all">
-                                    {discountCode}
-                                </div>
-                                <p className="text-xs text-on-surface-variant mt-1">هنگام مراجعه به باشگاه این کد را ارائه دهید.</p>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center text-center gap-3">
-                                <Ticket className="w-8 h-8 text-primary opacity-80" />
-                                <p className="text-sm text-on-surface-variant">
-                                    شما می‌توانید از تخفیف اختصاصی علاج‌گر برای این مجموعه استفاده کنید.
+                        <div className="flex flex-col items-center text-center gap-3">
+                            <Ticket className="w-8 h-8 text-primary opacity-80" />
+                            {hasDiscount ? (
+                                <p className="text-sm text-on-surface-variant leading-relaxed">
+                                    اعضای علاج‌گر برای این مجموعه{' '}
+                                    <span className="font-bold text-primary">{toPersianDigits(gym.discountPercentage)}٪ تخفیف</span> دارند.
+                                    برای اعمال تخفیف، هنگام مراجعه حساب علاج‌گر خود را به باشگاه نشان دهید و شرایط دقیق
+                                    (ساعت، نوع اشتراک، ترکیب تخفیف‌ها) را پیش از خرید از خود باشگاه بپرسید؛ تخفیف
+                                    توسط خود باشگاه اعمال می‌شود.
                                 </p>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsClaimed(true)}
-                                    className="btn btn-primary btn-md w-full mt-2"
-                                >
-                                    دریافت کد تخفیف
-                                </button>
+                            ) : (
+                                <p className="text-sm text-on-surface-variant leading-relaxed">
+                                    این مجموعه هم‌اکنون تخفیفی برای اعضای علاج‌گر ثبت نکرده است؛ برای شرایط
+                                    همکاری و امکان اعطای تخفیف، با خود باشگاه در تماس باشید.
+                                </p>
+                            )}
+                            <div className="bg-surface-container px-4 py-3 rounded-xl border border-outline-variant/40 text-sm font-bold text-on-surface mt-1 w-full">
+                                {discountLabel}
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
 
@@ -311,7 +312,7 @@ function GymCard({ gym }: { gym: Gym }) {
                         isExpanded ? "btn-secondary btn-md" : "btn-primary btn-md"
                     )}
                 >
-                    {isExpanded ? 'بستن' : 'مشاهده جزئیات و دریافت تخفیف'}
+                    {isExpanded ? 'بستن' : 'مشاهده جزئیات باشگاه'}
                 </button>
             </div>
         </article>

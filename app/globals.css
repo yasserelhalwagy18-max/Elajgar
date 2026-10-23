@@ -74,6 +74,22 @@
   --radius-3xl: 2rem;
   --radius-4xl: 2.5rem;
 
+  /* Primary-hue glows - the documented constant map for the brand halo.
+     These used to be spray-painted as `shadow-[0_0_20px_rgba(37,99,235,…)]`
+     arbitrary values wherever something needed a primary-coloured shadow;
+     they live here so the hue is defined once (Tailwind generates the
+     `shadow-glow*` utilities from them). The rgb triplet mirrors
+     `--color-primary` (#2563eb = rgb(37 99 235)) - when the primary changes,
+     update these together. Static rgb rather than relative-color syntax so
+     the glow still renders on engines without `rgb(from …)` support.
+     Remaining outliers with their own geometry (the button hovers below,
+     PainHeatmap's hover intensities, the wizard pill, the landing hero
+     drop) should adopt these or be tokenised alongside them next. */
+  --shadow-glow-soft: 0 0 15px 0 rgb(37 99 235 / 0.2);
+  --shadow-glow-subtle: 0 0 20px 0 rgb(37 99 235 / 0.4);
+  --shadow-glow: 0 0 20px 0 rgb(37 99 235 / 0.6);
+  --shadow-glow-lg: 0 0 40px 0 rgb(37 99 235 / 0.6);
+
   /* The self-hosted Vazirmatn, in its Arabic and Latin subsets. Each one
      carries its own unicode-range, so the browser fetches the Arabic file
      for the Persian text and the Latin file for the numbers - see
@@ -319,6 +335,10 @@ body {
     align-items: center;
     gap: 0.375rem;
     padding: 0.5rem 1rem;
+    /* 44px tall like .icon-btn: the chip rails are the primary filters on
+       the education and gyms screens, so they meet the app's own
+       touch-target standard, not just WCAG's 24px minimum. */
+    min-height: 2.75rem;
     border-radius: 9999px;
     font-size: 0.875rem;
     font-weight: 700;

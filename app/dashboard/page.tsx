@@ -161,8 +161,7 @@ export default function DashboardIndex() {
     });
 
   const waterAmountMl = dayLog.waterIntake || 0;
-  const waterAmountLiters = (waterAmountMl / 1000).toFixed(1);
-
+  const waterAmountLiters = waterAmountMl / 1000;
   const consumedCalories = dayLog.foods?.reduce((acc: number, food: any) => acc + food.calories, 0) || 0;
   const consumedProtein = dayLog.foods?.reduce((acc: number, food: any) => acc + food.protein, 0) || 0;
   const consumedCarbs = dayLog.foods?.reduce((acc: number, food: any) => acc + food.carbs, 0) || 0;
@@ -513,7 +512,7 @@ export default function DashboardIndex() {
 
         {/* Health Score Dial */}
         <section className="card p-8 rounded-3xl flex flex-col items-center mb-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl mix-blend-multiply" aria-hidden="true"></div>
+            <div className="absolute top-0 start-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl mix-blend-multiply" aria-hidden="true"></div>
             <h2 className="text-xl text-on-surface font-bold z-10">شاخص سلامت شما</h2>
             <p className="text-primary font-medium text-sm mb-8 z-10">
                 {hasDayData ? getStatusText(targetScore) : 'هنوز برای این روز چیزی ثبت نشده'}
@@ -615,17 +614,17 @@ export default function DashboardIndex() {
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
               <Scale className="w-6 h-6 text-primary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وزن</p>
-              <p className="text-lg font-bold text-on-surface">{weight ? toPersianDigits(weight) : '-'} <span className="text-xs font-normal">کیلوگرم</span></p>
+              <p className="text-lg font-bold text-on-surface">{weight ? formatNumber(weight, 1) : '-'} <span className="text-xs font-normal">کیلوگرم</span></p>
             </div>
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
               <Activity className="w-6 h-6 text-secondary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">شاخص توده بدنی</p>
-              <p className="text-lg font-bold text-on-surface">{bmi ? toPersianDigits(bmi) : '-'}</p>
+              <p className="text-lg font-bold text-on-surface">{bmi ? formatNumber(bmi, 1) : '-'}</p>
             </div>
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center col-span-2 sm:col-span-1">
               <Pulse className="w-6 h-6 text-error mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وضعیت درد</p>
-              <p className="text-lg font-bold text-error">{hasPainData ? `${toPersianDigits(averagePain.toFixed(1))} / ۱۰` : <span className="text-xs font-normal text-on-surface-variant">ثبت نشده</span>}</p>
+              <p className="text-lg font-bold text-error">{hasPainData ? `${formatNumber(averagePain, 1)} / ۱۰` : <span className="text-xs font-normal text-on-surface-variant">ثبت نشده</span>}</p>
             </div>
         </section>
 
@@ -699,7 +698,7 @@ export default function DashboardIndex() {
                         <h3 className="font-bold text-on-surface mb-1">آب مصرفی</h3>
                         {waterAmountMl > 0 ? (
                             <>
-                                <p className="text-2xl font-black text-water">{toPersianDigits(waterAmountLiters)} لیتر</p>
+                                <p className="text-2xl font-black text-water">{formatNumber(waterAmountLiters, 1)} لیتر</p>
                                 <p className="text-xs text-on-surface-variant font-mono">{formatNumber(waterAmountMl)} / {formatNumber(waterTarget)} میلی‌لیتر</p>
                             </>
                         ) : (
@@ -817,7 +816,7 @@ export default function DashboardIndex() {
                             inputMode="decimal"
                             value={dailyWeight}
                             onChange={e => setDailyWeight(normalizeDigits(e.target.value))}
-                            placeholder={userProfile?.weight ? toPersianDigits(String(userProfile.weight)) : '—'}
+                            placeholder={userProfile?.weight ? formatNumber(userProfile.weight, 1) : '—'}
                             aria-invalid={!!weightError}
                             aria-describedby={weightError ? 'daily-weight-error' : undefined}
                             className={`input text-center ${weightError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}

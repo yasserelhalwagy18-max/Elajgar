@@ -65,7 +65,10 @@ function WizardForm() {
 
   const [fullName, setFullName] = useState(userProfile?.fullName || '');
   const [age, setAge] = useState(userProfile?.age?.toString() || '');
-  const [gender, setGender] = useState<'male' | 'female'>(userProfile?.gender || 'male');
+  // «''» means "not chosen". Seeding a default «مرد» would silently record a
+  // fabricated answer in a health profile, so there is an explicit empty
+  // option and step 1 does not pass without a choice.
+  const [gender, setGender] = useState<'male' | 'female' | ''>(userProfile?.gender || '');
 
   const [height, setHeight] = useState(userProfile?.height?.toString() || '');
   const [weight, setWeight] = useState(userProfile?.weight?.toString() || '');
@@ -129,10 +132,13 @@ function WizardForm() {
       if (!fullName || fullName.length < 2) newErrors.fullName = 'نام و نام خانوادگی باید حداقل ۲ حرف باشد';
       const parsedAge = parseInt(age);
       if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) newErrors.age = 'سن باید بین ۱ تا ۱۲۰ باشد';
+      if (gender !== 'male' && gender !== 'female') newErrors.gender = 'لطفاً جنسیت را انتخاب کنید';
     } else if (step === 2) {
-      const parsedHeight = parseInt(height);
+      // Weight and height are measurements: parseFloat keeps ۶۴٫۵ as 64.5
+      // instead of silently truncating it to 64.
+      const parsedHeight = parseFloat(height);
       if (isNaN(parsedHeight) || parsedHeight < 50 || parsedHeight > 250) newErrors.height = 'قد باید بین ۵۰ تا ۲۵۰ سانتی‌متر باشد';
-      const parsedWeight = parseInt(weight);
+      const parsedWeight = parseFloat(weight);
       if (isNaN(parsedWeight) || parsedWeight < 10 || parsedWeight > 300) newErrors.weight = 'وزن باید بین ۱۰ تا ۳۰۰ کیلوگرم باشد';
     } else if (step === 5) {
       if ((userProfile?.painZones?.length || 0) === 0) newErrors.painZones = 'حداقل یک ناحیه درد باید انتخاب شود';
@@ -143,8 +149,12 @@ function WizardForm() {
       if (isNaN(parsedExerciseDays) || parsedExerciseDays < 0 || parsedExerciseDays > 7) newErrors.exerciseDaysPerWeek = 'روزهای ورزش باید بین ۰ تا ۷ باشد';
 
       // The yes/no questions feed the pain analysis, and the server stores the
-      // questionnaire only when it is complete. Asking for them here keeps a
-      // half-answered questionnaire from being dropped.
+      // questionnaire only when it is complete - including the free-text
+      // duration, which is validated here like the selects below it.
+      if (!questionnaireAnswers.duration.trim()) {
+        newErrors.duration = 'لطفاً مدت زمان درد را وارد کنید';
+      }
+
       const required = [
         ['aggravatedByActivity', 'تشدید با فعالیت'],
         ['relievedByRest', 'تسکین با استراحت'],
@@ -207,11 +217,17 @@ function WizardForm() {
 
   const saveCurrentStepData = () => {
     if (step === 1) {
-      updateUserProfile({ fullName, age: parseInt(age) || 0, gender });
+      // saveCurrentStepData only runs after validateStep passed, so gender
+      // cannot still be '' here.
+      updateUserProfile({
+        fullName,
+        age: parseInt(age) || 0,
+        gender: gender as 'male' | 'female',
+      });
     } else if (step === 2) {
       updateUserProfile({
-        height: parseInt(height) || 0,
-        weight: parseInt(weight) || 0,
+        height: parseFloat(height) || 0,
+        weight: parseFloat(weight) || 0,
         activityLevel,
         jobTitle,
       });
@@ -344,12 +360,24 @@ function WizardForm() {
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-gender">جنسیت</label>
                 <select id="wizard-gender"
                 value={gender}
-                onChange={(e) => setGender(e.target.value as 'male' | 'female')}
-                className="select"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setGender(value === 'male' || value === 'female' ? value : '');
+                  if (errors.gender) setErrors({ ...errors, gender: '' });
+                }}
+                aria-invalid={!!errors.gender}
+                aria-describedby={errors.gender ? 'wizard-gender-error' : undefined}
+                className={`select ${errors.gender ? 'border-error' : ''}`}
               >
+                <option value="">انتخاب کنید</option>
                 <option value="male">مرد</option>
                 <option value="female">زن</option>
               </select>
+              {errors.gender && (
+                <p id="wizard-gender-error" role="alert" className="text-error text-xs mt-1 error-message">
+                  {errors.gender}
+                </p>
+              )}
             </div>
           </motion.div>
         )}
@@ -538,7 +566,7 @@ function WizardForm() {
             >
                 <Step5BodyMap errorId={errors.painZones ? 'wizard-pain-zones-error' : undefined} />
                 {errors.painZones && (
-                  <div className="absolute bottom-4 right-0 left-0 text-center">
+                  <div className="absolute bottom-4 inset-x-0 text-center">
                     <p id="wizard-pain-zones-error" role="alert" className="text-error text-sm font-bold bg-surface-container inline-block px-4 py-1 rounded-full shadow-md error-message">
                       {errors.painZones}
                     </p>
@@ -741,9 +769,16 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                         name="duration"
                         value={answers.duration}
                         onChange={handleChange}
-                        className="input w-full"
+                        aria-invalid={!!errors?.duration}
+                        aria-describedby={errors?.duration ? 'wizard-duration-error' : undefined}
+                        className={`input w-full ${errors?.duration ? 'border-error' : ''}`}
                         placeholder="مثال: ۲ ماه"
                     />
+                    {errors?.duration && (
+                        <p id="wizard-duration-error" role="alert" className="text-error text-xs mt-1 error-message">
+                            {errors.duration}
+                        </p>
+                    )}
                 </label>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

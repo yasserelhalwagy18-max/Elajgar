@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Clock, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Check, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { toDateKey } from '@/lib/utils';
@@ -23,14 +23,6 @@ interface SessionTemplate {
     text: string;
     status: SessionStatus;
 }
-
-const DEFAULT_SESSION_TEMPLATES: SessionTemplate[] = [
-    { offset: -4, text: 'تمرینات گردن', status: 'completed' },
-    { offset: -3, text: 'حرکات اصلاحی کمر', status: 'completed' },
-    { offset: -2, text: 'مدیتیشن', status: 'skipped' },
-    { offset: -1, text: 'تمرینات گردن', status: 'pending' },
-    { offset: 0, text: 'حرکات اصلاحی کمر', status: 'pending' },
-];
 
 /**
  * The Persian (Jalali) calendar is derived with `Intl` rather than a date
@@ -162,7 +154,18 @@ export function CorrectionalCalendar() {
 
     // The program steps come from the database, so an admin can change the
     // daily routine from the panel.
-    const [templates, setTemplates] = useState<SessionTemplate[]>(DEFAULT_SESSION_TEMPLATES);
+    //
+    // The list starts out empty - a call whose output has not arrived yet is
+    // not data, and it is certainly not a workout record. A previous
+    // version filled this with a hard-coded five-day history that claimed
+    // «تمرینات گردن ✓» for days that never happened, and because a failed
+    // fetch left it in place, that fabrication persisted forever. Now the
+    // component renders an explicit loading state, and an explicit failure
+    // state with a retry, until real steps arrive.
+    const [templates, setTemplates] = useState<SessionTemplate[]>([]);
+    const [programState, setProgramState] = useState<'loading' | 'error' | 'ready'>('loading');
+    /** Bumped by the retry button to re-run the request. */
+    const [retryToken, setRetryToken] = useState(0);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -173,20 +176,21 @@ export function CorrectionalCalendar() {
                     signal: controller.signal,
                     cache: 'no-store',
                 });
-                if (!res.ok) return;
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                 const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    setTemplates(data);
-                }
+                if (!Array.isArray(data)) throw new Error('unexpected payload');
+                setTemplates(data);
+                setProgramState('ready');
             } catch (error) {
                 if ((error as Error)?.name === 'AbortError') return;
+                setProgramState('error');
             }
         }
 
         void load();
         return () => controller.abort();
-    }, []);
+    }, [retryToken]);
 
     // The status the user set for a day, on top of the program. Keeping the
     // overrides separate means the sessions can be derived instead of being
@@ -339,12 +343,12 @@ export function CorrectionalCalendar() {
                                 >
                                     {day.label}
                                     {sessionForDay?.status === 'completed' && (
-                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center border-2 border-surface-container">
+                                        <div className="absolute -bottom-1 -end-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center border-2 border-surface-container">
                                             <Check className="w-2.5 h-2.5" />
                                         </div>
                                     )}
                                     {sessionForDay?.status === 'skipped' && (
-                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-error text-white rounded-full flex items-center justify-center border-2 border-surface-container">
+                                        <div className="absolute -bottom-1 -end-1 w-4 h-4 bg-error text-white rounded-full flex items-center justify-center border-2 border-surface-container">
                                             <X className="w-2.5 h-2.5" />
                                         </div>
                                     )}
@@ -357,21 +361,40 @@ export function CorrectionalCalendar() {
                 <div className="bg-surface-variant/30 rounded-2xl p-4 min-h-[90px] relative overflow-hidden">
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={`${selectedKey}-${currentSession?.status}`}
+                            key={`${selectedKey}-${currentSession?.status}-${programState}`}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.2 }}
                             className="flex justify-between items-center h-full w-full"
                         >
-                            {currentSession ? (
+                            {programState === 'loading' ? (
+                                <div className="w-full text-center text-sm font-medium text-on-surface-variant py-2" role="status">
+                                    در حال بارگذاری برنامه تمرینی...
+                                </div>
+                            ) : programState === 'error' ? (
+                                // A failed load is not «استراحت»: the user is
+                                // told so and can try again, instead of the
+                                // calendar silently showing nothing.
+                                <div className="flex flex-col items-center gap-3 w-full text-center py-2">
+                                    <p className="text-sm font-bold text-error-strong" role="alert">
+                                        بارگذاری برنامه تمرینی انجام نشد
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setProgramState('loading');
+                                            setRetryToken((token) => token + 1);
+                                        }}
+                                        className="btn btn-secondary btn-sm"
+                                    >
+                                        تلاش مجدد
+                                    </button>
+                                </div>
+                            ) : currentSession ? (
                                 <>
                                     <div className="flex flex-col gap-1">
                                         <h3 className="font-bold text-on-surface">{currentSession.text}</h3>
-                                        <div className="flex gap-2 text-xs font-medium text-on-surface-variant items-center">
-                                            <Clock className="w-3.5 h-3.5" />
-                                            <span>۲۰ دقیقه</span>
-                                        </div>
                                     </div>
 
                                     {currentSession.status === 'pending' && (

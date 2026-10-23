@@ -155,7 +155,7 @@ export function AdminTable<T>({
           <thead className="bg-surface-variant/50 text-on-surface-variant text-sm border-b border-outline-variant">
             <tr>
               {columns.map((column) => (
-                <th key={column.key} className="p-4 font-semibold text-start whitespace-nowrap">
+                <th key={column.key} scope="col" className="p-4 font-semibold text-start whitespace-nowrap">
                   {column.header}
                 </th>
               ))}

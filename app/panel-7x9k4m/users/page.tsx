@@ -65,6 +65,10 @@ export default function AdminUsersPage() {
   const [activeFilter, setActiveFilter] = React.useState<'all' | 'true' | 'false'>('all');
 
   const [pendingDelete, setPendingDelete] = React.useState<AdminUser | null>(null);
+  const [pendingToggle, setPendingToggle] = React.useState<{
+    user: AdminUser;
+    kind: 'role' | 'active';
+  } | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
   const debouncedSearch = useDebouncedValue(search);
@@ -91,6 +95,10 @@ export default function AdminUsersPage() {
     params,
   );
 
+  /** Audit #24: promoting to admin and deactivating an account were
+      single-click actions with real consequences sitting next to the
+      delete button - only delete asked first. Both toggles now open a
+      ConfirmDialog; the request fires from its confirm button. */
   const toggleRole = async (user: AdminUser) => {
     setBusyId(user.id);
     const nextRole = user.role === 'ADMIN' ? 'USER' : 'ADMIN';
@@ -123,6 +131,60 @@ export default function AdminUsersPage() {
 
     setBusyId(null);
   };
+
+  const confirmToggle = async () => {
+    if (!pendingToggle) return;
+    if (pendingToggle.kind === 'role') toggleRole(pendingToggle.user);
+    else toggleActive(pendingToggle.user);
+  };
+
+  /** The confirmation copy for the pending toggle, computed here so the
+      JSX stays flat and null-safe while the dialog stays mounted. */
+  let toggleTitle = 'تغییر وضعیت حساب';
+  let toggleTone: 'default' | 'danger' = 'default';
+  let toggleConfirmLabel = 'بله، فعال شود';
+  let toggleMessage: React.ReactNode = null;
+
+  if (pendingToggle?.kind === 'role') {
+    toggleTitle = 'تغییر نقش کاربر';
+    if (pendingToggle.user.role === 'ADMIN') {
+      toggleTone = 'danger';
+      toggleConfirmLabel = 'بله، دسترسی لغو شود';
+      toggleMessage = (
+        <>
+          دسترسی مدیریتی <strong>{pendingToggle.user.phoneNumber ?? 'این کاربر'}</strong> لغو
+          می‌شود و او دیگر به پنل دسترسی نخواهد داشت.
+        </>
+      );
+    } else {
+      toggleConfirmLabel = 'بله، ارتقا داده شود';
+      toggleMessage = (
+        <>
+          کاربر <strong>{pendingToggle.user.phoneNumber ?? 'این کاربر'}</strong> به مدیر ارتقا
+          می‌یابد و به پنل و تمام داده کاربران دسترسی خواهد داشت.
+        </>
+      );
+    }
+  } else if (pendingToggle) {
+    if (pendingToggle.user.isActive) {
+      toggleTone = 'danger';
+      toggleConfirmLabel = 'بله، غیرفعال شود';
+      toggleMessage = (
+        <>
+          حساب <strong>{pendingToggle.user.phoneNumber ?? 'این کاربر'}</strong> غیرفعال
+          می‌شود و او دیگر وارد سامانه نخواهد شد.
+        </>
+      );
+    } else {
+      toggleConfirmLabel = 'بله، فعال شود';
+      toggleMessage = (
+        <>
+          حساب <strong>{pendingToggle.user.phoneNumber ?? 'این کاربر'}</strong> فعال
+          می‌شود و می‌تواند دوباره وارد سامانه شود.
+        </>
+      );
+    }
+  }
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
@@ -219,7 +281,7 @@ export default function AdminUsersPage() {
 
           <button
             type="button"
-            onClick={() => toggleRole(user)}
+            onClick={() => setPendingToggle({ user, kind: 'role' })}
             disabled={busyId === user.id}
             aria-label={user.role === 'ADMIN' ? 'لغو دسترسی مدیریتی' : 'ارتقا به مدیر'}
             title={user.role === 'ADMIN' ? 'لغو دسترسی مدیریتی' : 'ارتقا به مدیر'}
@@ -230,7 +292,7 @@ export default function AdminUsersPage() {
 
           <button
             type="button"
-            onClick={() => toggleActive(user)}
+            onClick={() => setPendingToggle({ user, kind: 'active' })}
             disabled={busyId === user.id}
             aria-label={user.isActive ? 'غیرفعال کردن حساب' : 'فعال کردن حساب'}
             title={user.isActive ? 'غیرفعال کردن حساب' : 'فعال کردن حساب'}
@@ -315,6 +377,19 @@ export default function AdminUsersPage() {
         total={total}
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
+      />
+
+      {/* Audit #24: the role and active toggles get the same confirmation
+          gate the delete step already had, so a stray click cannot demote
+          an admin or lock an account outright. */}
+      <ConfirmDialog
+        open={pendingToggle !== null}
+        onClose={() => setPendingToggle(null)}
+        onConfirm={confirmToggle}
+        title={toggleTitle}
+        tone={toggleTone}
+        confirmLabel={toggleConfirmLabel}
+        message={toggleMessage}
       />
 
       <ConfirmDialog

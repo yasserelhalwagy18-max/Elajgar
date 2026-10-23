@@ -50,6 +50,11 @@ export default function EducationPage() {
     const [plans, setPlans] = React.useState<Plan[]>([]);
     const [premiumVideos, setPremiumVideos] = React.useState<PremiumVideo[]>([]);
     const [subscription, setSubscription] = React.useState<SubscriptionState | null>(null);
+    // The premium videos carry an explicit status so the skeletons render only
+    // while the request is in flight: a failed fetch has to say so and offer a
+    // retry instead of leaving blurred placeholder rows on screen forever.
+    const [videosStatus, setVideosStatus] = React.useState<'loading' | 'error' | 'done'>('loading');
+    const [videosRetryToken, setVideosRetryToken] = React.useState(0);
 
     // The tags come from the articles that are actually published, so a
     // category that is not used does not show up as an empty filter.
@@ -62,6 +67,7 @@ export default function EducationPage() {
     const controller = new AbortController();
 
     async function load() {
+      setVideosStatus('loading');
       try {
         const [plansRes, videosRes, subscriptionRes] = await Promise.all([
           fetch('/api/plans', { signal: controller.signal, cache: 'no-store' }),
@@ -77,6 +83,9 @@ export default function EducationPage() {
         if (videosRes.ok) {
           const data = (await videosRes.json()) as PremiumVideo[];
           setPremiumVideos(Array.isArray(data) ? data : []);
+          setVideosStatus('done');
+        } else {
+          setVideosStatus('error');
         }
 
         if (subscriptionRes.ok) {
@@ -84,12 +93,13 @@ export default function EducationPage() {
         }
       } catch (error) {
         if ((error as Error)?.name === 'AbortError') return;
+        setVideosStatus('error');
       }
     }
 
     void load();
     return () => controller.abort();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, videosRetryToken]);
 
   // The category rail, derived from the published articles.
   React.useEffect(() => {
@@ -166,12 +176,44 @@ export default function EducationPage() {
 
                 <div className="card rounded-3xl p-4 relative overflow-hidden min-h-[350px]">
 
-                    {/* The real premium videos, blurred until the user subscribes. */}
+                    {/* The video area is a status ladder: error (with a retry
+                        for the subscriber), loading skeletons, the videos, and
+                        finally an explicit empty state. A paying user must
+                        never be left staring at frozen placeholder rows. */}
                     <div
                         className={cn('space-y-4', !hasPremiumAccess && 'opacity-50 blur-[4px]')}
                         aria-hidden={!hasPremiumAccess}
                     >
-                        {lockedVideos.length > 0 ? (
+                        {videosStatus === 'error' ? (
+                            <div className="flex flex-col items-center gap-3 py-6 text-center">
+                                <p role="alert" className="text-sm font-bold text-error">
+                                    بارگذاری ویدیوها ممکن نشد. لطفاً دوباره تلاش کنید.
+                                </p>
+                                {/* The wrapper is aria-hidden behind the paywall,
+                                    so the retry is only offered where the content
+                                    is actually reachable - a hidden focusable
+                                    button is an accessibility trap. */}
+                                {hasPremiumAccess && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setVideosRetryToken((token) => token + 1)}
+                                        className="btn btn-secondary btn-sm"
+                                    >
+                                        تلاش مجدد
+                                    </button>
+                                )}
+                            </div>
+                        ) : videosStatus === 'loading' ? (
+                            [1, 2, 3].map(i => (
+                                 <div key={i} className="flex gap-4 p-2 bg-surface-variant/30 rounded-2xl items-center">
+                                     <div className="w-24 h-16 bg-surface-variant rounded-xl border border-white/20"></div>
+                                     <div className="flex-1 space-y-2">
+                                          <div className="h-4 bg-outline-variant/30 rounded w-3/4"></div>
+                                          <div className="h-3 bg-outline-variant/30 rounded w-1/2"></div>
+                                     </div>
+                                 </div>
+                            ))
+                        ) : lockedVideos.length > 0 ? (
                             lockedVideos.map((video) => (
                                 <div key={video.id} className="flex gap-4 p-2 bg-surface-variant/30 rounded-2xl items-center">
                                     <div className="w-24 h-16 bg-surface-variant rounded-xl border border-white/20 flex items-center justify-center shrink-0">
@@ -189,15 +231,9 @@ export default function EducationPage() {
                                 </div>
                             ))
                         ) : (
-                            [1, 2, 3].map(i => (
-                                 <div key={i} className="flex gap-4 p-2 bg-surface-variant/30 rounded-2xl items-center">
-                                     <div className="w-24 h-16 bg-surface-variant rounded-xl border border-white/20"></div>
-                                     <div className="flex-1 space-y-2">
-                                          <div className="h-4 bg-outline-variant/30 rounded w-3/4"></div>
-                                          <div className="h-3 bg-outline-variant/30 rounded w-1/2"></div>
-                                     </div>
-                                 </div>
-                            ))
+                            <div className="py-10 text-center text-on-surface-variant font-bold">
+                                در حال حاضر ویدیویی برای این پکیج منتشر نشده است.
+                            </div>
                         )}
                     </div>
 
@@ -205,7 +241,7 @@ export default function EducationPage() {
                     {!hasPremiumAccess && (
                         <div className="absolute inset-0 flex items-center justify-center p-6 bg-gradient-to-t from-surface via-surface/80 to-surface/20 z-10 backdrop-blur-[2px]">
                             <div className="card rounded-3xl p-8 text-center border-t-2 border-secondary-container w-full max-w-sm">
-                                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mb-6 shadow-glow-subtle">
                                     <Lock className="w-8 h-8 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold text-on-surface mb-2">دسترسی به پکیج کامل</h3>
@@ -241,12 +277,12 @@ export default function EducationPage() {
                                 className={cn(
                                     'card rounded-2xl p-6 relative overflow-hidden flex flex-col',
                                     plan.isFeatured
-                                        ? 'border-2 border-primary shadow-[0_0_15px_rgba(37,99,235,0.2)]'
+                                        ? 'border-2 border-primary shadow-glow-soft'
                                         : 'border border-outline-variant',
                                 )}
                             >
                                 {plan.isFeatured && (
-                                    <div className="absolute top-3 right-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">
+                                    <div className="absolute top-3 start-[-30px] bg-warning text-on-warning text-xs font-bold py-1 px-10 rotate-45 z-10">
                                         پیشنهاد ویژه
                                     </div>
                                 )}

@@ -224,3 +224,80 @@ describe('daily log sync', () => {
     expect(useStore.getState().unsyncedLogDates).toEqual(['2026-10-19']);
   });
 });
+
+/**
+ * The nutrition screen deletes logged foods with a same-duration undo in
+ * the toast, and logs water in glasses from both ends (add/remove). These
+ * cover the actions the recovery pair relies on: a delete must be
+ * reversible in place, and a mispressed 44px water button must be
+ * recoverable - without ever corrupting the log.
+ */
+describe('food & water log mutations', () => {
+  const foodA = { id: 'f1', name: 'Soup', calories: 100, protein: 2, carbs: 10, fat: 1 };
+  const foodB = { id: 'f2', name: 'Bread', calories: 80, protein: 3, carbs: 15, fat: 0 };
+
+  it('restoreFood puts an undone delete back at its original index', () => {
+    useStore.setState({
+      userProfile: {
+        phoneNumber: '09120000000',
+        dailyLogs: [{ date: '2026-10-23', foods: [foodA, foodB], waterIntake: 0 }],
+      },
+    });
+
+    useStore.getState().removeFood('2026-10-23', foodA.id);
+    expect(useStore.getState().userProfile?.dailyLogs?.[0].foods).toEqual([foodB]);
+
+    useStore.getState().restoreFood('2026-10-23', foodA, 0);
+    expect(useStore.getState().userProfile?.dailyLogs?.[0].foods).toEqual([foodA, foodB]);
+  });
+
+  it('restoreFood is a no-op when the item was already re-logged', () => {
+    useStore.setState({
+      userProfile: {
+        phoneNumber: '09120000000',
+        dailyLogs: [{ date: '2026-10-23', foods: [foodB, foodA], waterIntake: 0 }],
+      },
+    });
+
+    // The user logged "Soup" again while the undo toast was still up;
+    // clicking «برگردان» on the stale toast must not duplicate it.
+    useStore.getState().restoreFood('2026-10-23', foodA, 0);
+    expect(useStore.getState().userProfile?.dailyLogs?.[0].foods).toEqual([foodB, foodA]);
+  });
+
+  it('removeWater takes glasses back out but never below zero', () => {
+    useStore.setState({
+      userProfile: {
+        phoneNumber: '09120000000',
+        dailyLogs: [{ date: '2026-10-23', foods: [], waterIntake: 400 }],
+      },
+    });
+
+    useStore.getState().removeWater('2026-10-23', 250);
+    expect(useStore.getState().userProfile?.dailyLogs?.[0].waterIntake).toBe(150);
+
+    useStore.getState().removeWater('2026-10-23', 250);
+    expect(useStore.getState().userProfile?.dailyLogs?.[0].waterIntake).toBe(0);
+
+    // One more mispress: still zero, not negative.
+    useStore.getState().removeWater('2026-10-23', 250);
+    expect(useStore.getState().userProfile?.dailyLogs?.[0].waterIntake).toBe(0);
+  });
+
+  it('addWater stops at the ceiling even under a burst of taps', () => {
+    useStore.setState({
+      userProfile: {
+        phoneNumber: '09120000000',
+        dailyLogs: [{ date: '2026-10-23', foods: [], waterIntake: 0 }],
+      },
+    });
+
+    // Twelve rapid taps: each set() calls sees the previous one's write,
+    // but the screen's own guard reads the render, so the store has to be
+    // the one that cannot be outrun.
+    const addWater = useStore.getState().addWater;
+    for (let i = 0; i < 12; i++) addWater('2026-10-23', 250, 2000);
+
+    expect(useStore.getState().userProfile?.dailyLogs?.[0].waterIntake).toBe(2000);
+  });
+});

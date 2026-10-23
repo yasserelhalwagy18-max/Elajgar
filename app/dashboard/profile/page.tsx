@@ -6,13 +6,13 @@ import Link from 'next/link';
 import { Bell, Droplet, Activity, User, Shield, LogOut, Pencil, ChevronLeft, Phone, Verified } from 'lucide-react';
 import { cn, normalizeDigits, toPersianDigits } from '@/lib/utils';
 import { ADMIN_PATH } from '@/lib/admin-path';
-import { motion } from 'motion/react';
 import { useStore } from '../../../lib/store';
 import { useRouter } from 'next/navigation';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { CopyContactButton, SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/components/SupportContact';
 import toast from 'react-hot-toast';
 
 const NOTIFICATIONS_KEY = 'elajgar-notifications';
@@ -304,18 +304,27 @@ export default function ProfilePage() {
                         </span>
                         <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
                     </a>
-                    {/* The support route the privacy policy points the user to.
-                        A real link, so it always opens a mail client. */}
-                    <a
-                        href="mailto:support@elajgar.com?subject=%D8%B3%D8%B1%D8%A7%D8%B3%D8%AA%20%D9%BE%D8%B4%D8%AA%D8%A8%D8%B4%D8%A7%D9%86%DB%8C%20%D8%B9%D9%84%D8%A7%D8%AC%DA%AF%D8%B1"
-                        className="w-full bg-surface-container p-4 flex items-center justify-between hover:bg-surface-variant/60 transition-colors"
-                    >
-                        <span className="flex items-center gap-4">
-                            <Shield className="w-5 h-5 text-on-surface-variant" />
-                            <span className="font-bold text-on-surface text-sm">پشتیبانی و درخواست حذف حساب</span>
-                        </span>
-                        <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
-                    </a>
+                    {/* The support route the privacy policy points the user to,
+                        with account deletion routed through it. Audit #23: on a
+                        browser without a default mail client the mailto: link
+                        dead-ends, so the row keeps the raw address as a second
+                        line and a copy button puts it on the clipboard. */}
+                    <div className="w-full bg-surface-container p-4 flex items-center justify-between gap-2 hover:bg-surface-variant/60 transition-colors">
+                        <a
+                            href={SUPPORT_MAILTO}
+                            className="flex items-center gap-4 min-w-0"
+                        >
+                            <Shield className="w-5 h-5 text-on-surface-variant shrink-0" />
+                            <span className="flex flex-col text-start">
+                                <span className="font-bold text-on-surface text-sm">پشتیبانی و درخواست حذف حساب</span>
+                                <span className="text-xs text-on-surface-variant" dir="ltr">{SUPPORT_EMAIL}</span>
+                            </span>
+                        </a>
+                        <div className="flex items-center shrink-0">
+                            <CopyContactButton />
+                            <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -542,7 +551,7 @@ export default function ProfilePage() {
                         <div className="flex items-center justify-between gap-3 text-xs">
                             <span className="text-on-surface-variant">اعتبار تا</span>
                             <span className="font-bold text-on-surface">
-                                {new Intl.DateTimeFormat('fa-IR', {
+                                {new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
                                     year: 'numeric',
                                     month: 'long',
                                     day: 'numeric',
@@ -635,31 +644,28 @@ function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string
     const [activityLevel, setActivityLevel] = useState<'sedentary' | 'light' | 'moderate' | 'active'>(
         userProfile?.activityLevel || 'sedentary'
     );
-    const [error, setError] = useState<string | null>(null);
+    // Per-field errors with the message under its own input (the wizard /
+    // password-form pattern), instead of one shared role="alert" box.
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     const handleSubmit = () => {
         const parsedAge = parseInt(age);
-        const parsedHeight = parseInt(height);
-        const parsedWeight = parseInt(weight);
+        // Weight and height are measurements: parseFloat keeps ۶۴٫۵ as 64.5
+        // instead of silently truncating it to 64. The inputs are already
+        // normalized through normalizeDigits, which maps the Persian decimal
+        // mark (٫) onto a dot, so a decimal input reaches `parseFloat` intact.
+        const parsedHeight = parseFloat(height);
+        const parsedWeight = parseFloat(weight);
 
-        if (!fullName.trim() || fullName.trim().length < 2) {
-            setError('نام و نام خانوادگی باید حداقل ۲ حرف باشد');
-            return;
-        }
-        if (Number.isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
-            setError('سن باید بین ۱ تا ۱۲۰ باشد');
-            return;
-        }
-        if (Number.isNaN(parsedHeight) || parsedHeight < 50 || parsedHeight > 250) {
-            setError('قد باید بین ۵۰ تا ۲۵۰ سانتی‌متر باشد');
-            return;
-        }
-        if (Number.isNaN(parsedWeight) || parsedWeight < 10 || parsedWeight > 300) {
-            setError('وزن باید بین ۱۰ تا ۳۰۰ کیلوگرم باشد');
-            return;
-        }
+        const newErrors: Record<string, string> = {};
+        if (!fullName.trim() || fullName.trim().length < 2) newErrors.fullName = 'نام و نام خانوادگی باید حداقل ۲ حرف باشد';
+        if (Number.isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) newErrors.age = 'سن باید بین ۱ تا ۱۲۰ باشد';
+        if (Number.isNaN(parsedHeight) || parsedHeight < 50 || parsedHeight > 250) newErrors.height = 'قد باید بین ۵۰ تا ۲۵۰ سانتی‌متر باشد';
+        if (Number.isNaN(parsedWeight) || parsedWeight < 10 || parsedWeight > 300) newErrors.weight = 'وزن باید بین ۱۰ تا ۳۰۰ کیلوگرم باشد';
 
-        setError(null);
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) return;
+
         onSave({
             fullName: fullName.trim(),
             age: parsedAge,
@@ -684,9 +690,19 @@ function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string
                     id="profile-full-name"
                     type="text"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="input"
+                    onChange={(e) => {
+                        setFullName(e.target.value);
+                        if (errors.fullName) setErrors({ ...errors, fullName: '' });
+                    }}
+                    className={`input ${errors.fullName ? 'border-error' : ''}`}
+                    aria-invalid={!!errors.fullName}
+                    aria-describedby={errors.fullName ? 'profile-full-name-error' : undefined}
                 />
+                {errors.fullName && (
+                    <p id="profile-full-name-error" role="alert" className="text-error text-xs mt-1 error-message">
+                        {errors.fullName}
+                    </p>
+                )}
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -696,9 +712,19 @@ function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string
                         type="text"
                         inputMode="numeric"
                         value={age}
-                        onChange={(e) => setAge(normalizeDigits(e.target.value))}
-                        className="input"
+                        onChange={(e) => {
+                            setAge(normalizeDigits(e.target.value));
+                            if (errors.age) setErrors({ ...errors, age: '' });
+                        }}
+                        className={`input ${errors.age ? 'border-error' : ''}`}
+                        aria-invalid={!!errors.age}
+                        aria-describedby={errors.age ? 'profile-age-error' : undefined}
                     />
+                    {errors.age && (
+                        <p id="profile-age-error" role="alert" className="text-error text-xs mt-1 error-message">
+                            {errors.age}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="profile-gender">جنسیت</label>
@@ -712,22 +738,42 @@ function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string
                     <input
                         id="profile-height"
                         type="text"
-                        inputMode="numeric"
+                        inputMode="decimal"
                         value={height}
-                        onChange={(e) => setHeight(normalizeDigits(e.target.value))}
-                        className="input"
+                        onChange={(e) => {
+                            setHeight(normalizeDigits(e.target.value));
+                            if (errors.height) setErrors({ ...errors, height: '' });
+                        }}
+                        className={`input ${errors.height ? 'border-error' : ''}`}
+                        aria-invalid={!!errors.height}
+                        aria-describedby={errors.height ? 'profile-height-error' : undefined}
                     />
+                    {errors.height && (
+                        <p id="profile-height-error" role="alert" className="text-error text-xs mt-1 error-message">
+                            {errors.height}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="profile-weight">وزن (کیلوگرم)</label>
                     <input
                         id="profile-weight"
                         type="text"
-                        inputMode="numeric"
+                        inputMode="decimal"
                         value={weight}
-                        onChange={(e) => setWeight(normalizeDigits(e.target.value))}
-                        className="input"
+                        onChange={(e) => {
+                            setWeight(normalizeDigits(e.target.value));
+                            if (errors.weight) setErrors({ ...errors, weight: '' });
+                        }}
+                        className={`input ${errors.weight ? 'border-error' : ''}`}
+                        aria-invalid={!!errors.weight}
+                        aria-describedby={errors.weight ? 'profile-weight-error' : undefined}
                     />
+                    {errors.weight && (
+                        <p id="profile-weight-error" role="alert" className="text-error text-xs mt-1 error-message">
+                            {errors.weight}
+                        </p>
+                    )}
                 </div>
             </div>
             <div>
@@ -744,12 +790,6 @@ function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string
                     <option value="active">فعال</option>
                 </select>
             </div>
-
-            {error && (
-                <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
-                    {error}
-                </p>
-            )}
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-1">
                 <button type="button" onClick={onCancel} className="btn btn-secondary btn-md">
@@ -776,12 +816,16 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: () =
                 checked ? "bg-primary" : "bg-outline-variant"
             )}
         >
-            <motion.div
-                className="w-5 h-5 bg-surface-container rounded-full absolute top-[3px] right-[3px] shadow-sm"
+            {/* The slide is done with a logical inset, not a translateX: `start`
+                is the right in RTL and the left in an LTR rebuild, and the knob
+                animates 3px -> 25px away from whichever side that is. The old
+                hardcoded `translateX(-22px)` only meant toggle in RTL. */}
+            <span
+                className="absolute top-[3px] block h-5 w-5 rounded-full bg-surface-container shadow-sm transition-[inset-inline-start] duration-200 ease-in-out"
                 style={{
-                    transform: checked ? 'translateX(-22px)' : 'translateX(0px)',
-                    transition: 'transform 0.2s ease-in-out'
+                    insetInlineStart: checked ? 'calc(100% - 1.4375rem)' : '3px',
                 }}
+                aria-hidden="true"
             />
         </button>
     );

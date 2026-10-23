@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AlertTriangle, CheckCircle2, CreditCard, Lock, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cn, formatNumber } from '@/lib/utils';
+import { cn, formatNumber, normalizeDigits } from '@/lib/utils';
 import { adminRequest } from '@/lib/admin-client';
 
 interface Plan {
@@ -15,6 +15,26 @@ interface Plan {
   features: string[];
   durationDays: number;
 }
+
+/**
+ * Normalise a card number as the user types.
+ *
+ * `normalizeDigits` rewrites Persian (۱۲۳) and Arabic (١٢٣) digits into Latin
+ * ones - a Persian-keyboard user typing "۶۰۳۷" must end up in the same
+ * state as one typing "6037" - then drops everything that is not a digit,
+ * caps at 16 (the length an Iranian bank card has) and groups the value in
+ * fours the way the placeholder shows it.
+ */
+const formatCardNumber = (raw: string): string => {
+  const digits = normalizeDigits(raw).replace(/\D/g, '').slice(0, 16);
+  return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+};
+
+/** MM/YY with the same digit normalisation: ۱۲۳۴ becomes 12/34. */
+const formatExpiry = (raw: string): string => {
+  const digits = normalizeDigits(raw).replace(/\D/g, '').slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+};
 
 /**
  * The checkout page.
@@ -41,6 +61,8 @@ export default function CheckoutPage() {
   const [expiry, setExpiry] = React.useState('');
   const [cvv, setCvv] = React.useState('');
   const [formError, setFormError] = React.useState<string | null>(null);
+  /** Bumped by «تلاش مجدد» to re-run the plan fetch. */
+  const [reloadToken, setReloadToken] = React.useState(0);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -67,26 +89,29 @@ export default function CheckoutPage() {
 
     void load();
     return () => controller.abort();
-  }, [planKey]);
+  }, [planKey, reloadToken]);
 
   const handlePay = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!plan) return;
 
-    if (cardNumber.replace(/\s/g, '').length < 12) {
-      setFormError('شماره کارت را کامل وارد کنید');
+    // The stored values are already normalised by the `onChange` handlers;
+    // this re-normalises defensively in case the state was filled another way.
+    const digits = normalizeDigits(cardNumber).replace(/\D/g, '');
+    if (digits.length !== 16) {
+      setFormError('شماره کارت را ۱۶ رقمی وارد کنید');
       return;
     }
     if (!cardHolder.trim()) {
       setFormError('نام صاحب کارت را وارد کنید');
       return;
     }
-    if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+    if (!/^\d{2}\/\d{2}$/.test(normalizeDigits(expiry))) {
       setFormError('تاریخ انقضا را به شکل MM/YY وارد کنید');
       return;
     }
-    if (!/^\d{3,4}$/.test(cvv)) {
+    if (!/^\d{3,4}$/.test(normalizeDigits(cvv))) {
       setFormError('کد CVV را وارد کنید');
       return;
     }
@@ -135,16 +160,31 @@ export default function CheckoutPage() {
   if (loadError) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-surface">
-        <div className="card rounded-3xl p-8 text-center max-w-md">
+        <div className="card rounded-3xl p-8 text-center max-w-md w-full">
           <AlertTriangle className="w-10 h-10 text-warning mx-auto mb-4" />
           <p className="font-bold text-on-surface">{loadError}</p>
-          <button
-            type="button"
-            onClick={() => router.push('/dashboard/education')}
-            className="btn btn-primary btn-md mt-6"
-          >
-            بازگشت به بخش آموزش
-          </button>
+          {/* Recovery hatches: a retry for the transient case, and a way
+              back to the plans for the permanent one («پلن قابل خرید
+              نیست») - the payment flow must not dead-end on one button. */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-center mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setLoadError(null);
+                setReloadToken((token) => token + 1);
+              }}
+              className="btn btn-primary btn-md"
+            >
+              تلاش مجدد
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/education')}
+              className="btn btn-secondary btn-md"
+            >
+              مشاهده پلن‌ها
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -172,7 +212,7 @@ export default function CheckoutPage() {
           {expiresAt && (
             <p className="text-xs text-on-surface-variant mb-6">
               اعتبار تا{' '}
-              {new Intl.DateTimeFormat('fa-IR', {
+              {new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -241,7 +281,7 @@ export default function CheckoutPage() {
             <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
             <div className="text-xs text-on-surface-variant leading-relaxed">
               <strong className="text-on-surface">این یک درگاه آزمایشی است.</strong> هیچ مبلغی
-              جابه‌جا نمی‌شود، اطلاعات کارت به جایی ارسال نمی‌شود و هر شماره کارتی پذیرفته می‌شود.
+              جابه‌جا نمی‌شود، اطلاعات کارت به جایی ارسال نمی‌شود و هر شماره کارت ۱۶ رقمی پذیرفته می‌شود.
               این صفحه فقط برای آزمودن کل مسیر خرید است.
             </div>
           </div>
@@ -256,8 +296,9 @@ export default function CheckoutPage() {
                 type="text"
                 inputMode="numeric"
                 dir="ltr"
+                maxLength={19}
                 value={cardNumber}
-                onChange={(event) => setCardNumber(event.target.value)}
+                onChange={(event) => setCardNumber(formatCardNumber(event.target.value))}
                 placeholder="6037 9999 9999 9999"
                 className="input font-mono"
                 autoComplete="off"
@@ -290,7 +331,7 @@ export default function CheckoutPage() {
                   dir="ltr"
                   maxLength={5}
                   value={expiry}
-                  onChange={(event) => setExpiry(event.target.value)}
+                  onChange={(event) => setExpiry(formatExpiry(event.target.value))}
                   placeholder="MM/YY"
                   className="input font-mono"
                   autoComplete="off"
@@ -307,7 +348,7 @@ export default function CheckoutPage() {
                   dir="ltr"
                   maxLength={4}
                   value={cvv}
-                  onChange={(event) => setCvv(event.target.value)}
+                  onChange={(event) => setCvv(normalizeDigits(event.target.value).replace(/\D/g, '').slice(0, 4))}
                   placeholder="123"
                   className="input font-mono"
                   autoComplete="off"

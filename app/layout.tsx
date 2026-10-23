@@ -84,10 +84,14 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           position="top-center"
           toastOptions={{
             style: {
-              background: '#fff',
-              color: '#0f1722',
-              borderRadius: '16px',
-              border: '1px solid #e2e8f0'
+              // Same tokens as `.card`, so the toast is literally the card
+              // surface: these used to be raw hexes (#fff, #0f1722, #e2e8f0)
+              // that drifted from the palette and would not have followed a
+              // rebrand or a dark mode.
+              background: 'var(--color-surface-container)',
+              color: 'var(--color-on-surface)',
+              borderRadius: 'var(--radius-xl)',
+              border: '1px solid var(--color-outline-variant)'
             }
           }}
         />

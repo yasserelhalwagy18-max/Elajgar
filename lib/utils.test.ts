@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toDateKey, fromDateKey, normalizeText } from './utils';
+import { toDateKey, fromDateKey, normalizeText, normalizeDigits, formatNumber } from './utils';
 
 describe('toDateKey', () => {
   it('uses the local calendar day, not the UTC day', () => {
@@ -36,5 +36,44 @@ describe('normalizeText', () => {
 
   it('is case insensitive for latin text', () => {
     expect(normalizeText('CrossFit')).toBe('crossfit');
+  });
+});
+
+describe('normalizeDigits', () => {
+  it('maps Persian and Arabic digits onto Latin digits', () => {
+    expect(normalizeDigits('۱۶۴')).toBe('164');
+    expect(normalizeDigits('١٢٣')).toBe('123');
+  });
+
+  it('turns the Arabic decimal mark into a dot, so parseFloat sees the fraction', () => {
+    expect(normalizeDigits('۱۶۴٫۵')).toBe('164.5');
+    expect(parseFloat(normalizeDigits('۶۴٫۹'))).toBe(64.9);
+  });
+
+  it('drops the Arabic thousands separator, which is grouping punctuation', () => {
+    expect(normalizeDigits('۱٬۲۳۴٫۵')).toBe('1234.5');
+  });
+
+  it('strips spaces and hyphens', () => {
+    expect(normalizeDigits('0912-345 6789')).toBe('09123456789');
+  });
+});
+
+describe('formatNumber', () => {
+  it('groups thousands and uses Persian digits', () => {
+    expect(formatNumber(12345)).toBe('۱۲٬۳۴۵');
+  });
+
+  it('caps fraction digits with the Arabic decimal mark', () => {
+    expect(formatNumber(72.46, 1)).toBe('۷۲٫۵');
+  });
+
+  it('trims trailing zeros, so an integer never renders with a stranded decimal', () => {
+    expect(formatNumber(72, 1)).toBe('۷۲');
+    expect(formatNumber(64.0, 1)).toBe('۶۴');
+  });
+
+  it('shows a whole number without grouping marks', () => {
+    expect(formatNumber(100, 1)).toBe('۱۰۰');
   });
 });

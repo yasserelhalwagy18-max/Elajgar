@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { useStore } from '@/lib/store';
-import { searchFoods, FoodItem, getAllFoods } from '@/lib/food-service';
-import { Search, Plus, Droplet, Target, Utensils, Check, Sparkles, Trash2 } from 'lucide-react';
+import { searchFoods, FoodSearchIssue, FoodItem, getAllFoods } from '@/lib/food-service';
+import { Search, Plus, Minus, Droplet, Target, Utensils, Check, Sparkles, Trash2 } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
 import { toDateKey, toPersianDigits, formatNumber } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
@@ -28,7 +28,9 @@ export default function NutritionPage() {
   const updateUserProfile = useStore((state) => state.updateUserProfile);
   const logFood = useStore((state) => state.logFood);
   const removeFood = useStore((state) => state.removeFood);
+  const restoreFood = useStore((state) => state.restoreFood);
   const addWater = useStore((state) => state.addWater);
+  const removeWater = useStore((state) => state.removeWater);
   const clearAndSetFoods = useStore((state) => state.clearAndSetFoods);
   const mounted = useMounted();
   const [goalModalOpen, setGoalModalOpen] = React.useState(false);
@@ -37,6 +39,15 @@ export default function NutritionPage() {
   const [searchResults, setSearchResults] = React.useState<FoodItem[]>([]);
   /** The query the currently displayed results belong to. */
   const [resolvedQuery, setResolvedQuery] = React.useState<string | null>(null);
+  /**
+   * Why the search box has nothing to show, when that is not the query's
+   * fault. A failure and an empty result are different situations and look
+   * different on screen; collapsing them made an offline user read advice
+   * («نام دیگری را امتحان کنید») that could not possibly help.
+   */
+  const [searchError, setSearchError] = React.useState<FoodSearchIssue>(null);
+  /** Bumped by the retry button to re-run the request. */
+  const [searchRetryToken, setSearchRetryToken] = React.useState(0);
   const [isGeneratingPlan, setIsGeneratingPlan] = React.useState(false);
   const [planError, setPlanError] = React.useState<string | null>(null);
   const [confirmPlan, setConfirmPlan] = React.useState<{ foods: FoodItem[]; calories: number } | null>(null);
@@ -65,6 +76,7 @@ export default function NutritionPage() {
     nutritionGoal: userProfile?.nutritionGoal,
   });
   const waterGlasses = Math.ceil(waterTarget / 250);
+  const waterIntakeToday = todayLog.waterIntake || 0;
 
   // Current intake
   // `todayLog.foods` can be undefined when the profile was merged from a
@@ -89,22 +101,24 @@ export default function NutritionPage() {
     let cancelled = false;
 
     searchFoods(debouncedQuery, controller.signal)
-      .then((results) => {
+      .then((result) => {
         if (cancelled) return;
-        setSearchResults(results);
+        setSearchResults(result.foods);
         setResolvedQuery(debouncedQuery);
+        setSearchError(result.error);
       })
       .catch(() => {
         if (cancelled) return;
         setSearchResults([]);
         setResolvedQuery(debouncedQuery);
+        setSearchError('network');
       });
 
     return () => {
       cancelled = true;
       controller.abort();
     };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, searchRetryToken]);
 
   // Derived, not stored: we are still searching until the results for the
   // exact text in the box have arrived.
@@ -118,10 +132,59 @@ export default function NutritionPage() {
     toast.success(`«${food.name}» به وعده‌های امروز اضافه شد`);
   };
 
-  /** Take a logged food back out. */
-  const handleRemoveFood = (food: FoodItem) => {
+  /**
+   * Take a logged food back out.
+   *
+   * The trash button sits on a card row and thumbs are imprecise, so the
+   * delete also offers a same-duration undo in the toast: restoring the
+   * item puts it back at its original index, so the list reads exactly as
+   * before.
+   */
+  const handleRemoveFood = (food: FoodItem, foodIndex: number) => {
     removeFood(todayDate, food.id);
-    toast(`«${food.name}» از وعده‌های امروز حذف شد`, { icon: null });
+    // react-hot-toast v2.6 has no built-in action button any more, so the
+    // undo is a custom toast; the `t` argument carries its id for dismissal.
+    toast.custom(
+      (t) => (
+        <div
+          role="status"
+          className="max-w-sm flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container px-4 py-3 text-sm font-medium text-on-surface shadow-md"
+        >
+          <p className="text-start">«{food.name}» از وعده‌های امروز حذف شد</p>
+          <button
+            type="button"
+            onClick={() => {
+              restoreFood(todayDate, food, foodIndex);
+              toast.dismiss(t.id);
+            }}
+            className="btn btn-ghost btn-sm shrink-0 -me-1"
+          >
+            برگردان
+          </button>
+        </div>
+      ),
+      { duration: 4000 }
+    );
+  };
+
+  /**
+   * Water is logged in glasses, capped at the target: the glasses grid is
+   * drawn for the target, so «یک لیوان» past it would fill glasses that do
+   * not exist. A partial remainder still goes in, in one press.
+   *
+   * The target is also handed to the store (`max`) as the authoritative
+   * clamp - the button guard alone can be outrun by taps in one task.
+   */
+  const handleAddWater = () => {
+    const remaining = waterTarget - waterIntakeToday;
+    if (remaining <= 0) return;
+    addWater(todayDate, Math.min(250, remaining), waterTarget);
+  };
+
+  /** The minus takes the last glass back out - a mispress is recoverable. */
+  const handleRemoveWater = () => {
+    if (waterIntakeToday <= 0) return;
+    removeWater(todayDate, Math.min(250, waterIntakeToday));
   };
 
   const handleGenerateMealPlan = async () => {
@@ -344,6 +407,24 @@ export default function NutritionPage() {
         >
             {isSearching ? (
                 <p className="text-sm text-center text-on-surface-variant py-4" role="status">در حال جستجو...</p>
+            ) : searchError ? (
+                // Announced as an alert, not a status: this is a failure, and
+                // it is a different one from «نتیجه‌ای نبود» - here a retry
+                // is what helps, not another query.
+                <div className="flex flex-col items-center gap-3 py-4">
+                    <p className="text-sm text-center text-error font-bold" role="alert">
+                        {searchError === 'network'
+                            ? 'ارتباط برقرار نشد. اتصال اینترنت خود را بررسی کنید.'
+                            : 'دریافت فهرست غذاها ممکن نشد. لطفاً کمی بعد دوباره تلاش کنید.'}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setSearchRetryToken((token) => token + 1)}
+                        className="btn btn-secondary btn-sm"
+                    >
+                        تلاش مجدد
+                    </button>
+                </div>
             ) : searchResults.length === 0 ? (
                 // Announced: a search that finds nothing used to be silent,
                 // so a screen reader user could not tell it apart from a
@@ -357,7 +438,7 @@ export default function NutritionPage() {
                         <div>
                             <p className="font-bold text-sm text-on-surface">{food.name}</p>
                             <p className="text-xs text-on-surface-variant">
-                              {formatNumber(food.calories)} کالری • پروتئین {toPersianDigits(food.protein)} • کربوهیدرات {toPersianDigits(food.carbs)} • چربی {toPersianDigits(food.fat)}
+                              {formatNumber(food.calories)} کالری • پروتئین {formatNumber(food.protein, 1)} • کربوهیدرات {formatNumber(food.carbs, 1)} • چربی {formatNumber(food.fat, 1)}
                             </p>
                         </div>
                         <button
@@ -389,7 +470,7 @@ export default function NutritionPage() {
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {todayFoods.map((food) => (
+            {todayFoods.map((food, foodIndex) => (
               <li
                 key={food.id}
                 className="flex items-center justify-between gap-3 p-3 card rounded-xl"
@@ -402,7 +483,7 @@ export default function NutritionPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleRemoveFood(food)}
+                  onClick={() => handleRemoveFood(food, foodIndex)}
                   aria-label={`حذف ${food.name} از وعده‌های امروز`}
                   className="icon-btn shrink-0 hover:text-error hover:bg-error/10"
                 >
@@ -427,13 +508,30 @@ export default function NutritionPage() {
                   {formatNumber(todayLog.waterIntake || 0)} / {formatNumber(waterTarget)} میلی‌لیتر
                 </p>
             </div>
-            <button
-                type="button"
-                onClick={() => addWater(todayDate, 250)}
-                className="btn btn-primary btn-sm bg-water hover:bg-water-hover shrink-0"
-            >
-                <Plus className="w-4 h-4" /> یک لیوان
-            </button>
+            {/* The minus takes a glass back out, so a mispressed 44px button
+                is one tap from undone - before this the only recovery was
+                editing logs manually elsewhere. Both ends are guarded: the
+                plus stops at the target the glasses grid is drawn for, the
+                minus can never go below zero. */}
+            <div className="flex items-center gap-2 shrink-0">
+                <button
+                    type="button"
+                    onClick={handleRemoveWater}
+                    disabled={waterIntakeToday <= 0}
+                    aria-label="حذف یک لیوان آب"
+                    className="icon-btn border border-outline-variant bg-surface-container text-water hover:text-water-hover hover:bg-water-container"
+                >
+                    <Minus className="w-4 h-4" aria-hidden="true" />
+                </button>
+                <button
+                    type="button"
+                    onClick={handleAddWater}
+                    disabled={waterIntakeToday >= waterTarget}
+                    className="btn btn-primary btn-sm bg-water hover:bg-water-hover shrink-0"
+                >
+                    <Plus className="w-4 h-4" /> یک لیوان
+                </button>
+            </div>
          </div>
 
          {/* Each glass fills proportionally, so a partially-finished last glass

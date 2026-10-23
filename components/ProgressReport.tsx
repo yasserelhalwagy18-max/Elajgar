@@ -9,7 +9,7 @@ import {
 import { DailyHealthData, buildHealthDataFromLogs } from '@/lib/healthScore';
 import { ChartDataTable } from '@/components/ui/ChartDataTable';
 import { useStore } from '@/lib/store';
-import { formatNumber, toPersianDigits } from '@/lib/utils';
+import { formatNumber } from '@/lib/utils';
 
 const chartTooltipStyle = {
   borderRadius: '16px',
@@ -105,7 +105,7 @@ export default function ProgressReport() {
                   <Tooltip
                     contentStyle={chartTooltipStyle}
                     labelStyle={{ fontWeight: 'bold', color: 'var(--color-primary)' }}
-                    formatter={(value: any) => [`${toPersianDigits(value)} کیلوگرم`, 'وزن']}
+                    formatter={(value: any) => [`${formatNumber(value, 1)} کیلوگرم`, 'وزن']}
                   />
                   <Line type="monotone" dataKey="weight" stroke="var(--color-primary)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls />
                 </LineChart>
@@ -116,7 +116,7 @@ export default function ProgressReport() {
               columns={['تاریخ', 'وزن (کیلوگرم)']}
               rows={rtlData.map((d) => [
                 d.date,
-                d.weight === null ? 'ثبت نشده' : formatNumber(d.weight),
+                d.weight === null ? 'ثبت نشده' : formatNumber(d.weight, 1),
               ])}
             />
           </figure>
@@ -133,7 +133,7 @@ export default function ProgressReport() {
                   <Tooltip
                     contentStyle={chartTooltipStyle}
                     labelStyle={{ fontWeight: 'bold', color: 'var(--color-secondary)' }}
-                    formatter={(value: any) => [toPersianDigits(value), 'شاخص توده بدنی']}
+                    formatter={(value: any) => [formatNumber(value, 1), 'شاخص توده بدنی']}
                   />
                   <Line type="monotone" dataKey="bmi" stroke="var(--color-secondary)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls />
                 </LineChart>
@@ -144,7 +144,7 @@ export default function ProgressReport() {
               columns={['تاریخ', 'شاخص توده بدنی']}
               rows={rtlData.map((d) => [
                 d.date,
-                d.bmi === null ? 'ثبت نشده' : formatNumber(d.bmi),
+                d.bmi === null ? 'ثبت نشده' : formatNumber(d.bmi, 1),
               ])}
             />
           </figure>
@@ -166,7 +166,7 @@ export default function ProgressReport() {
                   <YAxis domain={[0, 10]} tick={{ fill: '#475569', fontSize: 12 }} tickFormatter={(v: number) => formatNumber(v)} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={chartTooltipStyle}
-                    formatter={(value: any) => [toPersianDigits(value), 'شدت درد']}
+                    formatter={(value: any) => [formatNumber(value, 1), 'شدت درد']}
                   />
                   <Area type="monotone" dataKey="pain" stroke="var(--color-error)" strokeWidth={3} fillOpacity={1} fill="url(#colorPain)" connectNulls />
                 </AreaChart>
@@ -177,7 +177,7 @@ export default function ProgressReport() {
               columns={['تاریخ', 'شدت درد (۰ تا ۱۰)']}
               rows={rtlData.map((d) => [
                 d.date,
-                d.pain === null ? 'ثبت نشده' : formatNumber(d.pain),
+                d.pain === null ? 'ثبت نشده' : formatNumber(d.pain, 1),
               ])}
             />
           </figure>
@@ -196,7 +196,7 @@ export default function ProgressReport() {
                     <Tooltip
                       cursor={{ fill: 'rgba(37,99,235,0.08)' }}
                       contentStyle={chartTooltipStyle}
-                      formatter={(value: any) => [`${toPersianDigits(value)} دقیقه`, 'فعالیت']}
+                      formatter={(value: any) => [`${formatNumber(value)} دقیقه`, 'فعالیت']}
                     />
                     <Bar dataKey="activity" fill="var(--color-secondary)" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -225,7 +225,7 @@ export default function ProgressReport() {
                     <Tooltip
                       contentStyle={chartTooltipStyle}
                       formatter={(value: any, name: any) => [
-                        name === 'calories' ? `${toPersianDigits(value)} کالری` : `${toPersianDigits(value)} لیتر`,
+                        name === 'calories' ? `${formatNumber(value)} کالری` : `${formatNumber(value, 1)} لیتر`,
                         name === 'calories' ? 'کالری' : 'آب'
                       ]}
                     />
@@ -240,7 +240,7 @@ export default function ProgressReport() {
                 rows={rtlData.map((d) => [
                   d.date,
                   d.calories === null ? 'ثبت نشده' : formatNumber(d.calories),
-                  d.water === null ? 'ثبت نشده' : formatNumber(d.water),
+                  d.water === null ? 'ثبت نشده' : formatNumber(d.water, 1),
                 ])}
               />
             </figure>

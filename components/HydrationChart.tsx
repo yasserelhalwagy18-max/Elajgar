@@ -213,7 +213,7 @@ export default function HydrationChart() {
             <ChartDataTable
                 caption="نقاط داده نمودار مصرف آب هفت روز گذشته"
                 columns={['روز', 'آب (لیتر)']}
-                rows={activeData.map((d) => [d.day, formatNumber(d.amount)])}
+                rows={activeData.map((d) => [d.day, formatNumber(d.amount, 1)])}
             />
         </div>
     );

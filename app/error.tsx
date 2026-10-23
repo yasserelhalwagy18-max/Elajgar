@@ -4,6 +4,13 @@ import { useEffect } from 'react';
 import { AlertCircle, RefreshCcw } from 'lucide-react';
 import * as Sentry from '@sentry/nextjs';
 
+/*
+ * The mailto the landing footer and the profile page use, so every failure
+ * path funnels into the same support inbox.
+ */
+const SUPPORT_HREF_BASE =
+  'mailto:support@elajgar.com?subject=%D8%B3%D8%B1%D8%A7%D8%B3%D8%AA%20%D9%BE%D8%B4%D8%AA%D8%A8%D8%B4%D8%A7%D9%86%DB%8C%20%D8%B9%D9%84%D8%A7%D8%AC%DA%AF%D8%B1';
+
 export default function Error({
   error,
   reset,
@@ -17,6 +24,12 @@ export default function Error({
     // Log the error to console securely
     console.error('Application Error:', error);
   }, [error]);
+
+  // The digest lets support find the exact Sentry event - only included
+  // when the runtime produced one.
+  const supportHref = error.digest
+    ? `${SUPPORT_HREF_BASE}&body=${encodeURIComponent(`کد خطا: ${error.digest}`)}`
+    : SUPPORT_HREF_BASE;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -38,6 +51,15 @@ export default function Error({
           <RefreshCcw className="w-5 h-5" />
           <span>تلاش مجدد</span>
         </button>
+
+        {/* When the retry loops, a human must be reachable from here - the
+            mailto carries the error digest so support can match it. */}
+        <a
+          href={supportHref}
+          className="btn btn-secondary w-full py-3 px-6 mt-3"
+        >
+          رابطه با پشتیبانی
+        </a>
       </div>
     </div>
   );

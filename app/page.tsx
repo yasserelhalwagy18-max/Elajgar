@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, HeartPulse, Lock, Waves, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 import { cn, toPersianDigits } from '@/lib/utils';
+import { CopyContactButton, SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/components/SupportContact';
 
 const BRAND = 'علاج‌گر';
 
@@ -31,6 +32,15 @@ export default function LandingPage() {
     plans: 0,
     bestDiscount: 0,
   });
+  /**
+   * Whether real numbers are in `stats`.
+   *
+   * While the request is in flight - or when it fails - the counters start
+   * out at zero, and rendering them would put «۰ باشگاه شریک» and
+   * «تخفیف ویژه ۰٪» on a marketing page. Unless real numbers are in,
+   * the sections that would show fabricated zeros stay hidden.
+   */
+  const [statsReady, setStatsReady] = React.useState(false);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -45,6 +55,7 @@ export default function LandingPage() {
 
         const data = await res.json();
         setStats((previous) => ({ ...previous, ...data }));
+        setStatsReady(true);
       } catch (error) {
         if ((error as Error)?.name === 'AbortError') return;
       }
@@ -247,7 +258,7 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
           {/* Connecting line for desktop */}
-          <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-outline-variant/30 -translate-y-1/2 z-0" aria-hidden="true"></div>
+          <div className="hidden md:block absolute top-1/2 inset-x-[10%] h-0.5 bg-outline-variant/30 -translate-y-1/2 z-0" aria-hidden="true"></div>
 
           {[
             { icon: UserPlus, title: '۱. ثبت‌نام', body: 'اطلاعات اولیه و پروفایل خود را تکمیل کنید.' },
@@ -300,7 +311,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Section - the numbers come from the database */}
+      {/* Stats Section - the numbers come from the database. Until they do,
+          the whole band is hidden: a «۰» here is not a low number, it is a
+          fabricated one. */}
+      {statsReady && (
       <section id="stats" className="mb-24 px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
@@ -316,6 +330,7 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* Gyms / Discount Banner */}
       <section id="gyms" className="mb-24 px-4">
@@ -330,6 +345,10 @@ export default function LandingPage() {
                 با تهیه اشتراک ویژه، به تمامی امکانات اکوسیستم با تخفیف ویژه دسترسی پیدا کنید و از خدمات حضوری باشگاه‌های شریک بهره‌مند شوید.
               </p>
            </div>
+           {/* The percentage is real data from the database. When it has not
+               arrived yet (or is zero) the box is left out by design: a
+               «تخفیف ویژه ۰٪» promise is worse than no box at all. */}
+           {stats.bestDiscount > 0 && (
            <div className="relative z-10 flex flex-col items-center justify-center bg-white/15 backdrop-blur-md p-8 rounded-3xl border border-white/30">
               <span className="text-sm text-white/90 mb-1 tracking-widest font-bold">تخفیف ویژه</span>
               <span className="text-6xl font-black drop-shadow-md">{toPersianDigits(stats.bestDiscount)}٪</span>
@@ -337,6 +356,7 @@ export default function LandingPage() {
                 دریافت پیشنهاد
               </Link>
            </div>
+           )}
          </div>
       </section>
 
@@ -363,14 +383,21 @@ export default function LandingPage() {
             <div className="flex flex-col gap-2 text-sm text-on-surface-variant">
               {/* A real, working route. The old block carried a placeholder
                   phone number and a placeholder address, which in a health
-                  app looked like a contact point but reached nobody. */}
-              <a
-                href="mailto:support@elajgar.com?subject=%D8%B3%D8%B1%D8%A7%D8%B3%D8%AA%20%D9%BE%D8%B4%D8%AA%D8%A8%D8%B4%D8%A7%D9%86%DB%8C%20%D8%B9%D9%84%D8%A7%D8%AC%DA%AF%D8%B1"
-                dir="ltr"
-                className="text-start hover:text-primary transition-colors"
-              >
-                support@elajgar.com
-              </a>
+                  app looked like a contact point but reached nobody.
+                  Audit #23: on a browser without a default mail client the
+                  mailto: link does nothing, so the raw address stays
+                  selectable text beside it and the copy button puts it on
+                  the clipboard in one click. */}
+              <span className="flex items-center gap-1">
+                <a
+                  href={SUPPORT_MAILTO}
+                  dir="ltr"
+                  className="text-start hover:text-primary transition-colors"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
+                <CopyContactButton />
+              </span>
               <Link href="/privacy" className="hover:text-primary transition-colors">
                 سیاست حریم خصوصی
               </Link>

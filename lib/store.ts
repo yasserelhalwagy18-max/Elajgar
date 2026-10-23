@@ -84,8 +84,25 @@ interface AuthState {
    * could not be corrected.
    */
   removeFood: (date: string, foodId: string) => void;
+  /**
+   * Put an undone delete back where it was.
+   *
+   * The trash button is small and thumbs are big, so deleting logs a
+   * same-duration undo in the toast - this is its payload side. It splices
+   * the item back at its original index rather than appending, so the list
+   * looks exactly like it did before the delete.
+   */
+  restoreFood: (date: string, food: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }, foodIndex: number) => void;
   clearAndSetFoods: (date: string, foods: { id: string; name: string; calories: number; protein: number; carbs: number; fat: number }[]) => void;
-  addWater: (date: string, amount: number) => void;
+  addWater: (date: string, amount: number, max?: number) => void;
+  /**
+   * Take glasses of water back out.
+   *
+   * «یک لیوان» used to be one-way: a mispressed 44px button added 250 ml
+   * and the only way back was editing logs manually. Floors at 0 - there
+   * is no such thing as negative hydration.
+   */
+  removeWater: (date: string, amount: number) => void;
   logDailyMetrics: (date: string, metrics: { sleepHours?: number; sleepQuality?: 'poor' | 'fair' | 'good'; activityMinutes?: number; weight?: number; painIntensity?: number }) => void;
   resetAll: () => void;
   fetchUserFromServer: () => Promise<void>;
@@ -211,6 +228,45 @@ export const useStore = create<AuthState>()(
             unsyncedLogDates: withUnsyncedDate(state.unsyncedLogDates, date),
           };
         }),
+      restoreFood: (date, food, foodIndex) =>
+        set((state) => {
+          const profile = state.userProfile || {};
+          const logs = profile.dailyLogs || [];
+          const existingLogIndex = logs.findIndex((l) => l.date === date);
+
+          let newLogs = [...logs];
+          if (existingLogIndex >= 0) {
+            // If the same item was logged again while the undo toast was
+            // still on screen, splicing it back would duplicate it - back
+            // out instead of corrupting the log.
+            if (newLogs[existingLogIndex].foods.some((entry) => entry.id === food.id)) return state;
+
+            const foods = [...newLogs[existingLogIndex].foods];
+            const clampedIndex = Math.min(Math.max(foodIndex, 0), foods.length);
+            foods.splice(clampedIndex, 0, food);
+            newLogs[existingLogIndex] = {
+              ...newLogs[existingLogIndex],
+              foods,
+            };
+          } else {
+            // The whole day's row disappeared in between (e.g. a sync arrived
+            // with nothing that date) - the undone item re-seeds it.
+            newLogs.push({
+              date,
+              foods: [food],
+              waterIntake: 0,
+            });
+          }
+
+          return {
+            userProfile: {
+              ...profile,
+              dailyLogs: newLogs,
+            },
+            // This row is device-only until the next debounced push lands.
+            unsyncedLogDates: withUnsyncedDate(state.unsyncedLogDates, date),
+          };
+        }),
       clearAndSetFoods: (date, foods) =>
         set((state) => {
           const profile = state.userProfile || {};
@@ -240,7 +296,7 @@ export const useStore = create<AuthState>()(
             unsyncedLogDates: withUnsyncedDate(state.unsyncedLogDates, date),
           };
         }),
-      addWater: (date, amount) =>
+      addWater: (date, amount, max) =>
         set((state) => {
           const profile = state.userProfile || {};
           const logs = profile.dailyLogs || [];
@@ -248,17 +304,51 @@ export const useStore = create<AuthState>()(
 
           let newLogs = [...logs];
           if (existingLogIndex >= 0) {
+            // `max` is the day's glass grid ceiling. It is also enforced here,
+            // not only in the screen's button, so a burst of taps arriving in
+            // one task - each seeing the same stale render - cannot overflow
+            // the target the grid is drawn for.
+            const current = newLogs[existingLogIndex].waterIntake || 0;
+            const next = max === undefined ? current + amount : Math.min(current + amount, max);
+            if (next === current) return state;
             newLogs[existingLogIndex] = {
               ...newLogs[existingLogIndex],
-              waterIntake: newLogs[existingLogIndex].waterIntake + amount,
+              waterIntake: next,
             };
           } else {
             newLogs.push({
               date,
               foods: [],
-              waterIntake: amount,
+              waterIntake: max === undefined ? amount : Math.min(amount, max),
             });
           }
+
+          return {
+            userProfile: {
+              ...profile,
+              dailyLogs: newLogs,
+            },
+            // This row is device-only until the next debounced push lands.
+            unsyncedLogDates: withUnsyncedDate(state.unsyncedLogDates, date),
+          };
+        }),
+      removeWater: (date, amount) =>
+        set((state) => {
+          const profile = state.userProfile || {};
+          const logs = profile.dailyLogs || [];
+          const existingLogIndex = logs.findIndex((l) => l.date === date);
+          if (existingLogIndex < 0) return state;
+
+          const current = logs[existingLogIndex].waterIntake || 0;
+          const next = Math.max(0, current - amount);
+          // Already at (or past) zero: nothing to take back.
+          if (next === current) return state;
+
+          const newLogs = [...logs];
+          newLogs[existingLogIndex] = {
+            ...newLogs[existingLogIndex],
+            waterIntake: next,
+          };
 
           return {
             userProfile: {

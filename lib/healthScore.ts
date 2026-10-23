@@ -227,7 +227,7 @@ export function buildHealthDataFromLogs(
   const generatedData: DailyHealthData[] = [];
   let validEntriesCount = 0;
 
-  const formatter = new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'short' });
+  const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { day: 'numeric', month: 'short' });
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

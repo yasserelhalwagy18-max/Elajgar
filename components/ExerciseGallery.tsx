@@ -162,12 +162,12 @@ export function ExerciseGallery() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" aria-hidden="true" />
 
                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
-                                     <div className="w-10 h-10 rounded-full bg-primary/90 text-white flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(37,99,235,0.6)]">
+                                     <div className="w-10 h-10 rounded-full bg-primary/90 text-white flex items-center justify-center backdrop-blur-md shadow-glow">
                                          <Play className="w-4 h-4 ms-0.5 fill-white" />
                                      </div>
                                 </div>
 
-                                <div className="absolute bottom-3 left-3 right-3">
+                                <div className="absolute bottom-3 inset-x-3">
                                     <h3 className="text-white font-bold text-sm leading-tight mb-1">{exercise.title}</h3>
                                     <div className="flex justify-between items-center text-xs text-white/90 font-medium">
                                         <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full">{toPersianDigits(exercise.durationMinutes)} دقیقه</span>
@@ -217,12 +217,12 @@ export function ExerciseGallery() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" aria-hidden="true" />
 
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
-                             <div className="w-12 h-12 rounded-full bg-primary/90 text-white flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(37,99,235,0.6)]">
+                             <div className="w-12 h-12 rounded-full bg-primary/90 text-white flex items-center justify-center backdrop-blur-md shadow-glow">
                                  <Play className="w-5 h-5 ms-0.5 fill-white" />
                              </div>
                         </div>
 
-                        <div className="absolute bottom-3 left-3 right-3">
+                        <div className="absolute bottom-3 inset-x-3">
                             <h3 className="text-white font-bold text-sm leading-tight mb-1">{exercise.title}</h3>
                             <div className="flex justify-between items-center text-xs text-white/90 font-medium">
                                 <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full">{toPersianDigits(exercise.durationMinutes)} دقیقه</span>
@@ -243,7 +243,7 @@ export function ExerciseGallery() {
                 {/* Fake Video Player */}
                 <div className="relative w-full aspect-video bg-surface-variant rounded-2xl overflow-hidden mb-5">
                     <div className="absolute inset-0 flex items-center justify-center flex-col gap-4">
-                        <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center animate-pulse shadow-[0_0_40px_rgba(37,99,235,0.6)]">
+                        <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center animate-pulse shadow-glow-lg">
                             <Play className="w-6 h-6 text-white ms-1 fill-white" />
                         </div>
                         <span className="text-xs text-on-surface-variant">ویدیوی تمرین به‌زودی منتشر می‌شود</span>
