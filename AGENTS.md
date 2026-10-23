@@ -44,9 +44,6 @@ These are already installed and available in every project. Pick from this list 
 | `performance-optimization` | Core Web Vitals, N+1 queries, bundle size, slow pages |
 | `observability-and-instrumentation` | Logging, metrics, tracing, production debugging |
 | `context-engineering` | Session context setup, rules files, when output quality degrades |
-| `idea-refine` | Refine vague ideas into sharp, actionable concepts before committing to a plan |
-| `browser-testing-with-devtools` | Test in real browsers via Chrome DevTools MCP (DOM, console, network, performance) |
-| `mempalace` | Memory/context persistence across sessions |
 
 ---
 
@@ -74,8 +71,6 @@ Map your request to a skill from Section 2 before implementing:
 | "Add logging / tracing / monitoring" | `observability-and-instrumentation` |
 | "Migrate DB schema / remove old code" | `deprecation-and-migration` |
 | "Verify approach against official docs" | `source-driven-development` |
-| "Refine a vague idea into a plan" | `idea-refine` |
-| "Test in a real browser" | `browser-testing-with-devtools` |
 | "Capture a screenshot for QA" | `screenshots` |
 
 ---
