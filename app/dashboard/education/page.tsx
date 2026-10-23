@@ -12,7 +12,7 @@ import { SmartAnalysis } from '@/components/SmartAnalysis';
 import { EducationalContent } from '@/components/EducationalContent';
 import { useStore } from '@/lib/store';
 import { useMounted } from '@/hooks/use-mounted';
-import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { useAuthGuard, logoutOnUnauthorized } from '@/hooks/use-auth-guard';
 import { Modal } from '@/components/ui/Modal';
 
 interface Plan {
@@ -43,7 +43,7 @@ export default function EducationPage() {
     const router = useRouter();
     const { isAuthenticated, hasHydrated } = useAuthGuard();
     const mounted = useMounted();
-    const { setAuthenticated } = useStore();
+    const { setAuthenticated, logout } = useStore();
 
     const [activeTag, setActiveTag] = React.useState('همه');
     const [showPremiumModal, setShowPremiumModal] = React.useState(false);
@@ -75,6 +75,13 @@ export default function EducationPage() {
           fetch('/api/subscription', { signal: controller.signal, cache: 'no-store' }),
         ]);
 
+        // A dead session cookie must send the user to login, not render the
+        // page with empty plans and a locked paywall.
+        if ([plansRes, videosRes, subscriptionRes].some((res) => res.status === 401)) {
+          logoutOnUnauthorized(plansRes, logout, router);
+          return;
+        }
+
         if (plansRes.ok) {
           const data = (await plansRes.json()) as Plan[];
           setPlans(Array.isArray(data) ? data : []);
@@ -99,7 +106,7 @@ export default function EducationPage() {
 
     void load();
     return () => controller.abort();
-  }, [isAuthenticated, videosRetryToken]);
+  }, [isAuthenticated, logout, router, videosRetryToken]);
 
   // The category rail, derived from the published articles.
   React.useEffect(() => {

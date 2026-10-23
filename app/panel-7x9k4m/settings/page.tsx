@@ -4,6 +4,7 @@ import * as React from 'react';
 import { CalendarDays, Save, Settings as SettingsIcon, Target, Utensils, Weight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AdminNumberInput, AdminPageHeader } from '@/components/admin/AdminUI';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { adminPatch } from '@/lib/admin-client';
 import { toPersianDigits } from '@/lib/utils';
 
@@ -75,6 +76,10 @@ export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Saving applies to every user, so the submit first validates the sums and
+  // then asks for confirmation with a summary.
+  const [showSaveConfirm, setShowSaveConfirm] = React.useState(false);
+  const [validationError, setValidationError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -145,8 +150,30 @@ export default function AdminSettingsPage() {
     return () => controller.abort();
   }, []);
 
-  const save = async (event: React.FormEvent) => {
+  // The submit validates the macro sums; only the confirmed dialog saves.
+  const save = (event: React.FormEvent) => {
     event.preventDefault();
+    setValidationError(null);
+
+    const badBucket = (['maintain', 'cut', 'bulk'] as const).find((bucket) => {
+      const sum = (['protein', 'carbs', 'fat'] as const).reduce(
+        (acc, field) => acc + (Number(macros[bucket]?.[field]) || 0),
+        0,
+      );
+      return sum !== 100;
+    });
+
+    if (badBucket) {
+      const label =
+        badBucket === 'maintain' ? 'حفظ وزن' : badBucket === 'cut' ? 'کاهش وزن' : 'افزایش وزن';
+      setValidationError(`مجموع سهم درشت‌ماکروهای «${label}» باید ۱۰۰ درصد باشد.`);
+      return;
+    }
+
+    setShowSaveConfirm(true);
+  };
+
+  const doSave = async () => {
     setIsSaving(true);
 
     const macroPayload = Object.fromEntries(
@@ -433,6 +460,12 @@ export default function AdminSettingsPage() {
           />
         </section>
 
+        {validationError && (
+          <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
+            {validationError}
+          </p>
+        )}
+
         <div className="flex justify-end">
           <button type="submit" disabled={isSaving} className="btn btn-primary btn-lg px-8">
             <Save className="w-5 h-5" />
@@ -440,6 +473,31 @@ export default function AdminSettingsPage() {
           </button>
         </div>
       </form>
+
+      {/* These values change the health score and nutrition targets for every
+          user, so the save shows a summary and asks first. The weights are
+          not hard-validated against ۱۰۰ because only their ratios matter
+          (see the section copy) - the summary makes the total visible. */}
+      <ConfirmDialog
+        open={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => void doSave()}
+        title="ذخیره تنظیمات"
+        confirmLabel="ذخیره و اعمال"
+        message={
+          <div className="flex flex-col gap-2">
+            <p>این تنظیمات پس از ذخیره برای همه کاربران اعمال می‌شود:</p>
+            <ul className="list-disc ps-5 space-y-1">
+              <li>مجموع وزن‌های امتیاز سلامت: {toPersianDigits(totalWeight)}</li>
+              <li>
+                اهداف روزانه: {toPersianDigits(targets.calories)} کیلوکالری و{' '}
+                {toPersianDigits(targets.water)} لیتر آب
+              </li>
+              <li>سهم درشت‌ماکروها برای هر سه هدف: ۱۰۰٪</li>
+            </ul>
+          </div>
+        }
+      />
     </>
   );
 }

@@ -60,6 +60,60 @@ export function AdminSidebar() {
   const router = useRouter();
   const logout = useStore((state) => state.logout);
   const [isOpen, setIsOpen] = React.useState(false);
+  const drawerRef = React.useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = React.useRef<HTMLElement | null>(null);
+
+  // The mobile drawer is a dialog, so it gets the same treatment as the
+  // shared Modal: focus moves in on open and back on close, Escape closes,
+  // Tab is trapped inside, and the page behind it stops scrolling.
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const focusTimer = window.setTimeout(() => {
+      drawerRef.current?.querySelector<HTMLElement>('button, a[href]')?.focus();
+    }, 0);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsOpen(false);
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const node = drawerRef.current;
+      if (!node) return;
+
+      const focusables = Array.from(
+        node.querySelectorAll<HTMLElement>('a[href],button:not([disabled])'),
+      );
+      if (focusables.length === 0) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocusedRef.current?.focus?.();
+    };
+  }, [isOpen]);
 
   const handleLogout = async () => {
     // The cookie has to be gone before the user is sent to the login screen,
@@ -153,7 +207,13 @@ export function AdminSidebar() {
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative z-10 w-72 max-w-[85vw] bg-surface-container border-e border-outline-variant flex flex-col py-8 px-4 overflow-y-auto">
+          <div
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="منوی مدیریت"
+            className="relative z-10 w-72 max-w-[85vw] bg-surface-container border-e border-outline-variant flex flex-col py-8 px-4 overflow-y-auto"
+          >
             <button
               type="button"
               onClick={() => setIsOpen(false)}

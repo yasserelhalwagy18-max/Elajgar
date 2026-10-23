@@ -31,6 +31,30 @@
       "skillPath": "plugins/accesslint/skills/accessibility-scan/SKILL.md",
       "computedHash": "6054f1cdbaa768e901f64fc3c45415335254c36cf8f44c0fd55adc3f7eaf268a"
     },
+    "nextjs-data-fetching": {
+      "source": "lusentis/next-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nextjs-data-fetching/SKILL.md",
+      "computedHash": "eab281f981270062c6caca51cc45ddc553e2a8b14ff5d7b5be22e425534089ad"
+    },
+    "nextjs-forms": {
+      "source": "lusentis/next-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nextjs-forms/SKILL.md",
+      "computedHash": "d2a85b7225f746ebeaae4eeede27167cb18f73f4b8c1762e3efc9907495d1211"
+    },
+    "nextjs-usestate": {
+      "source": "lusentis/next-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nextjs-usestate/SKILL.md",
+      "computedHash": "ec8b0528d7df3936dccaad7ba13e9416a04a55180533a55e71ce9dd0569d3ea6"
+    },
+    "no-await-import": {
+      "source": "lusentis/next-skills",
+      "sourceType": "github",
+      "skillPath": "skills/no-await-import/SKILL.md",
+      "computedHash": "ba1ec8636443d6691453f4d1739cbb30715c3ba5165f1dbc8a92200baf8b47c1"
+    },
     "prisma-cli": {
       "source": "prisma/skills",
       "sourceType": "github",
@@ -84,6 +108,12 @@
       "sourceType": "github",
       "skillPath": "prisma-upgrade-v7/SKILL.md",
       "computedHash": "0e07dc2831f86cf27627df914db43d862b0fc75d72c1f9070434aab7940bad7c"
+    },
+    "screenshots": {
+      "source": "lusentis/next-skills",
+      "sourceType": "github",
+      "skillPath": "skills/screenshots/SKILL.md",
+      "computedHash": "774f6907233bf425915676f467d0fe4bec51e25244ff19798481cc34e247ab0e"
     },
     "ui-ux-pro-max": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",

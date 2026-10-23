@@ -4,8 +4,9 @@ import * as React from 'react';
 import Image from 'next/image';
 import { Search, MapPin, Star, Tag, Ticket, X, Percent } from 'lucide-react';
 import { cn, normalizeText, toPersianDigits } from '@/lib/utils';
+import { useStore } from '@/lib/store';
 import { useMounted } from '@/hooks/use-mounted';
-import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { useAuthGuard, logoutOnUnauthorized } from '@/hooks/use-auth-guard';
 import { useRouter } from 'next/navigation';
 
 interface Gym {
@@ -65,6 +66,7 @@ function GymImage({ gym }: { gym: Gym }) {
 export default function GymsPage() {
     const router = useRouter();
     const { isAuthenticated, hasHydrated } = useAuthGuard();
+    const logout = useStore((state) => state.logout);
     const mounted = useMounted();
 
     const [gyms, setGyms] = React.useState<Gym[]>([]);
@@ -83,6 +85,12 @@ export default function GymsPage() {
         async function load() {
             try {
                 const res = await fetch('/api/gyms', { signal: controller.signal });
+                // A dead session cookie must send the user to login, not
+                // render an empty gym list as if none existed.
+                if (res.status === 401) {
+                    logoutOnUnauthorized(res, logout, router);
+                    return;
+                }
                 if (!res.ok) throw new Error('خطا در دریافت اطلاعات باشگاه‌ها');
                 const data = await res.json();
                 setGyms(Array.isArray(data) ? data : []);
@@ -97,7 +105,7 @@ export default function GymsPage() {
 
         load();
         return () => controller.abort();
-    }, []);
+    }, [logout, router]);
 
     // The filter rail lists the categories that actually exist. It used to be
     // a hardcoded list of four, which left two of the five categories

@@ -9,7 +9,7 @@ import { ADMIN_PATH } from '@/lib/admin-path';
 import { useStore } from '../../../lib/store';
 import { useRouter } from 'next/navigation';
 import { useMounted } from '@/hooks/use-mounted';
-import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { useAuthGuard, logoutOnUnauthorized } from '@/hooks/use-auth-guard';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CopyContactButton, SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/components/SupportContact';
@@ -95,7 +95,12 @@ export default function ProfilePage() {
         const controller = new AbortController();
 
         fetch('/api/subscription', { signal: controller.signal, cache: 'no-store' })
-            .then((res) => (res.ok ? res.json() : null))
+            .then((res) => {
+                // A dead session cookie must send the user to login, not
+                // render the page as if they had no subscription.
+                logoutOnUnauthorized(res, logout, router);
+                return res.ok ? res.json() : null;
+            })
             .then((data) => setSubscription(data))
             .catch((error) => {
                 if ((error as Error)?.name === 'AbortError') return;
@@ -104,14 +109,17 @@ export default function ProfilePage() {
         // The API answers whether a password is set, so the section can say
         // "set a password" or "change it".
         fetch('/api/user', { signal: controller.signal, cache: 'no-store' })
-            .then((res) => (res.ok ? res.json() : null))
+            .then((res) => {
+                logoutOnUnauthorized(res, logout, router);
+                return res.ok ? res.json() : null;
+            })
             .then((data) => setHasPassword(Boolean(data?.hasPassword)))
             .catch((error) => {
                 if ((error as Error)?.name === 'AbortError') return;
             });
 
         return () => controller.abort();
-    }, [isAuthenticated]);
+    }, [isAuthenticated, logout, router]);
 
     const savePassword = async (event: React.FormEvent) => {
         event.preventDefault();

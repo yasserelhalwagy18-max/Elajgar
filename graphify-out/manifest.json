@@ -462,15 +462,15 @@
     "semantic_hash": ""
   },
   "app/dashboard/education/page.tsx": {
-    "mtime": 1792701652.3340576,
-    "seen": 1792783863.067177,
-    "ast_hash": "870b4b8c55c281625d899fb138974b85",
+    "mtime": 1792787297.7287533,
+    "seen": 1792787358.5557382,
+    "ast_hash": "588fcb3f17f7be833c0d5125c6d5f2c1",
     "semantic_hash": ""
   },
   "app/dashboard/gyms/page.tsx": {
-    "mtime": 1792701622.4520276,
-    "seen": 1792783863.067177,
-    "ast_hash": "af94c0b96117b674c82a4174fe5baa45",
+    "mtime": 1792787297.728753,
+    "seen": 1792787358.555739,
+    "ast_hash": "fe8d0162a2d4b1b6c84d7ba677e1f79f",
     "semantic_hash": ""
   },
   "app/dashboard/layout.tsx": {
@@ -492,9 +492,9 @@
     "semantic_hash": ""
   },
   "app/dashboard/profile/page.tsx": {
-    "mtime": 1792704772.9597733,
-    "seen": 1792783863.06718,
-    "ast_hash": "41feec929b33a1547d9a1e8fd0cc79d4",
+    "mtime": 1792787297.7162967,
+    "seen": 1792787358.555743,
+    "ast_hash": "da2d17fc47cbe097e900215bcb8ffbec",
     "semantic_hash": ""
   },
   "app/error.tsx": {
@@ -504,9 +504,9 @@
     "semantic_hash": ""
   },
   "app/global-error.tsx": {
-    "mtime": 1792757083.1726198,
-    "seen": 1792783863.067182,
-    "ast_hash": "14cfedcda2300f56988947ad6c93c4d4",
+    "mtime": 1792787338.9131553,
+    "seen": 1792787358.5557451,
+    "ast_hash": "c2a8a5892af2f76eff29b7e7000478e6",
     "semantic_hash": ""
   },
   "app/layout.tsx": {
@@ -558,9 +558,9 @@
     "semantic_hash": ""
   },
   "app/panel-7x9k4m/content/page.tsx": {
-    "mtime": 1792754999.0419114,
-    "seen": 1792783863.067189,
-    "ast_hash": "3f66a6b2f2362b9625d1087af3258175",
+    "mtime": 1792787241.0077212,
+    "seen": 1792787358.555753,
+    "ast_hash": "1e769fa6ffa8c0d687e6b27f5ad0d74a",
     "semantic_hash": ""
   },
   "app/panel-7x9k4m/foods/page.tsx": {
@@ -594,9 +594,9 @@
     "semantic_hash": ""
   },
   "app/panel-7x9k4m/settings/page.tsx": {
-    "mtime": 1792754932.6438296,
-    "seen": 1792783863.067193,
-    "ast_hash": "c8e2e445985d7e3b75c383ba1d210ce8",
+    "mtime": 1792787275.598999,
+    "seen": 1792787358.555758,
+    "ast_hash": "bf005ec9e1222b4fd052f9ad463c1932",
     "semantic_hash": ""
   },
   "app/panel-7x9k4m/subscriptions/page.tsx": {
@@ -606,9 +606,9 @@
     "semantic_hash": ""
   },
   "app/panel-7x9k4m/users/[id]/page.tsx": {
-    "mtime": 1792699666.6442835,
-    "seen": 1792783863.067195,
-    "ast_hash": "69a4fd145115e937723ea99547b33496",
+    "mtime": 1792787256.0859118,
+    "seen": 1792787358.5557601,
+    "ast_hash": "cdfa3a9ecf25c279d409a389bb120d54",
     "semantic_hash": ""
   },
   "app/panel-7x9k4m/users/page.tsx": {
@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "components/admin/AdminSidebar.tsx": {
-    "mtime": 1792619450.4842517,
-    "seen": 1792783863.067206,
-    "ast_hash": "d759a544c51e71d4f8fa1b03b401d3a0",
+    "mtime": 1792787248.3478043,
+    "seen": 1792787358.555773,
+    "ast_hash": "7175d81bbf43eb01057abf2db6c0167e",
     "semantic_hash": ""
   },
   "components/admin/AdminUI.tsx": {
@@ -750,9 +750,9 @@
     "semantic_hash": ""
   },
   "hooks/use-auth-guard.ts": {
-    "mtime": 1792599344.846851,
-    "seen": 1792783863.067212,
-    "ast_hash": "dfe2e27d68cdd302ea035c86d1fd33b4",
+    "mtime": 1792787284.2906084,
+    "seen": 1792787358.5557811,
+    "ast_hash": "4ebd57ec8db4101ce514a8194866f04a",
     "semantic_hash": ""
   },
   "hooks/use-mobile.ts": {

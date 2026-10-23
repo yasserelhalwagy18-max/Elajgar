@@ -183,9 +183,17 @@ function ArticlesTab({
     // input hands back the digit-normalised text and save parses it.
     sortOrder: '0',
   });
-  const [formError, setFormError] = React.useState<string | null>(null);
+  /** Which field is at fault (null = the form as a whole), plus the message. */
+  const [formError, setFormError] = React.useState<{
+    field: 'title' | 'slug' | 'category' | null;
+    message: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<Article | null>(null);
+
+  // The modal error carries a stable id, so the offending field can point at
+  // it with aria-describedby while aria-invalid marks the field itself.
+  const errorId = React.useId();
 
   const openCreate = () => {
     setEditing(null);
@@ -231,15 +239,15 @@ function ArticlesTab({
     event.preventDefault();
 
     if (!form.title.trim()) {
-      setFormError('عنوان مطلب الزامی است');
+      setFormError({ field: 'title', message: 'عنوان مطلب الزامی است' });
       return;
     }
     if (!form.category.trim()) {
-      setFormError('دسته‌بندی الزامی است');
+      setFormError({ field: 'category', message: 'دسته‌بندی الزامی است' });
       return;
     }
     if (!form.slug.trim()) {
-      setFormError('نامک (slug) الزامی است');
+      setFormError({ field: 'slug', message: 'نامک (slug) الزامی است' });
       return;
     }
 
@@ -266,7 +274,7 @@ function ArticlesTab({
       closeModal();
       reload();
     } else {
-      setFormError(result.error ?? 'ذخیره انجام نشد');
+      setFormError({ field: null, message: result.error ?? 'ذخیره انجام نشد' });
     }
 
     setIsSaving(false);
@@ -405,8 +413,13 @@ function ArticlesTab({
                 id="article-title"
                 type="text"
                 value={form.title}
-                onChange={(event) => setForm({ ...form, title: event.target.value })}
+                onChange={(event) => {
+                  setForm({ ...form, title: event.target.value });
+                  setFormError(null);
+                }}
                 className="input"
+                aria-invalid={formError?.field === 'title' || undefined}
+                aria-describedby={formError?.field === 'title' ? errorId : undefined}
               />
             </div>
             <div>
@@ -417,10 +430,15 @@ function ArticlesTab({
                 id="article-slug"
                 type="text"
                 value={form.slug}
-                onChange={(event) => setForm({ ...form, slug: event.target.value })}
+                onChange={(event) => {
+                  setForm({ ...form, slug: event.target.value });
+                  setFormError(null);
+                }}
                 placeholder="water-therapy-for-joints"
                 className="input"
                 dir="ltr"
+                aria-invalid={formError?.field === 'slug' || undefined}
+                aria-describedby={formError?.field === 'slug' ? errorId : undefined}
               />
             </div>
           </div>
@@ -434,9 +452,14 @@ function ArticlesTab({
                 id="article-category"
                 type="text"
                 value={form.category}
-                onChange={(event) => setForm({ ...form, category: event.target.value })}
+                onChange={(event) => {
+                  setForm({ ...form, category: event.target.value });
+                  setFormError(null);
+                }}
                 placeholder="آب درمانی"
                 className="input"
+                aria-invalid={formError?.field === 'category' || undefined}
+                aria-describedby={formError?.field === 'category' ? errorId : undefined}
               />
             </div>
             <div>
@@ -520,8 +543,12 @@ function ArticlesTab({
           </div>
 
           {formError && (
-            <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
-              {formError}
+            <p
+              id={errorId}
+              role="alert"
+              className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2"
+            >
+              {formError.message}
             </p>
           )}
 
@@ -598,9 +625,17 @@ function ExercisesTab({
     isPublished: true,
     sortOrder: '0',
   });
-  const [formError, setFormError] = React.useState<string | null>(null);
+  /** Which field is at fault (null = the form as a whole), plus the message. */
+  const [formError, setFormError] = React.useState<{
+    field: 'title' | null;
+    message: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<Exercise | null>(null);
+
+  // The modal error carries a stable id, so the offending field can point at
+  // it with aria-describedby while aria-invalid marks the field itself.
+  const errorId = React.useId();
 
   const openCreate = () => {
     setEditing(null);
@@ -650,7 +685,7 @@ function ExercisesTab({
     event.preventDefault();
 
     if (!form.title.trim()) {
-      setFormError('عنوان تمرین الزامی است');
+      setFormError({ field: 'title', message: 'عنوان تمرین الزامی است' });
       return;
     }
 
@@ -682,7 +717,7 @@ function ExercisesTab({
       closeModal();
       reload();
     } else {
-      setFormError(result.error ?? 'ذخیره انجام نشد');
+      setFormError({ field: null, message: result.error ?? 'ذخیره انجام نشد' });
     }
 
     setIsSaving(false);
@@ -823,8 +858,13 @@ function ExercisesTab({
                 id="exercise-title"
                 type="text"
                 value={form.title}
-                onChange={(event) => setForm({ ...form, title: event.target.value })}
+                onChange={(event) => {
+                  setForm({ ...form, title: event.target.value });
+                  setFormError(null);
+                }}
                 className="input"
+                aria-invalid={formError?.field === 'title' || undefined}
+                aria-describedby={formError?.field === 'title' ? errorId : undefined}
               />
             </div>
             <div>
@@ -964,8 +1004,12 @@ function ExercisesTab({
           </div>
 
           {formError && (
-            <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
-              {formError}
+            <p
+              id={errorId}
+              role="alert"
+              className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2"
+            >
+              {formError.message}
             </p>
           )}
 
@@ -1039,9 +1083,17 @@ function VideosTab({
     isPublished: true,
     associatedPainTags: '',
   });
-  const [formError, setFormError] = React.useState<string | null>(null);
+  /** Which field is at fault (null = the form as a whole), plus the message. */
+  const [formError, setFormError] = React.useState<{
+    field: 'title' | 'url' | null;
+    message: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<VideoContent | null>(null);
+
+  // The modal error carries a stable id, so the offending field can point at
+  // it with aria-describedby while aria-invalid marks the field itself.
+  const errorId = React.useId();
 
   const openCreate = () => {
     setEditing(null);
@@ -1085,11 +1137,11 @@ function VideosTab({
     event.preventDefault();
 
     if (!form.title.trim()) {
-      setFormError('عنوان ویدیو الزامی است');
+      setFormError({ field: 'title', message: 'عنوان ویدیو الزامی است' });
       return;
     }
     if (!form.url.trim()) {
-      setFormError('آدرس ویدیو الزامی است');
+      setFormError({ field: 'url', message: 'آدرس ویدیو الزامی است' });
       return;
     }
 
@@ -1118,7 +1170,7 @@ function VideosTab({
       closeModal();
       reload();
     } else {
-      setFormError(result.error ?? 'ذخیره انجام نشد');
+      setFormError({ field: null, message: result.error ?? 'ذخیره انجام نشد' });
     }
 
     setIsSaving(false);
@@ -1262,8 +1314,13 @@ function VideosTab({
               id="video-title"
               type="text"
               value={form.title}
-              onChange={(event) => setForm({ ...form, title: event.target.value })}
+              onChange={(event) => {
+                setForm({ ...form, title: event.target.value });
+                setFormError(null);
+              }}
               className="input"
+              aria-invalid={formError?.field === 'title' || undefined}
+              aria-describedby={formError?.field === 'title' ? errorId : undefined}
             />
           </div>
 
@@ -1275,10 +1332,15 @@ function VideosTab({
               id="video-url"
               type="text"
               value={form.url}
-              onChange={(event) => setForm({ ...form, url: event.target.value })}
+              onChange={(event) => {
+                setForm({ ...form, url: event.target.value });
+                setFormError(null);
+              }}
               placeholder="https://..."
               className="input"
               dir="ltr"
+              aria-invalid={formError?.field === 'url' || undefined}
+              aria-describedby={formError?.field === 'url' ? errorId : undefined}
             />
           </div>
 
@@ -1361,8 +1423,12 @@ function VideosTab({
           </div>
 
           {formError && (
-            <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
-              {formError}
+            <p
+              id={errorId}
+              role="alert"
+              className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2"
+            >
+              {formError.message}
             </p>
           )}
 

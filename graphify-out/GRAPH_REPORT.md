@@ -1,17 +1,17 @@
 # Graph Report - Elajgar  (2026-10-23)
 
 ## Corpus Check
-- 284 files · ~387,769 words
+- 284 files · ~388,915 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 47 file(s) not represented in the graph (top: .csv 37, (none) 5, .log 2)
 
 ## Summary
-- 2531 nodes · 4648 edges · 148 communities (127 shown, 21 thin omitted)
+- 2532 nodes · 4663 edges · 144 communities (125 shown, 19 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 45 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5362f4c1`
+- Built from commit: `886dba74`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -32,8 +32,8 @@
 - lucide-react
 - Model Queries
 - Driver Adapters
-- test_core.py
-- search
+- BM25
+- nutrition/page.tsx
 - user/route.ts
 - Upgrade to Prisma ORM 7
 - Relation Queries
@@ -44,7 +44,7 @@
 - Prisma CLI Reference
 - Raw Queries
 - Troubleshooting Prisma Compute
-- pathlib
+- test_skill_script_paths.py
 - compilerOptions
 - Client Methods
 - Filter Conditions and Operators
@@ -62,7 +62,7 @@
 - settings.ts
 - prisma db seed
 - Environment Variables
-- DesignSystemGenerator
+- format_ascii_box
 - UI/UX Pro Max - Design Intelligence
 - CorrectionalCalendar.tsx
 - prisma db pull
@@ -73,19 +73,19 @@
 - Prisma Accelerate Users
 - ESM and CommonJS Support
 - Schema Changes
-- read_rows
+- DesignSystemGenerator
 - manifest.json
 - Transactions
 - Workflow
-- _palette_is_dark
+- TestMetricMath
 - CatalogRefreshTest
 - PainHeatmap3D.tsx
 - Prisma Compute Framework Readiness
 - MongoDB Setup
 - Prisma SQL Driver Adapter Implementation
 - Core Workflows
-- detect_domain
-- .generate
+- TestTextLayoutDataContracts
+- GET
 - Modal.tsx
 - nutrition-targets.ts
 - prisma db execute
@@ -115,7 +115,6 @@
 - decision-stay-or-migrate
 - console-and-connections
 - management-api-sdk
-- _contrast_ratio
 - prisma migrate status
 - Prisma Compute Config
 - create-prisma Compute Flow
@@ -129,7 +128,6 @@
 - prisma mcp
 - client-api-mapping
 - Service Tokens
-- _select_palette_for_mode
 - How to Upload and Run Elajgar on Your Webhost
 - palette.md
 - doctor.mjs
@@ -144,7 +142,6 @@
 - CatalogSummaryLineEndingsTest
 - split_values
 - TestGeneratedCatalogContract
-- settings/page.tsx
 - CLAUDE.md
 - eslint.config.mjs
 - TestStackFlagWithDesignSystem
@@ -185,7 +182,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (148 total, 21 thin omitted)
+## Communities (144 total, 19 thin omitted)
 
 ### Community 0 - "next"
 Cohesion: 0.05
@@ -200,24 +197,24 @@ Cohesion: 0.07
 Nodes (43): read_rows(), TestAccessibilityGuidance, TestChartsTypographyAndIcons, TestCurrentReactGuidance, TestSemanticColors, _catalog_date(), _check_app_interface_contract(), _check_catalog_contract() (+35 more)
 
 ### Community 3 - "toPersianDigits"
-Cohesion: 0.09
-Nodes (40): EducationPage(), Plan, PremiumVideo, SubscriptionState, CATEGORY_LABELS, Gym, GymCard(), GymImage() (+32 more)
+Cohesion: 0.12
+Nodes (38): EducationPage(), load(), Plan, PremiumVideo, SubscriptionState, CATEGORY_LABELS, Gym, GymCard() (+30 more)
 
 ### Community 4 - "send-otp/route.ts"
 Cohesion: 0.08
 Nodes (33): POST(), cookieSet, prismaMock, sendOtpSmsMock, sign(), signMock, smsFailureMessageMock, POST() (+25 more)
 
 ### Community 5 - "core.py"
-Cohesion: 0.07
-Nodes (24): _contains_phrase(), _domain_keywords(), _exact_match_diagnostic(), _exact_row_identity(), _exact_stack_identifier(), _file_signature(), _legacy_successor_guidance(), _load_csv() (+16 more)
+Cohesion: 0.05
+Nodes (20): _exact_match_diagnostic(), _exact_row_identity(), _exact_stack_identifier(), _legacy_successor_guidance(), _normalize(), _passes_threshold(), _project_row(), _query_coverage() (+12 more)
 
 ### Community 6 - "search_stack"
-Cohesion: 0.07
-Nodes (9): search_stack(), _rows(), TestNativeDesktopStackFreshness, read_rows(), read_rows(), TestTextLayoutDataContracts, TestTextLayoutRetrieval, _rows() (+1 more)
+Cohesion: 0.12
+Nodes (5): search_stack(), _rows(), TestNativeDesktopStackFreshness, _rows(), TestWebStackFreshness
 
 ### Community 7 - "vitest"
 Cohesion: 0.06
-Nodes (28): cookieStore, prismaMock, verifyTokenMock, prismaMock, sessionUserId, verifyPassword, cookieStore, prismaMock (+20 more)
+Nodes (30): cookieStore, prismaMock, verifyTokenMock, prismaMock, sessionUserId, verifyPassword, cookieStore, prismaMock (+22 more)
 
 ### Community 8 - "accessibility-inspect/SKILL.md"
 Cohesion: 0.04
@@ -225,23 +222,23 @@ Nodes (39): Grading, Notes, Report format, WCAG-EM steps, 1. Audit, 2. Report, 3
 
 ### Community 9 - "design_system.py"
 Cohesion: 0.08
-Nodes (11): _detect_page_type(), format_page_override_md(), _generate_intelligent_overrides(), persist_design_system(), safe_slug(), _write_persisted_file(), apply_decision_rules(), _object_without_duplicates() (+3 more)
+Nodes (8): _write_persisted_file(), apply_decision_rules(), _object_without_duplicates(), parse_decision_rules(), _validate_action(), format_output(), read_rows(), read_rows()
 
 ### Community 10 - "utils.ts"
-Cohesion: 0.11
-Nodes (30): DashboardIndex(), getStatusText(), HydrationChart, MEAL_PRESETS, MetricFieldKey, ProgressReport, NutritionPage(), HydrationChart() (+22 more)
+Cohesion: 0.13
+Nodes (26): CheckoutPage(), formatCardNumber(), formatExpiry(), Plan, DashboardIndex(), getStatusText(), HydrationChart, MEAL_PRESETS (+18 more)
 
 ### Community 11 - "test_design_system_mode.py"
-Cohesion: 0.07
-Nodes (16): ansi_ljust(), _filter_anti_patterns_for_mode(), format_ascii_box(), add_wrapped(), wrap_text(), format_markdown(), generate_design_system(), hex_to_ansi() (+8 more)
+Cohesion: 0.06
+Nodes (16): _button_outline_text_color(), _contrast_ratio(), _derive_dark_palette(), _filter_anti_patterns_for_mode(), format_master_md(), _palette_is_dark(), _query_wants_dark(), _relative_luminance() (+8 more)
 
 ### Community 12 - "package.json"
 Cohesion: 0.06
-Nodes (30): name, prisma, seed, private, version, autoprefixer, class-variance-authority, @cloudflare/next-on-pages (+22 more)
+Nodes (31): name, prisma, seed, private, version, autoprefixer, class-variance-authority, @cloudflare/next-on-pages (+23 more)
 
 ### Community 13 - "lucide-react"
-Cohesion: 0.13
-Nodes (23): CheckoutPage(), formatCardNumber(), formatExpiry(), Plan, EditProfileForm(), EditProfileModal(), EditProfileModalProps, NotificationPrefs (+15 more)
+Cohesion: 0.11
+Nodes (22): EditProfileForm(), EditProfileModal(), EditProfileModalProps, NotificationPrefs, readNotificationPrefs(), SubscriptionState, HubCard(), LandingPage() (+14 more)
 
 ### Community 14 - "Model Queries"
 Cohesion: 0.07
@@ -251,13 +248,13 @@ Nodes (27): aggregate, Aggregation Operations, Atomic operations, count, create,
 Cohesion: 0.07
 Nodes (27): Accept self-signed certificates, After (v7), Available Adapters, Before (v6), Configuration, Connection Pool Configuration, Driver Adapters, Installation (+19 more)
 
-### Community 16 - "test_core.py"
-Cohesion: 0.13
-Nodes (5): BM25, _get_bm25(), _suggest_identities(), TestBm25CoreBehavior, TestTokenizer
+### Community 16 - "BM25"
+Cohesion: 0.06
+Nodes (17): BM25, _contains_phrase(), detect_domain(), _domain_keywords(), _file_signature(), _get_bm25(), _load_csv(), _load_csv_snapshot() (+9 more)
 
-### Community 17 - "search"
-Cohesion: 0.11
-Nodes (5): search(), _style_search_destination(), TestDiagnosticsContracts, TestSearchDomains, TestStyleTaxonomy
+### Community 17 - "nutrition/page.tsx"
+Cohesion: 0.20
+Nodes (14): DashboardLayout(), NutritionPage(), BottomNav(), buildSyncPayload(), composeSyncedSnapshot(), json(), SYNCABLE_JSON_KEYS, SYNCABLE_PROFILE_KEYS (+6 more)
 
 ### Community 18 - "user/route.ts"
 Cohesion: 0.10
@@ -299,9 +296,9 @@ Nodes (21): BigInt handling, Database-Specific Features, Date handling, Delete e
 Cohesion: 0.09
 Nodes (22): Accidental Prisma Postgres Provisioning, Auth Fails, Bun Entrypoint Missing, Compute Config Invalid, `create-prisma --yes` Did Not Deploy, Database Wiring or Schema Did Not Apply, Env Changes Did Not Apply, First Checks (+14 more)
 
-### Community 28 - "pathlib"
-Cohesion: 0.12
-Nodes (4): TestMetricMath, resolve(), shipped_invocations(), SkillScriptPathsTest
+### Community 28 - "test_skill_script_paths.py"
+Cohesion: 0.38
+Nodes (3): resolve(), shipped_invocations(), SkillScriptPathsTest
 
 ### Community 29 - "compilerOptions"
 Cohesion: 0.10
@@ -360,8 +357,8 @@ Cohesion: 0.11
 Nodes (18): After schema changes, Command, Common Patterns, Create and apply migration, Create without applying, Examples, Follow-up Commands, Full workflow (+10 more)
 
 ### Community 43 - "settings.ts"
-Cohesion: 0.20
-Nodes (17): GET(), booleanToClient(), GET(), serializeUser(), DEFAULT_PROGRAM_STEPS, DEFAULT_SETTINGS, getHealthScoreTargets(), getHealthScoreWeights() (+9 more)
+Cohesion: 0.25
+Nodes (14): GET(), DEFAULT_PROGRAM_STEPS, DEFAULT_SETTINGS, getHealthScoreTargets(), getHealthScoreWeights(), getNutritionConfig(), getProgramSteps(), getSettings() (+6 more)
 
 ### Community 44 - "prisma db seed"
 Cohesion: 0.11
@@ -371,9 +368,9 @@ Nodes (17): Best Practices, Command, Common Patterns, Common seed commands, Cond
 Cohesion: 0.11
 Nodes (17): 1. Install dotenv, 2. Import in prisma.config.ts, Application Code, Bun Users, CI/CD Considerations, Entry point, Environment Variables, Multiple .env Files (+9 more)
 
-### Community 46 - "DesignSystemGenerator"
-Cohesion: 0.18
-Nodes (3): DesignSystemGenerator, TestReasoningMatch, TestLightResultOutputCoherence
+### Community 46 - "format_ascii_box"
+Cohesion: 0.07
+Nodes (16): ansi_ljust(), _detect_page_type(), format_ascii_box(), add_wrapped(), wrap_text(), format_markdown(), format_page_override_md(), generate_design_system() (+8 more)
 
 ### Community 47 - "UI/UX Pro Max - Design Intelligence"
 Cohesion: 0.11
@@ -415,9 +412,9 @@ Nodes (16): Browser-Safe Types, Bun, "Cannot use import statement outside a modu
 Cohesion: 0.12
 Nodes (15): 1. Provider name, 2. Output is required, 3. engineType changed, 4. moduleFormat is explicit when needed, After Schema Changes, Datasource Block, Example Output Paths, Generated Entrypoints (+7 more)
 
-### Community 57 - "read_rows"
-Cohesion: 0.17
-Nodes (3): read_rows(), TestLandingAndStackContract, TestReasoningContract
+### Community 57 - "DesignSystemGenerator"
+Cohesion: 0.08
+Nodes (6): DesignSystemGenerator, _resolve_dial(), TestReasoningMatch, read_rows(), TestLandingAndStackContract, TestReasoningContract
 
 ### Community 58 - "manifest.json"
 Cohesion: 0.12
@@ -430,10 +427,6 @@ Nodes (14): All or nothing, Best Practices, Handle errors, Interactive Transacti
 ### Community 60 - "Workflow"
 Cohesion: 0.13
 Nodes (14): Error Handling, Prerequisites, Prisma Postgres Setup, Reference Files, Step 1: Authenticate, Step 2: List available regions, Step 3: Create a project with a database, Step 4: Create a named connection (optional) (+6 more)
-
-### Community 61 - "_palette_is_dark"
-Cohesion: 0.18
-Nodes (4): _palette_is_dark(), _relative_luminance(), TestEndToEndCoherence, TestLuminance
 
 ### Community 63 - "PainHeatmap3D.tsx"
 Cohesion: 0.20
@@ -455,13 +448,17 @@ Nodes (13): Commit and rollback, Contract snapshot, Error mapping, Factory, owne
 Cohesion: 0.14
 Nodes (13): 1. Console-first workflow, 2. Quick provisioning with create-db, 2b. Persistent databases with the Platform CLI, 3. Link an existing local project, 4. Programmatic provisioning with Management API, 5. Type-safe integration with Management API SDK, Core Workflows, How to Use (+5 more)
 
+### Community 69 - "GET"
+Cohesion: 0.67
+Nodes (3): booleanToClient(), GET(), serializeUser()
+
 ### Community 70 - "Modal.tsx"
-Cohesion: 0.16
-Nodes (10): Article, EducationalContent(), ModalProps, ModalSize, SIZE_CLASSES, CONTENT_ICON_KEYS, CONTENT_ICONS, ContentIcon (+2 more)
+Cohesion: 0.24
+Nodes (7): Article, EducationalContent(), CONTENT_ICON_KEYS, CONTENT_ICONS, ContentIcon, DEFAULT_CONTENT_ICON, resolveContentIcon()
 
 ### Community 71 - "nutrition-targets.ts"
-Cohesion: 0.20
-Nodes (11): HealthScoreWeights, ACTIVITY_MULTIPLIERS, goalBucket, MacroSplit, NutritionConfig, NutritionGoalKey, NutritionProfile, NutritionTargets (+3 more)
+Cohesion: 0.24
+Nodes (8): ACTIVITY_MULTIPLIERS, DEFAULT_NUTRITION_CONFIG, goalBucket, MacroSplit, NutritionGoalKey, NutritionProfile, NutritionTargets, profile
 
 ### Community 72 - "prisma db execute"
 Cohesion: 0.15
@@ -513,11 +510,11 @@ Nodes (11): 1. Schema Configuration, 2. Config Configuration, 3. Environment Var
 
 ### Community 84 - "body-regions.ts"
 Cohesion: 0.21
-Nodes (10): BODY_BUCKET_LABELS, BODY_BUCKET_POSITIONS, BODY_BUCKETS, BODY_REGIONS, BodyFamily, BodyRegion, BodyView, FAMILY_KEYWORDS (+2 more)
+Nodes (11): BODY_BUCKET_LABELS, BODY_BUCKET_POSITIONS, BODY_BUCKETS, BODY_REGIONS, BodyFamily, BodyRegion, BodyView, FAMILY_KEYWORDS (+3 more)
 
 ### Community 85 - "healthScore.ts"
-Cohesion: 0.24
-Nodes (9): buildHealthDataFromLogs(), calculateHealthScore(), DEFAULT_HEALTH_TARGETS, DEFAULT_HEALTH_WEIGHTS, HealthScoreInput, HealthScoreOptions, HealthScoreTargets, optimal (+1 more)
+Cohesion: 0.20
+Nodes (11): DailyHealthData, DEFAULT_HEALTH_TARGETS, DEFAULT_HEALTH_WEIGHTS, HealthScoreInput, HealthScoreOptions, HealthScoreTargets, HealthScoreWeights, optimal (+3 more)
 
 ### Community 86 - "SQL Server Setup"
 Cohesion: 0.18
@@ -570,10 +567,6 @@ Nodes (9): Adapter choices, Connection setup, console-and-connections, Console w
 ### Community 98 - "management-api-sdk"
 Cohesion: 0.20
 Nodes (9): Full SDK (OAuth + refresh), Install, management-api-sdk, OAuth SDK flow, Priority, References, Simple client (existing token), Why It Matters (+1 more)
-
-### Community 99 - "_contrast_ratio"
-Cohesion: 0.22
-Nodes (4): _button_outline_text_color(), _contrast_ratio(), _derive_dark_palette(), format_master_md()
 
 ### Community 100 - "prisma migrate status"
 Cohesion: 0.22
@@ -671,10 +664,6 @@ Nodes (4): child, env, prismaBin, root
 Cohesion: 0.47
 Nodes (3): split_values(), style_identities(), TestStyleIdentityContract
 
-### Community 129 - "settings/page.tsx"
-Cohesion: 0.33
-Nodes (4): AdminSettingsPage(), SettingsResponse, WEIGHT_HINTS, WEIGHT_LABELS
-
 ### Community 130 - "CLAUDE.md"
 Cohesion: 0.33
 Nodes (4): 1. Think Before Coding, 2. Simplicity First, 3. Surgical Changes, 4. Goal-Driven Execution
@@ -697,23 +686,23 @@ Nodes (4): Food, 5. Database Setup, Create an admin account, Seed the food datab
 
 ## Knowledge Gaps
 - **21 isolated node(s):** `@fontsource/vazirmatn`, `autoprefixer`, `class-variance-authority`, `postcss`, `react-dom` (+16 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1454 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1452 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `next` connect `next` to `[id]/page.tsx`, `content/page.tsx`, `toPersianDigits`, `send-otp/route.ts`, `server.js`, `vitest`, `utils.ts`, `settings.ts`, `package.json`, `lucide-react`, `user/route.ts`, `app/layout.tsx`, `PainHeatmap3D.tsx`?**
-  _High betweenness centrality (0.040) - this node is a cross-community bridge._
+- **Why does `next` connect `next` to `[id]/page.tsx`, `content/page.tsx`, `toPersianDigits`, `send-otp/route.ts`, `server.js`, `vitest`, `utils.ts`, `settings.ts`, `package.json`, `lucide-react`, `nutrition/page.tsx`, `user/route.ts`, `app/layout.tsx`, `PainHeatmap3D.tsx`?**
+  _High betweenness centrality (0.041) - this node is a cross-community bridge._
 - **What connects `@fontsource/vazirmatn`, `autoprefixer`, `class-variance-authority` to the rest of the system?**
   _21 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `next` be split into smaller, more focused modules?**
-  _Cohesion score 0.0531839954916878 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05290636964845109 - nodes in this community are weakly interconnected._
 - **Why does `Food` connect `5. Database Setup` to `content/page.tsx`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **Should `content/page.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.09430379746835443 - nodes in this community are weakly interconnected._
-- **Why does `react` connect `utils.ts` to `content/page.tsx`, `[id]/page.tsx`, `toPersianDigits`, `settings/page.tsx`, `Modal.tsx`, `package.json`, `lucide-react`, `CorrectionalCalendar.tsx`, `app/layout.tsx`, `PainHeatmap3D.tsx`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+  _Cohesion score 0.09272151898734177 - nodes in this community are weakly interconnected._
 - **Should `validate_data.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.07115384615384615 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06946386946386947 - nodes in this community are weakly interconnected._
+- **Should `toPersianDigits` be split into smaller, more focused modules?**
+  _Cohesion score 0.1196808510638298 - nodes in this community are weakly interconnected._

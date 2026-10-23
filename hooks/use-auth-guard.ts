@@ -55,4 +55,19 @@ export function useAuthGuard() {
   return { isAuthenticated, hasHydrated };
 }
 
+/**
+ * A 401 from a data fetch means the session cookie is dead while the store
+ * still says signed in - the same out-of-step case `syncSession` handles.
+ * Clear the session and go to login instead of rendering the page with
+ * empty or false content.
+ */
+export function logoutOnUnauthorized(
+  res: Response,
+  logout: () => Promise<void>,
+  router: ReturnType<typeof useRouter>,
+): void {
+  if (res.status !== 401) return;
+  void logout().then(() => router.push('/login'));
+}
+
 export default useAuthGuard;

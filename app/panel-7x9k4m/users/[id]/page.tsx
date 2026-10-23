@@ -92,6 +92,9 @@ export default function AdminUserDetailPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [busy, setBusy] = React.useState(false);
   const [showDelete, setShowDelete] = React.useState(false);
+  // The role and active toggles change what the account can do, so they ask
+  // first - the same confirmation pattern the user list uses.
+  const [pendingToggle, setPendingToggle] = React.useState<'role' | 'active' | null>(null);
 
   // Refresh after a change. The first render fetches the record separately,
   // so this is only called from event handlers.
@@ -214,7 +217,7 @@ export default function AdminUserDetailPage() {
             </Link>
             <button
               type="button"
-              onClick={toggleRole}
+              onClick={() => setPendingToggle('role')}
               disabled={busy}
               className="btn btn-secondary btn-md"
             >
@@ -223,7 +226,7 @@ export default function AdminUserDetailPage() {
             </button>
             <button
               type="button"
-              onClick={toggleActive}
+              onClick={() => setPendingToggle('active')}
               disabled={busy}
               className="btn btn-secondary btn-md"
             >
@@ -452,6 +455,56 @@ export default function AdminUserDetailPage() {
           )}
         </section>
       </div>
+
+      <ConfirmDialog
+        open={pendingToggle !== null}
+        onClose={() => setPendingToggle(null)}
+        onConfirm={() => {
+          if (pendingToggle === 'role') void toggleRole();
+          else void toggleActive();
+        }}
+        title={pendingToggle === 'role' ? 'تغییر نقش کاربر' : 'تغییر وضعیت حساب'}
+        tone={
+          (pendingToggle === 'role' && user.role === 'ADMIN') ||
+          (pendingToggle === 'active' && user.isActive)
+            ? 'danger'
+            : 'default'
+        }
+        confirmLabel={
+          pendingToggle === 'role'
+            ? user.role === 'ADMIN'
+              ? 'بله، دسترسی لغو شود'
+              : 'بله، ارتقا داده شود'
+            : user.isActive
+              ? 'بله، غیرفعال شود'
+              : 'بله، فعال شود'
+        }
+        message={
+          pendingToggle === 'role' ? (
+            user.role === 'ADMIN' ? (
+              <>
+                دسترسی مدیریتی <strong>{user.phoneNumber ?? 'این کاربر'}</strong> لغو می‌شود و او
+                دیگر به پنل دسترسی نخواهد داشت.
+              </>
+            ) : (
+              <>
+                کاربر <strong>{user.phoneNumber ?? 'این کاربر'}</strong> به مدیر ارتقا می‌یابد و به
+                پنل و تمام داده کاربران دسترسی خواهد داشت.
+              </>
+            )
+          ) : user.isActive ? (
+            <>
+              حساب <strong>{user.phoneNumber ?? 'این کاربر'}</strong> غیرفعال می‌شود و او دیگر وارد
+              سامانه نخواهد شد.
+            </>
+          ) : (
+            <>
+              حساب <strong>{user.phoneNumber ?? 'این کاربر'}</strong> فعال می‌شود و می‌تواند دوباره
+              وارد سامانه شود.
+            </>
+          )
+        }
+      />
 
       <ConfirmDialog
         open={showDelete}
