@@ -1,0 +1,120 @@
+{
+  "nodes": [
+    {
+      "id": "public_icon",
+      "label": "Elajgar app icon (512×512 SVG)",
+      "file_type": "image",
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_icon_rounded_rect_background",
+      "label": "Rounded rectangle background (rx=100)",
+      "file_type": "concept",
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_icon_brand_blue",
+      "label": "Brand blue #2563EB",
+      "file_type": "concept",
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "public_icon_white_stroked_symbol",
+      "label": "White stroked foreground symbol (stroke #FFFFFF, width 22, round caps/joins)",
+      "file_type": "concept",
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "public_icon",
+      "target": "public_icon_rounded_rect_background",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "public_icon",
+      "target": "public_icon_brand_blue",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "public_icon",
+      "target": "public_icon_white_stroked_symbol",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "public_icon_brand_blue",
+      "target": "public_icon_white_stroked_symbol",
+      "relation": "contrasts_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "public_icon_white_stroked_symbol",
+      "target": "public_icon_brand_blue",
+      "relation": "depicts_on",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "public_icon_composition",
+      "label": "Icon design composition",
+      "nodes": [
+        "public_icon_rounded_rect_background",
+        "public_icon_brand_blue",
+        "public_icon_white_stroked_symbol"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/sadegh/Elajgar/public/icon.svg"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "/Users/sadegh/Elajgar/public/icon.svg": 4
+  }
+}

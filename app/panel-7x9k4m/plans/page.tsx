@@ -4,6 +4,7 @@ import * as React from 'react';
 import { CreditCard, Pencil, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
+  AdminNumberInput,
   AdminPageHeader,
   AdminSearch,
   AdminTable,
@@ -59,9 +60,19 @@ export default function AdminPlansPage() {
   const [editing, setEditing] = React.useState<Plan | null>(null);
   const [isCreating, setIsCreating] = React.useState(false);
   const [form, setForm] = React.useState<PlanForm>(EMPTY_FORM);
-  const [formError, setFormError] = React.useState<string | null>(null);
+  /** Which field is at fault (null = the form as a whole), plus the message. */
+  const [formError, setFormError] = React.useState<{
+    field: 'title' | 'key' | null;
+    message: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+
+  // The modal error carries a stable id, so the offending field can point at
+  // it with aria-describedby while aria-invalid marks the field itself.
+  const errorId = React.useId();
+
   const [pendingDelete, setPendingDelete] = React.useState<Plan | null>(null);
+  const [pendingToggle, setPendingToggle] = React.useState<Plan | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
   const { items, isLoading, error, reload } = useAdminResource<Plan>('/api/admin/plans', {});
@@ -110,11 +121,11 @@ export default function AdminPlansPage() {
     event.preventDefault();
 
     if (!form.title.trim()) {
-      setFormError('عنوان پلن الزامی است');
+      setFormError({ field: 'title', message: 'عنوان پلن الزامی است' });
       return;
     }
     if (!form.key.trim()) {
-      setFormError('شناسه پلن الزامی است');
+      setFormError({ field: 'key', message: 'شناسه پلن الزامی است' });
       return;
     }
 
@@ -144,7 +155,7 @@ export default function AdminPlansPage() {
       closeModal();
       reload();
     } else {
-      setFormError(result.error ?? 'ذخیره انجام نشد');
+      setFormError({ field: null, message: result.error ?? 'ذخیره انجام نشد' });
     }
 
     setIsSaving(false);
@@ -162,6 +173,10 @@ export default function AdminPlansPage() {
     }
 
     setBusyId(null);
+  };
+
+  const confirmToggle = () => {
+    if (pendingToggle) toggleActive(pendingToggle);
   };
 
   const confirmDelete = async () => {
@@ -252,7 +267,7 @@ export default function AdminPlansPage() {
           </button>
           <button
             type="button"
-            onClick={() => toggleActive(plan)}
+            onClick={() => setPendingToggle(plan)}
             disabled={busyId === plan.id}
             aria-label={plan.isActive ? `غیرفعال کردن ${plan.title}` : `فعال کردن ${plan.title}`}
             title={plan.isActive ? 'غیرفعال کردن' : 'فعال کردن'}
@@ -322,8 +337,13 @@ export default function AdminPlansPage() {
                 id="plan-title"
                 type="text"
                 value={form.title}
-                onChange={(event) => setForm({ ...form, title: event.target.value })}
+                onChange={(event) => {
+                  setForm({ ...form, title: event.target.value });
+                  setFormError(null);
+                }}
                 className="input"
+                aria-invalid={formError?.field === 'title' || undefined}
+                aria-describedby={formError?.field === 'title' ? errorId : undefined}
               />
             </div>
             <div>
@@ -334,11 +354,16 @@ export default function AdminPlansPage() {
                 id="plan-key"
                 type="text"
                 value={form.key}
-                onChange={(event) => setForm({ ...form, key: event.target.value })}
+                onChange={(event) => {
+                  setForm({ ...form, key: event.target.value });
+                  setFormError(null);
+                }}
                 placeholder="pro"
                 className="input"
                 dir="ltr"
                 disabled={editing !== null}
+                aria-invalid={formError?.field === 'key' || undefined}
+                aria-describedby={formError?.field === 'key' ? errorId : undefined}
               />
             </div>
           </div>
@@ -348,38 +373,33 @@ export default function AdminPlansPage() {
               <label className="block text-sm font-medium mb-1" htmlFor="plan-price">
                 قیمت ماهانه (تومان)
               </label>
-              <input
+              <AdminNumberInput
                 id="plan-price"
-                type="number"
-                min="0"
+                inputMode="numeric"
                 value={form.price}
-                onChange={(event) => setForm({ ...form, price: event.target.value })}
-                className="input"
+                onChange={(value) => setForm({ ...form, price: value })}
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="plan-duration">
                 مدت اشتراک (روز)
               </label>
-              <input
+              <AdminNumberInput
                 id="plan-duration"
-                type="number"
-                min="1"
+                inputMode="numeric"
                 value={form.durationDays}
-                onChange={(event) => setForm({ ...form, durationDays: event.target.value })}
-                className="input"
+                onChange={(value) => setForm({ ...form, durationDays: value })}
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="plan-order">
                 ترتیب نمایش
               </label>
-              <input
+              <AdminNumberInput
                 id="plan-order"
-                type="number"
+                inputMode="numeric"
                 value={form.sortOrder}
-                onChange={(event) => setForm({ ...form, sortOrder: event.target.value })}
-                className="input"
+                onChange={(value) => setForm({ ...form, sortOrder: value })}
               />
             </div>
           </div>
@@ -433,8 +453,12 @@ export default function AdminPlansPage() {
           </div>
 
           {formError && (
-            <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
-              {formError}
+            <p
+              id={errorId}
+              role="alert"
+              className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2"
+            >
+              {formError.message}
             </p>
           )}
 
@@ -449,6 +473,32 @@ export default function AdminPlansPage() {
           </div>
         </form>
       </Modal>
+
+      {/* The activate/deactivate toggle changes what users can buy, so it
+          asks first - same pattern as the delete dialog. */}
+      <ConfirmDialog
+        open={pendingToggle !== null}
+        onClose={() => setPendingToggle(null)}
+        onConfirm={confirmToggle}
+        title={
+          pendingToggle?.isActive ? 'غیرفعال کردن پلن' : 'فعال کردن پلن'
+        }
+        tone={pendingToggle?.isActive ? 'danger' : 'default'}
+        confirmLabel={pendingToggle?.isActive ? 'بله، غیرفعال شود' : 'بله، فعال شود'}
+        message={
+          pendingToggle?.isActive ? (
+            <>
+              پلن <strong>{pendingToggle.title}</strong> از فروش خارج می‌شود و دیگر در صفحه
+              پیشنهاد به کاربران نشان داده نمی‌شود. اشتراک‌های فعال فعلی باقی می‌مانند.
+            </>
+          ) : (
+            <>
+              پلن <strong>{pendingToggle?.title}</strong> دوباره قابل خرید می‌شود و در صفحه
+              پیشنهاد به کاربران نمایش داده می‌شود.
+            </>
+          )
+        }
+      />
 
       <ConfirmDialog
         open={pendingDelete !== null}

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { BookOpen, Dumbbell, Pencil, Plus, Trash2, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
+  AdminNumberInput,
   AdminPageHeader,
   AdminPagination,
   AdminSearch,
@@ -178,7 +179,9 @@ function ArticlesTab({
     icon: 'book',
     readTime: '۴ دقیقه',
     isPublished: true,
-    sortOrder: 0,
+    // The numeric field holds a string, like every other admin form: the
+    // input hands back the digit-normalised text and save parses it.
+    sortOrder: '0',
   });
   const [formError, setFormError] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -195,7 +198,7 @@ function ArticlesTab({
       icon: 'book',
       readTime: '۴ دقیقه',
       isPublished: true,
-      sortOrder: total,
+      sortOrder: String(total),
     });
     setFormError(null);
     setIsCreating(true);
@@ -213,7 +216,7 @@ function ArticlesTab({
       icon: article.icon,
       readTime: article.readTime ?? '',
       isPublished: article.isPublished,
-      sortOrder: article.sortOrder,
+      sortOrder: String(article.sortOrder),
     });
     setEditing(article);
   };
@@ -498,12 +501,11 @@ function ArticlesTab({
               <label className="block text-sm font-medium mb-1" htmlFor="article-order">
                 ترتیب نمایش
               </label>
-              <input
+              <AdminNumberInput
                 id="article-order"
-                type="number"
+                inputMode="numeric"
                 value={form.sortOrder}
-                onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) })}
-                className="input"
+                onChange={(value) => setForm({ ...form, sortOrder: value })}
               />
             </div>
             <label className="flex items-center gap-3 cursor-pointer sm:mt-7">
@@ -586,13 +588,15 @@ function ExercisesTab({
     description: '',
     category: 'کششی',
     level: 'مبتدی',
-    durationMinutes: 5,
-    sets: 3,
-    reps: 10,
+    // The numeric fields hold strings, like every other admin form: the input
+    // hands back the digit-normalised text and save parses it.
+    durationMinutes: '5',
+    sets: '3',
+    reps: '10',
     emoji: '🧘',
     targetTags: '',
     isPublished: true,
-    sortOrder: 0,
+    sortOrder: '0',
   });
   const [formError, setFormError] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -605,13 +609,13 @@ function ExercisesTab({
       description: '',
       category: 'کششی',
       level: 'مبتدی',
-      durationMinutes: 5,
-      sets: 3,
-      reps: 10,
+      durationMinutes: '5',
+      sets: '3',
+      reps: '10',
       emoji: '🧘',
       targetTags: '',
       isPublished: true,
-      sortOrder: total,
+      sortOrder: String(total),
     });
     setFormError(null);
     setIsCreating(true);
@@ -625,13 +629,13 @@ function ExercisesTab({
       description: exercise.description ?? '',
       category: exercise.category,
       level: exercise.level,
-      durationMinutes: exercise.durationMinutes,
-      sets: exercise.sets,
-      reps: exercise.reps,
+      durationMinutes: String(exercise.durationMinutes),
+      sets: String(exercise.sets),
+      reps: String(exercise.reps),
       emoji: exercise.emoji,
       targetTags: (exercise.targetTags ?? []).join('، '),
       isPublished: exercise.isPublished,
-      sortOrder: exercise.sortOrder,
+      sortOrder: String(exercise.sortOrder),
     });
     setEditing(exercise);
   };
@@ -889,15 +893,11 @@ function ExercisesTab({
               <label className="block text-sm font-medium mb-1" htmlFor="exercise-duration">
                 مدت (دقیقه)
               </label>
-              <input
+              <AdminNumberInput
                 id="exercise-duration"
-                type="number"
-                min="0"
+                inputMode="numeric"
                 value={form.durationMinutes}
-                onChange={(event) =>
-                  setForm({ ...form, durationMinutes: Number(event.target.value) })
-                }
-                className="input"
+                onChange={(value) => setForm({ ...form, durationMinutes: value })}
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -905,26 +905,22 @@ function ExercisesTab({
                 <label className="block text-sm font-medium mb-1" htmlFor="exercise-sets">
                   ست
                 </label>
-                <input
+                <AdminNumberInput
                   id="exercise-sets"
-                  type="number"
-                  min="0"
+                  inputMode="numeric"
                   value={form.sets}
-                  onChange={(event) => setForm({ ...form, sets: Number(event.target.value) })}
-                  className="input"
+                  onChange={(value) => setForm({ ...form, sets: value })}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1" htmlFor="exercise-reps">
                   تکرار
                 </label>
-                <input
+                <AdminNumberInput
                   id="exercise-reps"
-                  type="number"
-                  min="0"
+                  inputMode="numeric"
                   value={form.reps}
-                  onChange={(event) => setForm({ ...form, reps: Number(event.target.value) })}
-                  className="input"
+                  onChange={(value) => setForm({ ...form, reps: value })}
                 />
               </div>
             </div>
@@ -949,12 +945,11 @@ function ExercisesTab({
               <label className="block text-sm font-medium mb-1" htmlFor="exercise-order">
                 ترتیب نمایش
               </label>
-              <input
+              <AdminNumberInput
                 id="exercise-order"
-                type="number"
+                inputMode="numeric"
                 value={form.sortOrder}
-                onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) })}
-                className="input"
+                onChange={(value) => setForm({ ...form, sortOrder: value })}
               />
             </div>
             <label className="flex items-center gap-3 cursor-pointer sm:mt-7">
@@ -1037,7 +1032,9 @@ function VideosTab({
     url: '',
     thumbnailUrl: '',
     level: 'BEGINNER',
-    durationInMinutes: 5,
+    // A string like every other admin form: the input hands back the
+    // digit-normalised text and save parses it.
+    durationInMinutes: '5',
     isPremium: false,
     isPublished: true,
     associatedPainTags: '',
@@ -1053,7 +1050,7 @@ function VideosTab({
       url: '',
       thumbnailUrl: '',
       level: 'BEGINNER',
-      durationInMinutes: 5,
+      durationInMinutes: '5',
       isPremium: false,
       isPublished: true,
       associatedPainTags: '',
@@ -1070,7 +1067,7 @@ function VideosTab({
       url: video.url,
       thumbnailUrl: video.thumbnailUrl ?? '',
       level: video.level,
-      durationInMinutes: video.durationInMinutes,
+      durationInMinutes: String(video.durationInMinutes),
       isPremium: video.isPremium,
       isPublished: video.isPublished,
       associatedPainTags: (video.associatedPainTags ?? []).join('، '),
@@ -1321,15 +1318,11 @@ function VideosTab({
               <label className="block text-sm font-medium mb-1" htmlFor="video-duration">
                 مدت (دقیقه)
               </label>
-              <input
+              <AdminNumberInput
                 id="video-duration"
-                type="number"
-                min="1"
+                inputMode="numeric"
                 value={form.durationInMinutes}
-                onChange={(event) =>
-                  setForm({ ...form, durationInMinutes: Number(event.target.value) })
-                }
-                className="input"
+                onChange={(value) => setForm({ ...form, durationInMinutes: value })}
               />
             </div>
             <div className="flex items-end gap-4 pb-2">

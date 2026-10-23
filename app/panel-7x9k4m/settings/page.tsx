@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { CalendarDays, Save, Settings as SettingsIcon, Target, Utensils, Weight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { AdminPageHeader } from '@/components/admin/AdminUI';
+import { AdminNumberInput, AdminPageHeader } from '@/components/admin/AdminUI';
 import { adminPatch } from '@/lib/admin-client';
 import { toPersianDigits } from '@/lib/utils';
 
@@ -253,15 +253,12 @@ export default function AdminSettingsPage() {
                   {WEIGHT_LABELS[key] ?? key}
                 </label>
                 <p className="text-[11px] text-on-surface-variant mb-3">{WEIGHT_HINTS[key]}</p>
-                <input
+                <AdminNumberInput
                   id={`weight-${key}`}
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
+                  inputMode="numeric"
                   value={value}
-                  onChange={(event) => setWeights({ ...weights, [key]: event.target.value })}
-                  className="input font-mono"
+                  onChange={(value) => setWeights({ ...weights, [key]: value })}
+                  className="font-mono"
                 />
               </div>
             ))}
@@ -288,29 +285,24 @@ export default function AdminSettingsPage() {
               <label className="block text-sm font-bold mb-1" htmlFor="target-calories">
                 کالری روزانه (کیلوکالری)
               </label>
-              <input
+              <AdminNumberInput
                 id="target-calories"
-                type="number"
-                min="1"
-                max="20000"
+                inputMode="numeric"
                 value={targets.calories}
-                onChange={(event) => setTargets({ ...targets, calories: event.target.value })}
-                className="input font-mono"
+                onChange={(value) => setTargets({ ...targets, calories: value })}
+                className="font-mono"
               />
             </div>
             <div>
               <label className="block text-sm font-bold mb-1" htmlFor="target-water">
                 آب روزانه (لیتر)
               </label>
-              <input
+              <AdminNumberInput
                 id="target-water"
-                type="number"
-                step="0.1"
-                min="0.1"
-                max="20"
+                inputMode="decimal"
                 value={targets.water}
-                onChange={(event) => setTargets({ ...targets, water: event.target.value })}
-                className="input font-mono"
+                onChange={(value) => setTargets({ ...targets, water: value })}
+                className="font-mono"
               />
             </div>
           </div>
@@ -332,32 +324,24 @@ export default function AdminSettingsPage() {
               <label className="block text-sm font-bold mb-1" htmlFor="nutrition-water-per-kg">
                 آب به ازای هر کیلوگرم (میلی‌لیتر)
               </label>
-              <input
+              <AdminNumberInput
                 id="nutrition-water-per-kg"
-                type="number"
-                min="10"
-                max="100"
+                inputMode="numeric"
                 value={nutrition.waterPerKgMl}
-                onChange={(event) =>
-                  setNutrition({ ...nutrition, waterPerKgMl: event.target.value })
-                }
-                className="input font-mono"
+                onChange={(value) => setNutrition({ ...nutrition, waterPerKgMl: value })}
+                className="font-mono"
               />
             </div>
             <div>
               <label className="block text-sm font-bold mb-1" htmlFor="nutrition-water-default">
                 هدف پیش‌فرض آب (میلی‌لیتر)
               </label>
-              <input
+              <AdminNumberInput
                 id="nutrition-water-default"
-                type="number"
-                min="500"
-                max="10000"
+                inputMode="numeric"
                 value={nutrition.defaultWaterMl}
-                onChange={(event) =>
-                  setNutrition({ ...nutrition, defaultWaterMl: event.target.value })
-                }
-                className="input font-mono"
+                onChange={(value) => setNutrition({ ...nutrition, defaultWaterMl: value })}
+                className="font-mono"
               />
             </div>
           </div>
@@ -375,14 +359,13 @@ export default function AdminSettingsPage() {
                 <label className="block text-sm font-medium mb-1" htmlFor={`nutrition-${field}`}>
                   {label}
                 </label>
-                <input
+                <AdminNumberInput
                   id={`nutrition-${field}`}
-                  type="number"
-                  min="-2000"
-                  max="2000"
+                  inputMode="numeric"
+                  signed
                   value={nutrition[field]}
-                  onChange={(event) => setNutrition({ ...nutrition, [field]: event.target.value })}
-                  className="input font-mono"
+                  onChange={(value) => setNutrition({ ...nutrition, [field]: value })}
+                  className="font-mono"
                 />
               </div>
             ))}
@@ -400,22 +383,20 @@ export default function AdminSettingsPage() {
                     <label className="block text-[11px] text-on-surface-variant mb-1" htmlFor={`macro-${bucket}-${field}`}>
                       {field === 'protein' ? 'پروتئین' : field === 'carbs' ? 'کربوهیدرات' : 'چربی'}
                     </label>
-                    <input
+                    <AdminNumberInput
                       id={`macro-${bucket}-${field}`}
-                      type="number"
-                      min="0"
-                      max="100"
+                      inputMode="numeric"
                       value={macros[bucket]?.[field] ?? ''}
-                      onChange={(event) =>
+                      onChange={(value) =>
                         setMacros({
                           ...macros,
                           [bucket]: {
                             ...macros[bucket],
-                            [field]: event.target.value,
+                            [field]: value,
                           },
                         })
                       }
-                      className="input font-mono"
+                      className="font-mono"
                     />
                   </div>
                 ))}

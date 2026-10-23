@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Pencil, Plus, Trash2, Utensils } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
+  AdminNumberInput,
   AdminPageHeader,
   AdminPagination,
   AdminSearch,
@@ -44,8 +45,16 @@ export default function AdminFoodsPage() {
   const [editing, setEditing] = React.useState<Food | null>(null);
   const [isCreating, setIsCreating] = React.useState(false);
   const [form, setForm] = React.useState<FoodForm>(EMPTY_FORM);
-  const [formError, setFormError] = React.useState<string | null>(null);
+  /** Which field is at fault (null = the form as a whole), plus the message. */
+  const [formError, setFormError] = React.useState<{
+    field: 'name' | null;
+    message: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+
+  // The modal error carries a stable id, so the offending field can point at
+  // it with aria-describedby while aria-invalid marks the field itself.
+  const errorId = React.useId();
 
   const [pendingDelete, setPendingDelete] = React.useState<Food | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
@@ -94,7 +103,7 @@ export default function AdminFoodsPage() {
     event.preventDefault();
 
     if (!form.name.trim()) {
-      setFormError('نام غذا الزامی است');
+      setFormError({ field: 'name', message: 'نام غذا الزامی است' });
       return;
     }
 
@@ -117,7 +126,7 @@ export default function AdminFoodsPage() {
       closeModal();
       reload();
     } else {
-      setFormError(result.error ?? 'ذخیره انجام نشد');
+      setFormError({ field: null, message: result.error ?? 'ذخیره انجام نشد' });
     }
 
     setIsSaving(false);
@@ -251,9 +260,14 @@ export default function AdminFoodsPage() {
               id="food-name"
               type="text"
               value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              onChange={(event) => {
+                setForm({ ...form, name: event.target.value });
+                setFormError(null);
+              }}
               placeholder="مثال: نان بربری (یک کف دست)"
               className="input"
+              aria-invalid={formError?.field === 'name' || undefined}
+              aria-describedby={formError?.field === 'name' ? errorId : undefined}
             />
           </div>
 
@@ -270,22 +284,23 @@ export default function AdminFoodsPage() {
                 <label className="block text-sm font-medium mb-1" htmlFor={`food-${field}`}>
                   {label}
                 </label>
-                <input
+                <AdminNumberInput
                   id={`food-${field}`}
-                  type="number"
-                  step="0.1"
-                  min="0"
+                  inputMode="decimal"
                   value={form[field]}
-                  onChange={(event) => setForm({ ...form, [field]: event.target.value })}
-                  className="input"
+                  onChange={(value) => setForm({ ...form, [field]: value })}
                 />
               </div>
             ))}
           </div>
 
           {formError && (
-            <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
-              {formError}
+            <p
+              id={errorId}
+              role="alert"
+              className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2"
+            >
+              {formError.message}
             </p>
           )}
 

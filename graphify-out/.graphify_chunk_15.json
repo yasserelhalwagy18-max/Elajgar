@@ -1,0 +1,491 @@
+{
+  "nodes": [
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_list_regions",
+      "label": "List regions (GET /v1/regions/postgres)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_create_project",
+      "label": "Create project (POST /v1/projects)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_get_database",
+      "label": "Get database (GET /v1/databases/{databaseId})",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_create_connection",
+      "label": "Create connection (POST /v1/databases/{databaseId}/connections)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_delete_database",
+      "label": "Delete database (DELETE /v1/databases/{databaseId})",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_list_projects",
+      "label": "List projects (GET /v1/projects)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_delete_project",
+      "label": "Delete project (DELETE /v1/projects/{projectId})",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_database_url",
+      "label": "DATABASE_URL from direct connection string",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_api_basics_base_url",
+      "label": "Management API base URL (https://api.prisma.io/v1)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_api_basics_response_envelope",
+      "label": "Response envelope (data wrapper)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_api_basics_resource_id_prefixes",
+      "label": "Resource ID prefixes (proj_, db_, con_, wksp_)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_api_basics_pagination",
+      "label": "Cursor-based pagination",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_api_basics_error_responses",
+      "label": "Error response envelope (error.code / error.message)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_api_basics_error_codes",
+      "label": "Error codes by HTTP status (400, 401, 403, 404, 422, 429, 500)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_api_basics_self_correction_patterns",
+      "label": "Self-correction patterns for API errors",
+      "file_type": "rationale",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_prisma7_client_prisma_client_v7",
+      "label": "Prisma Client v7",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_prisma7_client_driver_adapter_pattern",
+      "label": "Driver adapter pattern (PrismaPg over pg.Pool)",
+      "file_type": "rationale",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_prisma7_client_pg_pool",
+      "label": "pg.Pool connection pool",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_prisma7_client_esm_requirement",
+      "label": "ESM module requirement (\"type\": \"module\")",
+      "file_type": "rationale",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_auth_service_tokens",
+      "label": "Service tokens (workspace-scoped API authentication)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_auth_prisma_service_token",
+      "label": "PRISMA_SERVICE_TOKEN environment variable",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_auth_oauth_2_0",
+      "label": "OAuth 2.0 (user-scoped access)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_auth_security_practices",
+      "label": "Service token security practices",
+      "file_type": "rationale",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_auth_prisma_postgres_integrator_skill",
+      "label": "prisma-postgres-integrator skill (OAuth details)",
+      "file_type": "document",
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_endpoints_create_project",
+      "target": "_agents_skills_prisma_postgres_setup_references_endpoints_database_url",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_endpoints_create_connection",
+      "target": "_agents_skills_prisma_postgres_setup_references_endpoints_database_url",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_endpoints_create_project",
+      "target": "_agents_skills_prisma_postgres_setup_references_endpoints_get_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_endpoints_list_projects",
+      "target": "_agents_skills_prisma_postgres_setup_references_api_basics_pagination",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_endpoints_create_project",
+      "target": "_agents_skills_prisma_postgres_setup_references_api_basics_response_envelope",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_endpoints_create_project",
+      "target": "_agents_skills_prisma_postgres_setup_references_api_basics_base_url",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_api_basics_self_correction_patterns",
+      "target": "_agents_skills_prisma_postgres_setup_references_api_basics_error_codes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_auth_service_tokens",
+      "target": "_agents_skills_prisma_postgres_setup_references_auth_prisma_service_token",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_auth_service_tokens",
+      "target": "_agents_skills_prisma_postgres_setup_references_auth_prisma_postgres_integrator_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_auth_service_tokens",
+      "target": "_agents_skills_prisma_postgres_setup_references_api_basics_base_url",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_auth_oauth_2_0",
+      "target": "_agents_skills_prisma_postgres_setup_references_auth_service_tokens",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.65,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_prisma7_client_prisma_client_v7",
+      "target": "_agents_skills_prisma_postgres_setup_references_prisma7_client_driver_adapter_pattern",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_prisma7_client_pg_pool",
+      "target": "_agents_skills_prisma_postgres_setup_references_prisma7_client_driver_adapter_pattern",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_prisma7_client_pg_pool",
+      "target": "_agents_skills_prisma_postgres_setup_references_prisma7_client_prisma_client_v7",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_prisma7_client_prisma_client_v7",
+      "target": "_agents_skills_prisma_postgres_setup_references_prisma7_client_esm_requirement",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_prisma7_client_pg_pool",
+      "target": "_agents_skills_prisma_postgres_setup_references_endpoints_database_url",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_agents_skills_prisma_postgres_setup_references_prisma7_client_prisma_client_v7",
+      "target": "_agents_skills_prisma_postgres_setup_references_endpoints_database_url",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.65,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_endpoints_database_setup_flow",
+      "label": "Prisma Postgres database setup flow",
+      "nodes": [
+        "_agents_skills_prisma_postgres_setup_references_endpoints_create_project",
+        "_agents_skills_prisma_postgres_setup_references_endpoints_get_database",
+        "_agents_skills_prisma_postgres_setup_references_endpoints_create_connection",
+        "_agents_skills_prisma_postgres_setup_references_endpoints_database_url"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md"
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_api_basics_api_conventions",
+      "label": "Prisma Management API conventions",
+      "nodes": [
+        "_agents_skills_prisma_postgres_setup_references_api_basics_base_url",
+        "_agents_skills_prisma_postgres_setup_references_api_basics_response_envelope",
+        "_agents_skills_prisma_postgres_setup_references_api_basics_resource_id_prefixes",
+        "_agents_skills_prisma_postgres_setup_references_api_basics_pagination"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md"
+    },
+    {
+      "id": "_agents_skills_prisma_postgres_setup_references_auth_api_authentication_flow",
+      "label": "Management API authentication flow",
+      "nodes": [
+        "_agents_skills_prisma_postgres_setup_references_auth_service_tokens",
+        "_agents_skills_prisma_postgres_setup_references_auth_prisma_service_token",
+        "_agents_skills_prisma_postgres_setup_references_api_basics_base_url"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "coverage": {
+    "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/endpoints.md": 223,
+    "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/api-basics.md": 102,
+    "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/prisma7-client.md": 82,
+    "/Users/sadegh/Elajgar/.agents/skills/prisma-postgres-setup/references/auth.md": 46
+  }
+}

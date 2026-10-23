@@ -100,6 +100,12 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
   };
 
   const submitOtp = async (codeOverride?: string) => {
+    // In-flight guard. The disabled button does not stop a form submit -
+    // pressing Enter while a verification is still running would fire a
+    // second request for the same code. `isLoading` is the one gate every
+    // entry point into this function shares.
+    if (isLoading) return;
+
     const code = codeOverride ?? otp;
     setOtpError('');
     setIsLoading(true);
@@ -159,7 +165,11 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
     setPhoneNumber(normalized);
 
     if (!/^09[0-9]{9}$/.test(normalized)) {
-      setPasswordError('شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود');
+      // The broken field is the phone, not the password: the error travels
+      // with it (aria-invalid + aria-describedby on #login-phone) instead of
+      // stacking under the password field where it did not belong.
+      setPhoneError('شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود');
+      setPasswordError('');
       return;
     }
     if (!password) {
@@ -295,7 +305,7 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
           <p className="text-sm text-on-surface-variant text-center mb-6">{subtitle}</p>
 
           {step === 'phone' ? (
-            <form onSubmit={handlePhoneSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handlePhoneSubmit} noValidate className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1" htmlFor="phone">
                   شماره موبایل
@@ -380,7 +390,7 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
               </div>
               <button
                 type="submit"
-                disabled={!!otpError || isLoading}
+                disabled={isLoading}
                 className="btn btn-primary w-full py-2.5"
               >
                 {isLoading ? 'در حال بررسی...' : 'تایید'}
@@ -413,7 +423,7 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
               </button>
             </form>
           ) : step === 'password' ? (
-            <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handlePasswordSubmit} noValidate className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1" htmlFor="login-phone">
                   شماره موبایل
@@ -424,13 +434,18 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
                   inputMode="numeric"
                   autoComplete="tel"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(normalizeDigits(e.target.value))}
+                  onChange={(e) => { setPhoneNumber(normalizeDigits(e.target.value)); if (phoneError) setPhoneError(''); }}
                   placeholder="09123456789"
-                  className="input text-left"
+                  aria-invalid={!!phoneError}
+                  aria-describedby={phoneError ? 'login-phone-error' : undefined}
+                  className={`input text-left ${phoneError ? 'border-error' : ''}`}
                   dir="ltr"
                   required
                   disabled={isLoading}
                 />
+                {phoneError && (
+                  <p id="login-phone-error" role="alert" className="text-error text-xs mt-1">{phoneError}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1" htmlFor="login-password">
@@ -463,7 +478,7 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
               </button>
               <button
                 type="button"
-                onClick={() => { setStep('phone'); setPasswordError(''); setPassword(''); }}
+                onClick={() => { setStep('phone'); setPasswordError(''); setPassword(''); setPhoneError(''); }}
                 disabled={isLoading}
                 className="btn btn-ghost btn-md w-full"
               >

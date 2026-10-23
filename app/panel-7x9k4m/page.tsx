@@ -195,7 +195,11 @@ export default function AdminOverviewPage() {
             ثبت‌نام‌های هفت روز گذشته
           </h3>
 
-          <div className="flex items-end gap-2 h-40" role="img" aria-label="نمودار ثبت‌نام هفت روز گذشته">
+          {/* No `role="img"` here: it would make every bar's visible text
+              presentational and drop it from reading order. The day and its
+              count are real text next to each bar, so the chart is already
+              readable without it. */}
+          <div className="flex items-end gap-2 h-40">
             {(stats?.signupTrend ?? []).map((day) => {
               const height = Math.round((day.count / maxSignup) * 100);
               return (

@@ -348,10 +348,13 @@ export default function LandingPage() {
            {/* The percentage is real data from the database. When it has not
                arrived yet (or is zero) the box is left out by design: a
                «تخفیف ویژه ۰٪» promise is worse than no box at all. */}
+           {/* A dark chip, not a white wash: over the gradient, `bg-white/15`
+               dropped the text to roughly 3.6:1, below AA. White on near-black
+               keeps every word readable. */}
            {stats.bestDiscount > 0 && (
-           <div className="relative z-10 flex flex-col items-center justify-center bg-white/15 backdrop-blur-md p-8 rounded-3xl border border-white/30">
+           <div className="relative z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md p-8 rounded-3xl border border-white/10">
               <span className="text-sm text-white/90 mb-1 tracking-widest font-bold">تخفیف ویژه</span>
-              <span className="text-6xl font-black drop-shadow-md">{toPersianDigits(stats.bestDiscount)}٪</span>
+              <span className="text-6xl font-black">{toPersianDigits(stats.bestDiscount)}٪</span>
               <Link href="/login" className="btn mt-6 bg-surface-container text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl text-center">
                 دریافت پیشنهاد
               </Link>

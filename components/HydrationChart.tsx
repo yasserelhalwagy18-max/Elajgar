@@ -197,15 +197,19 @@ export default function HydrationChart() {
     }
 
     return (
-        <div className="w-full mt-4">
+        <figure className="w-full mt-4">
+            {/* `role="img"` made the wrapper presentational with a focusable
+                child inside it; a figure caption names the chart without
+                hiding anything. The numbers live in the data table below. */}
+            <figcaption className="sr-only">
+                نمودار مصرف آب هفت روز گذشته
+            </figcaption>
             <div
                 ref={wrapperRef}
                 className="w-full h-[150px] flex items-center justify-center relative"
                 dir="ltr"
-                role="img"
-                aria-label="نمودار مصرف آب هفت روز گذشته"
             >
-                <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="none"></svg>
+                <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="none" aria-hidden="true"></svg>
             </div>
             {/* The chart itself carries no numbers for a screen reader, and the
                 tooltip can only be reached with a pointer. The table is the
@@ -215,6 +219,6 @@ export default function HydrationChart() {
                 columns={['روز', 'آب (لیتر)']}
                 rows={activeData.map((d) => [d.day, formatNumber(d.amount, 1)])}
             />
-        </div>
+        </figure>
     );
 }

@@ -645,7 +645,9 @@ export async function POST(request: Request) {
 
     // `upsert` on id: the session guarantees the row already exists, but upsert
     // keeps this endpoint working for a user created before the profile fields
-    // were migrated in.
+    // were migrated in. A payload can also carry daily logs or a questionnaire
+    // alone - nothing to write on the user row - so the upsert runs only when
+    // the user row itself has something to change.
     const update: Prisma.UserUncheckedUpdateInput = toPrismaProfile(data);
     const create: Prisma.UserUncheckedCreateInput = { id: userId, ...toPrismaCreate(data) };
 
@@ -656,7 +658,9 @@ export async function POST(request: Request) {
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.user.upsert({ where: { id: userId }, update, create });
+      if (hasScalars || painRegions !== undefined) {
+        await tx.user.upsert({ where: { id: userId }, update, create });
+      }
 
       for (const log of dailyLogs) {
         const date = new Date(`${log.date}T00:00:00.000Z`);

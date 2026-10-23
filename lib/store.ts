@@ -120,6 +120,14 @@ interface AuthState {
    * sending the user to the login screen would bounce them straight back.
    */
   syncSession: () => Promise<boolean | null>;
+  /**
+   * Push a profile snapshot to the server.
+   *
+   * With no argument the whole local profile is sent. The caller may pass a
+   * partial payload instead - the diff-push in `use-profile-sync` does - and
+   * the server then writes only the fields and daily-log rows it carries,
+   * leaving everything else untouched for the device that changed it.
+   */
   saveUserToServer: (profile?: Partial<UserProfile>) => Promise<boolean>;
   /**
    * The dates whose daily-log row exists, in its latest form, only on this

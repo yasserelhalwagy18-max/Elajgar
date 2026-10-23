@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { AlertCircle, ChevronLeft, ChevronRight, Inbox, Loader2, Search, X } from 'lucide-react';
-import { cn, toPersianDigits } from '@/lib/utils';
+import { cn, normalizeDigits, toPersianDigits } from '@/lib/utils';
 
 /**
  * The heading of an admin section.
@@ -87,6 +87,42 @@ export function AdminFilterChip({
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * A numeric admin field that accepts Persian digits.
+ *
+ * `input[type=number]` returns an empty string for Persian-Indic digits - the
+ * browser rejects them outright, so the field looks like it ignored the
+ * keyboard. This input stays `type="text"`, lets every digit style in, and
+ * normalises the value through `normalizeDigits()` as it is typed, so the
+ * form state always holds a string `Number()` can parse at save time.
+ */
+export function AdminNumberInput({
+  value,
+  onChange,
+  inputMode = 'decimal',
+  signed = false,
+  className,
+  ...inputProps
+}: Omit<React.ComponentProps<'input'>, 'type' | 'value' | 'onChange' | 'inputMode'> & {
+  value: string;
+  /** Receives the digit-normalised string. */
+  onChange: (value: string) => void;
+  inputMode?: 'numeric' | 'decimal';
+  /** Keep a leading minus, for fields a negative value is legal in. */
+  signed?: boolean;
+}) {
+  return (
+    <input
+      {...inputProps}
+      type="text"
+      inputMode={inputMode}
+      value={value}
+      onChange={(event) => onChange(normalizeDigits(event.target.value, { keepMinus: signed }))}
+      className={cn('input', className)}
+    />
   );
 }
 

@@ -32,7 +32,7 @@ export function fromDateKey(key: string): Date {
   return new Date(year!, (month ?? 1) - 1, day ?? 1);
 }
 
-export function normalizeDigits(input: string): string {
+export function normalizeDigits(input: string, options?: { keepMinus?: boolean }): string {
   return input
     .replace(/[۰-۹]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0x06f0 + 0x30))
     .replace(/[٠-٩]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0x0660 + 0x30))
@@ -41,7 +41,13 @@ export function normalizeDigits(input: string): string {
     // mark, not part of the number, so it is dropped.
     .replace(/\u066B/g, '.')
     .replace(/\u066C/g, '')
-    .replace(/[\s-]/g, '');
+    // The typographic minus becomes the hyphen-minus the number parser
+    // understands, so «−۲۰۰» and «-۲۰۰» mean the same thing.
+    .replace(/\u2212/g, '-')
+    // Whitespace never belongs inside a number. The minus sign goes with it -
+    // unless the caller asked to keep it, which a signed field (an adjustment
+    // that may be negative) has to.
+    .replace(options?.keepMinus ? /\s/g : /[\s-]/g, '');
 }
 
 /**

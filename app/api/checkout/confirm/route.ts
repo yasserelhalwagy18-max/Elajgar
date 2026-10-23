@@ -50,7 +50,20 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error confirming checkout:', error);
-    const message = error instanceof Error ? error.message : 'خطا در تایید پرداخت';
+    // Never echo `error.message` raw: a Prisma or network failure would hand
+    // its internals straight to a customer mid-payment. The business checks
+    // in `activateSubscription` throw Persian copy meant for the user - those
+    // pass through as-is; everything else gets a generic message that also
+    // says their money was not touched, which is what a failed confirm must
+    // reassure.
+    const BUSINESS_MESSAGES = new Set([
+      'پرداخت یافت نشد',
+      'این پرداخت قبلاً بازگشت داده شده است',
+    ]);
+    const message =
+      error instanceof Error && BUSINESS_MESSAGES.has(error.message)
+        ? error.message
+        : 'تایید پرداخت انجام نشد. مبلغی از حساب شما کسر نشد';
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

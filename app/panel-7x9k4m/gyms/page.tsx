@@ -5,6 +5,7 @@ import { Dumbbell, Pencil, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   AdminFilterChip,
+  AdminNumberInput,
   AdminPageHeader,
   AdminPagination,
   AdminSearch,
@@ -73,8 +74,16 @@ export default function AdminGymsPage() {
   const [editing, setEditing] = React.useState<Gym | null>(null);
   const [isCreating, setIsCreating] = React.useState(false);
   const [form, setForm] = React.useState<GymForm>(EMPTY_FORM);
-  const [formError, setFormError] = React.useState<string | null>(null);
+  /** Which field is at fault (null = the form as a whole), plus the message. */
+  const [formError, setFormError] = React.useState<{
+    field: 'name' | 'location' | null;
+    message: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+
+  // The modal error carries a stable id, so the offending fields can point
+  // at it with aria-describedby while aria-invalid marks the field itself.
+  const errorId = React.useId();
 
   const [pendingDelete, setPendingDelete] = React.useState<Gym | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
@@ -131,11 +140,11 @@ export default function AdminGymsPage() {
     event.preventDefault();
 
     if (!form.name.trim()) {
-      setFormError('نام باشگاه الزامی است');
+      setFormError({ field: 'name', message: 'نام باشگاه الزامی است' });
       return;
     }
     if (!form.location.trim()) {
-      setFormError('موقعیت باشگاه الزامی است');
+      setFormError({ field: 'location', message: 'موقعیت باشگاه الزامی است' });
       return;
     }
 
@@ -164,7 +173,7 @@ export default function AdminGymsPage() {
       closeModal();
       reload();
     } else {
-      setFormError(result.error ?? 'ذخیره انجام نشد');
+      setFormError({ field: null, message: result.error ?? 'ذخیره انجام نشد' });
     }
 
     setIsSaving(false);
@@ -336,8 +345,13 @@ export default function AdminGymsPage() {
                 id="gym-name"
                 type="text"
                 value={form.name}
-                onChange={(event) => setForm({ ...form, name: event.target.value })}
+                onChange={(event) => {
+                  setForm({ ...form, name: event.target.value });
+                  setFormError(null);
+                }}
                 className="input"
+                aria-invalid={formError?.field === 'name' || undefined}
+                aria-describedby={formError?.field === 'name' ? errorId : undefined}
               />
             </div>
             <div>
@@ -348,8 +362,13 @@ export default function AdminGymsPage() {
                 id="gym-location"
                 type="text"
                 value={form.location}
-                onChange={(event) => setForm({ ...form, location: event.target.value })}
+                onChange={(event) => {
+                  setForm({ ...form, location: event.target.value });
+                  setFormError(null);
+                }}
                 className="input"
+                aria-invalid={formError?.field === 'location' || undefined}
+                aria-describedby={formError?.field === 'location' ? errorId : undefined}
               />
             </div>
           </div>
@@ -376,29 +395,22 @@ export default function AdminGymsPage() {
               <label className="block text-sm font-medium mb-1" htmlFor="gym-rating">
                 امتیاز (۰ تا ۵)
               </label>
-              <input
+              <AdminNumberInput
                 id="gym-rating"
-                type="number"
-                step="0.1"
-                min="0"
-                max="5"
+                inputMode="decimal"
                 value={form.rating}
-                onChange={(event) => setForm({ ...form, rating: event.target.value })}
-                className="input"
+                onChange={(value) => setForm({ ...form, rating: value })}
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="gym-discount">
                 درصد تخفیف
               </label>
-              <input
+              <AdminNumberInput
                 id="gym-discount"
-                type="number"
-                min="0"
-                max="100"
+                inputMode="numeric"
                 value={form.discountPercentage}
-                onChange={(event) => setForm({ ...form, discountPercentage: event.target.value })}
-                className="input"
+                onChange={(value) => setForm({ ...form, discountPercentage: value })}
               />
             </div>
           </div>
@@ -442,8 +454,12 @@ export default function AdminGymsPage() {
           </label>
 
           {formError && (
-            <p role="alert" className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2">
-              {formError}
+            <p
+              id={errorId}
+              role="alert"
+              className="text-error text-sm font-bold bg-error/10 rounded-xl px-3 py-2"
+            >
+              {formError.message}
             </p>
           )}
 

@@ -41,6 +41,9 @@ const getStatusText = (score: number) => {
   return 'وضعیت نامطلوب';
 };
 
+/** The daily-metric fields the sleep/activity form edits (payload keys). */
+type MetricFieldKey = 'sleepHours' | 'sleepQuality' | 'activityMinutes' | 'weight' | 'painIntensity';
+
 export default function DashboardIndex() {
   // Subscribe to individual slices so an unrelated store update (e.g. adding
   // water) does not re-render the whole dashboard.
@@ -61,16 +64,20 @@ export default function DashboardIndex() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
-  // Sleep & Activity Modal state
-  const [isSleepModalOpen, setIsSleepModalOpen] = useState(false);
-  // The sleep and activity fields are strings, not numbers. A number state
-  // could not be cleared: `parseFloat(value) || 0` turned an empty field
-  // straight back into `0`, so the user could never replace the number.
-  const [sleepHours, setSleepHours] = useState<string>('7');
-  const [sleepQuality, setSleepQuality] = useState<'poor' | 'fair' | 'good'>('fair');
-  const [activityMinutes, setActivityMinutes] = useState<string>('0');
-  const [dailyWeight, setDailyWeight] = useState<string>('');
-  const [dailyPain, setDailyPain] = useState<string>('');
+  /**
+   * What the user typed into the metric fields, keyed by field, plus the
+   * date each edit belongs to.
+   *
+   * The number fields are strings, not numbers: a number state could not be
+   * cleared, because `parseFloat(value) || 0` turned an empty field straight
+   * back into `0`, so the user could never replace the number.
+   */
+  const [metricEdits, setMetricEdits] = useState<Partial<Record<MetricFieldKey, string>>>({});
+  const [metricTouchDates, setMetricTouchDates] = useState<Partial<Record<MetricFieldKey, string>>>({});
+  const touchMetric = (field: MetricFieldKey, value: string) => {
+    setMetricEdits((previous) => ({ ...previous, [field]: value }));
+    setMetricTouchDates((previous) => ({ ...previous, [field]: selectedDate }));
+  };
 
   // Timers that must be cancelled on unmount.
   const waterConfTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -84,6 +91,44 @@ export default function DashboardIndex() {
       if (disclaimerTimerRef.current) clearTimeout(disclaimerTimerRef.current);
     };
   }, []);
+
+  // Date and logs
+  // The dashboard can show any of the last 14 days, so a user can review and
+  // correct what they logged yesterday instead of being locked into "today".
+  const todayDate = toDateKey();
+  const [selectedDate, setSelectedDate] = useState<string>(todayDate);
+  const isToday = selectedDate === todayDate;
+  const dayLog = userProfile?.dailyLogs?.find(l => l.date === selectedDate) || { foods: [], waterIntake: 0, activityMinutes: 0, sleepHours: 0, sleepQuality: 'fair' as const, weight: 0, painIntensity: 0 };
+
+  /**
+   * What a metric field shows for the selected day.
+   *
+   * A field the user edited for this day shows their own value; everything
+   * else reads the day's own log, so reviewing yesterday shows what
+   * yesterday holds - not a hint for a new entry - and falls back to a
+   * suggestion for a day with nothing logged. Switching days and back
+   * preserves half-typed edits, because an edit remembers which day it is
+   * for and never bleeds into the next day's display.
+   */
+  const metricDisplay = (field: MetricFieldKey): string => {
+    if (metricTouchDates[field] === selectedDate) return metricEdits[field] ?? '';
+    switch (field) {
+      case 'sleepHours': return dayLog.sleepHours ? String(dayLog.sleepHours) : '7';
+      case 'sleepQuality': return dayLog.sleepQuality ?? 'fair';
+      case 'activityMinutes': return dayLog.activityMinutes ? String(dayLog.activityMinutes) : '0';
+      case 'weight': return dayLog.weight ? String(dayLog.weight) : '';
+      // The fallback log object carries 0 for "nothing logged", and a day
+      // with no pain report must show an empty field (the «—» placeholder),
+      // never a fabricated 0.
+      case 'painIntensity': return dayLog.painIntensity ? String(dayLog.painIntensity) : '';
+    }
+  };
+
+  const sleepHours = metricDisplay('sleepHours');
+  const sleepQuality = metricDisplay('sleepQuality') as 'poor' | 'fair' | 'good';
+  const activityMinutes = metricDisplay('activityMinutes');
+  const dailyWeight = metricDisplay('weight');
+  const dailyPain = metricDisplay('painIntensity');
 
   // Validation messages are pure derived state - compute them during render
   // instead of driving them from an effect that queues timers.
@@ -114,14 +159,6 @@ export default function DashboardIndex() {
       : null;
 
   const hasValidationError = !!(sleepError || activityError || weightError || painError);
-
-  // Date and logs
-  // The dashboard can show any of the last 14 days, so a user can review and
-  // correct what they logged yesterday instead of being locked into "today".
-  const todayDate = toDateKey();
-  const [selectedDate, setSelectedDate] = useState<string>(todayDate);
-  const isToday = selectedDate === todayDate;
-  const dayLog = userProfile?.dailyLogs?.find(l => l.date === selectedDate) || { foods: [], waterIntake: 0, activityMinutes: 0, sleepHours: 0, sleepQuality: 'fair' as const, weight: 0, painIntensity: 0 };
 
   const dateOptions = React.useMemo(() => {
     const options: { key: string; weekday: string; day: string; month: string }[] = [];
@@ -325,6 +362,14 @@ export default function DashboardIndex() {
   const handleDrinkWater = () => {
     addWater(selectedDate, 250);
 
+    // The meal quick-log announces itself with a toast; a logged glass of
+    // water used to say nothing, so a screen reader - or anyone not staring
+    // at the water card - got no confirmation. The total after this glass
+    // and the target give the announcement its "X از Y".
+    toast.success(
+      `${toPersianDigits(250)} میلی‌لیتر ثبت شد — ${formatNumber((dayLog.waterIntake || 0) + 250)} از ${formatNumber(waterTarget)} میلی‌لیتر`
+    );
+
     // Show confirmation animation
     setShowWaterConf(true);
     if (waterConfTimerRef.current) clearTimeout(waterConfTimerRef.current);
@@ -362,27 +407,47 @@ export default function DashboardIndex() {
   };
 
   const handleSaveSleepActivity = () => {
+    // Only fields the user touched for THIS day travel to the store. For a
+    // day with no log the form shows suggestions (7 hours, 0 activity), and
+    // an untouched suggestion must not write itself onto the day the user
+    // never meant to edit - "7 hours sleep" landing on a day that logged 5.
+    const touched = (field: MetricFieldKey) => metricTouchDates[field] === selectedDate;
+    const metrics: Partial<Parameters<typeof logDailyMetrics>[1]> = {};
+
+    if (touched('sleepQuality')) metrics.sleepQuality = sleepQuality;
+    if (
+      touched('sleepHours') &&
+      sleepHours.trim() !== '' &&
+      Number.isFinite(parsedSleepHours)
+    ) {
+      metrics.sleepHours = parsedSleepHours;
+    }
+    if (
+      touched('activityMinutes') &&
+      activityMinutes.trim() !== '' &&
+      Number.isFinite(parsedActivityMinutes)
+    ) {
+      metrics.activityMinutes = parsedActivityMinutes;
+    }
+
+    // An empty field means "not recorded", not zero - the same rule the
+    // health score already follows for a day with no data.
     const parsedWeight = dailyWeight.trim() === '' ? undefined : Number(normalizeDigits(dailyWeight));
     const parsedPain = dailyPain.trim() === '' ? undefined : Number(normalizeDigits(dailyPain));
 
-    logDailyMetrics(selectedDate, {
-      sleepQuality,
-      // An empty field means "not recorded", not zero - the same rule the
-      // health score already follows for a day with no data.
-      ...(sleepHours.trim() !== '' && Number.isFinite(parsedSleepHours)
-        ? { sleepHours: parsedSleepHours }
-        : {}),
-      ...(activityMinutes.trim() !== '' && Number.isFinite(parsedActivityMinutes)
-        ? { activityMinutes: parsedActivityMinutes }
-        : {}),
-      ...(parsedWeight !== undefined && Number.isFinite(parsedWeight)
-        ? { weight: parsedWeight }
-        : {}),
-      ...(parsedPain !== undefined && Number.isFinite(parsedPain)
-        ? { painIntensity: parsedPain }
-        : {}),
-    });
-    setIsSleepModalOpen(false);
+    if (touched('weight') && parsedWeight !== undefined && Number.isFinite(parsedWeight)) {
+      metrics.weight = parsedWeight;
+    }
+    if (touched('painIntensity') && parsedPain !== undefined && Number.isFinite(parsedPain)) {
+      metrics.painIntensity = parsedPain;
+    }
+
+    // Nothing touched means nothing to write. Sending still an empty metrics
+    // object would CREATE the day's row (water 0, no foods) and light up its
+    // dot in the date strip - plain "nothing happened" is more honest.
+    if (Object.keys(metrics).length > 0) {
+      logDailyMetrics(selectedDate, metrics);
+    }
   };
 
   /**
@@ -779,7 +844,7 @@ export default function DashboardIndex() {
                             type="text"
                             inputMode="decimal"
                             value={sleepHours}
-                            onChange={e => setSleepHours(normalizeDigits(e.target.value))}
+                            onChange={e => touchMetric('sleepHours', normalizeDigits(e.target.value))}
                             aria-invalid={!!sleepError}
                             aria-describedby={sleepError ? 'daily-sleep-hours-error' : undefined}
                             className={`input text-center ${sleepError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
@@ -797,7 +862,7 @@ export default function DashboardIndex() {
                             type="text"
                             inputMode="numeric"
                             value={activityMinutes}
-                            onChange={e => setActivityMinutes(normalizeDigits(e.target.value))}
+                            onChange={e => touchMetric('activityMinutes', normalizeDigits(e.target.value))}
                             aria-invalid={!!activityError}
                             aria-describedby={activityError ? 'daily-activity-minutes-error' : undefined}
                             className={`input text-center ${activityError ? 'ring-2 ring-error/50 bg-error/5' : ''}`}
@@ -815,7 +880,7 @@ export default function DashboardIndex() {
                             type="text"
                             inputMode="decimal"
                             value={dailyWeight}
-                            onChange={e => setDailyWeight(normalizeDigits(e.target.value))}
+                            onChange={e => touchMetric('weight', normalizeDigits(e.target.value))}
                             placeholder={userProfile?.weight ? formatNumber(userProfile.weight, 1) : '—'}
                             aria-invalid={!!weightError}
                             aria-describedby={weightError ? 'daily-weight-error' : undefined}
@@ -834,7 +899,7 @@ export default function DashboardIndex() {
                             type="text"
                             inputMode="numeric"
                             value={dailyPain}
-                            onChange={e => setDailyPain(normalizeDigits(e.target.value))}
+                            onChange={e => touchMetric('painIntensity', normalizeDigits(e.target.value))}
                             placeholder="—"
                             aria-invalid={!!painError}
                             aria-describedby={painError ? 'daily-pain-error' : undefined}
@@ -879,7 +944,7 @@ export default function DashboardIndex() {
                                     name="sleepQuality"
                                     value={quality}
                                     checked={sleepQuality === quality}
-                                    onChange={() => setSleepQuality(quality)}
+                                    onChange={() => touchMetric('sleepQuality', quality)}
                                     className="sr-only"
                                 />
                                 {label}
