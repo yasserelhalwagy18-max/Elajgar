@@ -44,8 +44,26 @@ These are already installed and available in every project. Pick from this list 
 | `performance-optimization` | Core Web Vitals, N+1 queries, bundle size, slow pages |
 | `observability-and-instrumentation` | Logging, metrics, tracing, production debugging |
 | `context-engineering` | Session context setup, rules files, when output quality degrades |
-
----
+| `browser-testing-with-devtools` | Test in real browsers via Chrome DevTools MCP (DOM, console, network, performance) |
+| `idea-refine` | Refine vague ideas into sharp, actionable concepts before committing to a plan |
+| `mempalace` | Memory/context persistence across sessions |
+| `web-design-guidelines` | Review UI code for Web Interface Guidelines compliance |
+| `using-agent-skills` | Discover and invoke agent skills |
+| `ui-ux-pro-max` | UI/UX design intelligence for web, mobile, desktop |
+| `accessibility-audit` | Full web accessibility audit against WCAG 2.2 |
+| `accessibility-diff` | Diff accessibility violations against a baseline |
+| `accessibility-fix` | Repair accessibility violations against WCAG 2.2 |
+| `accessibility-inspect` | Manual accessibility checks (keyboard, screen reader, reflow) |
+| `accessibility-scan` | Automated accessibility rule engine scan |
+| `prisma-cli` | Prisma ORM CLI commands reference |
+| `prisma-client-api` | Prisma Client API reference |
+| `prisma-compute` | Prisma Compute deployment guide |
+| `prisma-database-setup` | Prisma database provider setup |
+| `prisma-driver-adapter-implementation` | Prisma ORM 7 SQL driver adapter implementation |
+| `prisma-mongodb-upgrade` | Prisma MongoDB upgrade guide |
+| `prisma-postgres` | Prisma Postgres setup and operations |
+| `prisma-postgres-setup` | Set up Prisma Postgres and connect to project |
+| `prisma-upgrade-v7` | Prisma ORM v6 to v7 migration guide |
 
 ## 3. Intent → Skill Mapping
 
@@ -72,6 +90,14 @@ Map your request to a skill from Section 2 before implementing:
 | "Migrate DB schema / remove old code" | `deprecation-and-migration` |
 | "Verify approach against official docs" | `source-driven-development` |
 | "Capture a screenshot for QA" | `screenshots` |
+| "Test in a real browser" | `browser-testing-with-devtools` |
+| "Refine a vague idea into a plan" | `idea-refine` |
+| "Review UI / check accessibility / audit design" | `web-design-guidelines` |
+| "Accessibility audit / scan / fix / inspect / diff" | `accessibility-*` skills |
+| "Prisma schema / migration / CLI commands" | `prisma-*` skills |
+| "Discover which skill to use" | `find-skills` / `using-agent-skills` |
+| "UI/UX design intelligence" | `ui-ux-pro-max` |
+| "Memory/context across sessions" | `mempalace` |
 
 ---
 
