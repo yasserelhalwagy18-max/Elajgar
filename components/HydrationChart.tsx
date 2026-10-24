@@ -1,209 +1,160 @@
 'use client';
 
-import { useEffect, useRef, useMemo, useState } from 'react';
-import * as d3 from 'd3';
+import * as React from 'react';
+import { useMemo } from 'react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { useStore } from '@/lib/store';
-import { toDateKey, toPersianDigits, formatPersianNumber } from '@/lib/utils';
+import { toDateKey, formatPersianNumber } from '@/lib/utils';
 import { Droplet } from 'lucide-react';
 import { IconBadge } from '@/components/ui/IconBadge';
 
+function HydrationTooltip({ active, payload, label }: any) {
+  if (!active || !payload || !payload.length) return null;
+  const value = payload[0]?.value;
+
+  return (
+    <div className="card p-2.5 shadow-raised border border-outline-variant bg-surface-container text-on-surface text-xs rounded-2xl space-y-0.5">
+      <p className="font-bold text-water">{label}</p>
+      <p className="tabular-nums font-bold text-on-surface">
+        {formatPersianNumber(value)}{' '}
+        <span className="font-normal text-on-surface-variant text-[11px]">لیتر</span>
+      </p>
+    </div>
+  );
+}
+
 export default function HydrationChart() {
-    const svgRef = useRef<SVGSVGElement>(null);
-    const wrapperRef = useRef<HTMLDivElement>(null);
-    const userProfile = useStore(state => state.userProfile);
-    /** Width of the chart container; bumped on resize so the chart re-draws. */
-    const [chartWidth, setChartWidth] = useState(0);
+  const userProfile = useStore((state) => state.userProfile);
 
-    const chartData = useMemo(() => {
-        if (!userProfile) return { data: [], hasEnoughData: false };
+  const chartData = useMemo(() => {
+    if (!userProfile) return { data: [], hasEnoughData: false };
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-        const generatedData: { day: string; amount: number }[] = [];
-        let validEntriesCount = 0;
+    const generatedData: { day: string; amount: number }[] = [];
+    let validEntriesCount = 0;
 
-        const formatter = new Intl.DateTimeFormat('fa-IR', { weekday: 'long' });
+    const formatter = new Intl.DateTimeFormat('fa-IR', { weekday: 'long' });
 
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
 
-            // Local calendar day - must match the key used when writing logs.
-            const dateStr = toDateKey(d);
+      // Local calendar day - must match the key used when writing logs.
+      const dateStr = toDateKey(d);
 
-            const dayLabel = formatter.format(d);
+      const dayLabel = formatter.format(d);
 
-            const log = userProfile.dailyLogs?.find(l => l.date === dateStr);
+      const log = userProfile.dailyLogs?.find((l) => l.date === dateStr);
 
-            if (log) {
-                validEntriesCount++;
-            }
+      if (log) {
+        validEntriesCount++;
+      }
 
-            const amount = log?.waterIntake ? Number((log.waterIntake / 1000).toFixed(1)) : 0;
+      const amount = log?.waterIntake ? Number((log.waterIntake / 1000).toFixed(1)) : 0;
 
-            generatedData.push({ day: dayLabel, amount });
-        }
-
-        return { data: generatedData, hasEnoughData: validEntriesCount >= 3 };
-    }, [userProfile]);
-
-    const { data: activeData, hasEnoughData } = chartData;
-
-    useEffect(() => {
-        if (!svgRef.current || !wrapperRef.current || !hasEnoughData) return;
-
-        // Make it responsive by using wrapper's width
-        const width = wrapperRef.current.clientWidth || 300;
-        const height = 150;
-        const margin = { top: 10, right: 10, bottom: 20, left: 10 };
-
-        const svg = d3.select(svgRef.current);
-        svg.selectAll('*').remove();
-
-        const graphWidth = width - margin.left - margin.right;
-        const graphHeight = height - margin.top - margin.bottom;
-
-        // The app reads right-to-left, so the newest day sits on the left and
-        // the axis runs backwards compared to a Latin chart.
-        const x = d3.scalePoint()
-            .domain([...activeData].reverse().map(d => d.day))
-            .range([0, graphWidth])
-            .padding(0.1);
-
-        const maxAmount = d3.max(activeData, d => d.amount) || 0;
-        const yMax = Math.max(3, Math.ceil(maxAmount)); // Dynamic upper limit, minimum 3
-
-        const y = d3.scaleLinear()
-            .domain([0, yMax])
-            .range([graphHeight, 0]);
-
-        const area = d3.area<typeof activeData[0]>()
-            .x(d => x(d.day) as number)
-            .y0(graphHeight)
-            .y1(d => y(d.amount))
-            .curve(d3.curveMonotoneX);
-
-        const line = d3.line<typeof activeData[0]>()
-            .x(d => x(d.day) as number)
-            .y(d => y(d.amount))
-            .curve(d3.curveMonotoneX);
-
-        const g = svg.append('g')
-            .attr('transform', `translate(${margin.left},${margin.top})`);
-
-        // Gradient for the area
-        const defs = svg.append('defs');
-        const gradient = defs.append('linearGradient')
-            .attr('id', 'hydration-gradient')
-            .attr('x1', '0%').attr('y1', '0%')
-            .attr('x2', '0%').attr('y2', '100%');
-
-        gradient.append('stop')
-            .attr('offset', '0%')
-            .attr('stop-color', 'var(--color-primary-fixed)');
-        gradient.append('stop')
-            .attr('offset', '100%')
-            .attr('stop-color', 'transparent');
-
-        // Build the path strings once - d3's `.attr('d', fn)` typing does not
-        // accept the area/line generators directly.
-        const areaPath = area(activeData) ?? '';
-        const linePath = line(activeData) ?? '';
-
-        // Draw area
-        g.append('path')
-            .datum(activeData)
-            .attr('fill', 'url(#hydration-gradient)')
-            .attr('d', areaPath);
-
-        // Draw line
-        g.append('path')
-            .attr('fill', 'none')
-            .attr('stroke', 'var(--color-primary)')
-            .attr('stroke-width', 3)
-            .attr('d', linePath);
-
-        // Draw data points
-        g.selectAll('.dot')
-            .data(activeData)
-            .enter().append('circle')
-            .attr('class', 'dot')
-            .attr('cx', d => x(d.day) as number)
-            .attr('cy', d => y(d.amount))
-            .attr('r', 5)
-            .attr('fill', 'var(--color-surface-container)')
-            .attr('stroke', 'var(--color-primary)')
-            .attr('stroke-width', 2);
-
-        // Add X axis only (simpler)
-        const xAxis = d3.axisBottom(x).tickSize(0).tickPadding(10);
-        g.append('g')
-            .attr('transform', `translate(0,${graphHeight})`)
-            .call(xAxis)
-            .select('.domain').remove(); // remove axis line
-
-        // Customize X axis text
-        g.selectAll('.tick text')
-            .attr('font-size', '12px')
-            .attr('fill', 'var(--color-on-surface-variant)')
-            .attr('font-weight', '600')
-            .attr('font-family', 'inherit')
-            .text((d: unknown) => formatPersianNumber(String(d)));
-
-        // Add subtle horizontal grid lines for Y values based on yMax
-        const yTicks = d3.range(1, yMax + 1);
-        g.selectAll('.grid-line')
-            .data(yTicks)
-            .enter().append('line')
-            .attr('class', 'grid-line')
-            .attr('x1', 0)
-            .attr('x2', graphWidth)
-            .attr('y1', d => y(d))
-            .attr('y2', d => y(d))
-            .attr('stroke', 'var(--color-outline-variant)')
-            .attr('stroke-width', 1)
-            .attr('stroke-dasharray', '4,4');
-
-    }, [activeData, hasEnoughData, chartWidth]);
-
-    // Re-draw the chart when its container is resized. Without this the paths
-    // keep the coordinates they were drawn with and become misaligned.
-    useEffect(() => {
-        const wrapper = wrapperRef.current;
-        if (!wrapper || !hasEnoughData) return;
-
-        setChartWidth(wrapper.clientWidth);
-
-        const observer = new ResizeObserver((entries) => {
-            const width = entries[0]?.contentRect.width;
-            if (width) setChartWidth(width);
-        });
-
-        observer.observe(wrapper);
-        return () => observer.disconnect();
-    }, [hasEnoughData]);
-
-    if (!hasEnoughData) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[150px] mt-4 text-center gap-2">
-                <IconBadge variant="hydration" icon={Droplet} size={20} />
-                <p className="text-on-surface-variant text-xs">
-                    هنوز داده کافی ندارید. بعد از چند روز استفاده، نمودار نمایش داده می‌شود.
-                </p>
-            </div>
-        );
+      generatedData.push({ day: dayLabel, amount });
     }
 
+    return { data: generatedData, hasEnoughData: validEntriesCount >= 3 };
+  }, [userProfile]);
+
+  const { data: activeData, hasEnoughData } = chartData;
+
+  // The app reads right-to-left, so the newest day sits on the left
+  const rtlData = useMemo(() => [...activeData].reverse(), [activeData]);
+
+  const yMax = useMemo(() => {
+    const maxAmount = Math.max(...activeData.map((d) => d.amount), 0);
+    return Math.max(3, Math.ceil(maxAmount));
+  }, [activeData]);
+
+  if (!hasEnoughData) {
     return (
-        <div
-            ref={wrapperRef}
-            className="w-full h-[150px] mt-4 flex items-center justify-center relative"
-            dir="ltr"
-            role="img"
-            aria-label="نمودار مصرف آب هفت روز گذشته"
-        >
-            <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="none"></svg>
-        </div>
+      <div className="flex flex-col items-center justify-center h-[150px] mt-4 text-center gap-2">
+        <IconBadge variant="hydration" icon={Droplet} size={20} />
+        <p className="text-on-surface-variant text-xs">
+          هنوز داده کافی ندارید. بعد از چند روز استفاده، نمودار نمایش داده می‌شود.
+        </p>
+      </div>
     );
+  }
+
+  return (
+    <div
+      className="w-full h-[150px] mt-4 relative"
+      dir="ltr"
+      role="img"
+      aria-label="نمودار مصرف آب هفت روز گذشته"
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={rtlData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+          <defs>
+            <linearGradient id="hydration-area-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-water)" stopOpacity={0.32} />
+              <stop offset="100%" stopColor="var(--color-water)" stopOpacity={0.0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="var(--color-outline-variant)"
+            opacity={0.35}
+          />
+          <XAxis
+            dataKey="day"
+            tick={{
+              fill: 'var(--color-on-surface-variant)',
+              fontSize: 11,
+              fontFamily: 'var(--font-sans)',
+            }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => formatPersianNumber(v)}
+          />
+          <YAxis
+            domain={[0, yMax]}
+            tick={{
+              fill: 'var(--color-on-surface-variant)',
+              fontSize: 11,
+              fontFamily: 'var(--font-sans)',
+            }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => formatPersianNumber(v)}
+          />
+          <Tooltip content={<HydrationTooltip />} />
+          <Area
+            type="monotone"
+            dataKey="amount"
+            stroke="var(--color-water)"
+            strokeWidth={2.5}
+            fillOpacity={1}
+            fill="url(#hydration-area-gradient)"
+            dot={{
+              r: 3.5,
+              strokeWidth: 2,
+              fill: 'var(--color-surface-container)',
+              stroke: 'var(--color-water)',
+            }}
+            activeDot={{
+              r: 5,
+              stroke: 'var(--color-water)',
+              strokeWidth: 2,
+              fill: 'var(--color-surface-container)',
+            }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
