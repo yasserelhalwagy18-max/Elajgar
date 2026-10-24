@@ -17,6 +17,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { MacroBar } from '@/components/ui/MacroBar';
 import { IconBadge } from '@/components/ui/IconBadge';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function NutritionPage() {
   const { isAuthenticated, hasHydrated } = useAuthGuard();
@@ -304,6 +305,22 @@ export default function NutritionPage() {
              <MacroBar macro="fat" current={consumedFat} target={targetFat} />
          </div>
       </section>
+
+      {todayFoods.length === 0 && (
+        <div className="mb-6">
+          <EmptyState
+            variant="food"
+            message="هنوز هیچ وعده غذایی برای امروز در دفترچه تغذیه ثبت نشده است."
+            action={{
+              label: 'جستجو و ثبت اولین غذا',
+              onClick: () => {
+                const input = document.querySelector('input[type="search"]') as HTMLInputElement;
+                input?.focus();
+              },
+            }}
+          />
+        </div>
+      )}
 
       {/* Food Search and Log */}
       <section className="card p-6 rounded-3xl mb-6">

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useStore } from '@/lib/store';
 import { AlertCircle, AlertTriangle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export function SmartAnalysis() {
   const userProfile = useStore((state) => state.userProfile);
@@ -12,20 +13,15 @@ export function SmartAnalysis() {
 
   if (!hasData) {
     return (
-      <div className="mb-8 card p-6 rounded-3xl text-center flex flex-col items-center">
-        <div className="w-12 h-12 bg-surface-variant/50 rounded-full flex items-center justify-center mb-4">
-          <AlertCircle className="w-6 h-6 text-on-surface-variant" />
-        </div>
-        <h2 className="text-lg font-bold text-on-surface mb-2">اطلاعات شما کامل نیست</h2>
-        <p className="text-sm text-on-surface-variant mb-4">
-          برای دریافت تحلیل هوشمند و هشدارهای پزشکی اختصاصی، لطفا پروفایل و پرسشنامه خود را تکمیل کنید.
-        </p>
-        <Link
-          href="/wizard"
-          className="btn btn-primary px-6 py-2 rounded-full font-bold text-sm inline-block"
-        >
-          تکمیل اطلاعات
-        </Link>
+      <div className="mb-8">
+        <EmptyState
+          variant="pain"
+          message="هنوز هیچ ناحیه دردی برای ارزیابی و تحلیل هوشمند ثبت نکرده‌اید."
+          action={{
+            label: 'ثبت نقاط درد در ارزیابی',
+            href: '/wizard',
+          }}
+        />
       </div>
     );
   }

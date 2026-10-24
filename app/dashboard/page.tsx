@@ -19,6 +19,7 @@ import { Modal } from '@/components/ui/Modal';
 import { MacroBar } from '@/components/ui/MacroBar';
 import { IconBadge } from '@/components/ui/IconBadge';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 import DashboardLoading from './loading';
 
 const ProgressReport = dynamic(() => import('@/components/ProgressReport'), {
@@ -511,33 +512,16 @@ export default function DashboardIndex() {
                 the cards further down the page, so the instruction pointed
                 at something the user had to go and find. */}
             {!hasDayData && (
-                <div className="z-10 mt-2 w-full max-w-sm flex flex-col items-center gap-4">
-                    <p className="text-sm text-on-surface-variant text-center">
-                        برای دیدن شاخص سلامت، غذای روز و آب و فعالیت و خواب این روز را ثبت کنید.
-                    </p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => scrollToLogSection('calorie-section', 'log-food-button')}
-                            className="btn btn-primary btn-sm"
-                        >
-                            <Plus className="w-4 h-4" /> ثبت غذا
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => scrollToLogSection('water-section', 'log-water-button')}
-                            className="btn btn-secondary btn-sm"
-                        >
-                            <Droplet className="w-4 h-4" /> ثبت آب
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => scrollToLogSection('sleep-activity-section', 'daily-sleep-hours')}
-                            className="btn btn-secondary btn-sm"
-                        >
-                            <Activity className="w-4 h-4" /> ثبت خواب و فعالیت
-                        </button>
-                    </div>
+                <div className="z-10 mt-4 w-full max-w-sm">
+                    <EmptyState
+                        variant="daily"
+                        className="bg-surface-variant/40 border-outline-variant/40"
+                        message="هنوز هیچ فعالیت یا شاخصی برای این روز در سامانه ثبت نشده است."
+                        action={{
+                            label: 'ثبت اطلاعات و شاخص‌های امروز',
+                            onClick: () => scrollToLogSection('calorie-section', 'log-food-button'),
+                        }}
+                    />
                 </div>
             )}
         </section>
@@ -606,17 +590,15 @@ export default function DashboardIndex() {
                  </div>
 
                  {consumedCalories === 0 ? (
-                    <div className="flex flex-col items-center justify-center z-10 py-2 gap-3">
-                        <span className="text-on-surface-variant font-medium">کالری ثبت نشده</span>
-                        <button
-                            id="log-food-button"
-                            type="button"
-                            onClick={() => setIsLogModalOpen(true)}
-                            className="btn btn-primary btn-md"
-                        >
-                            <Plus className="w-4 h-4" /> ثبت غذا
-                        </button>
-                    </div>
+                    <EmptyState
+                        variant="food"
+                        className="border-0 bg-transparent shadow-none p-2 z-10"
+                        message="هنوز هیچ وعده غذایی برای امروز ثبت نکرده‌اید."
+                        action={{
+                            label: 'ثبت سریع وعده غذایی',
+                            onClick: () => setIsLogModalOpen(true),
+                        }}
+                    />
                  ) : (
                     <div className="z-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <MacroBar macro="protein" current={consumedProtein} target={targetProtein} />

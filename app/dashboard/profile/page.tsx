@@ -14,6 +14,7 @@ import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { IconBadge } from '@/components/ui/IconBadge';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes';
 import toast from 'react-hot-toast';
 
@@ -536,15 +537,14 @@ export default function ProfilePage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="card rounded-3xl p-5 flex flex-col gap-4">
-                        <p className="text-sm text-on-surface-variant leading-relaxed">
-                            شما اشتراک فعالی ندارید. با فعال‌کردن اشتراک، همه ویدیوهای تخصصی و
-                            برنامه تمرینی اختصاصی برای شما باز می‌شود.
-                        </p>
-                        <Link href="/dashboard/education" className="btn btn-secondary btn-md w-full">
-                            مشاهده پلن‌ها
-                        </Link>
-                    </div>
+                    <EmptyState
+                        variant="subscription"
+                        message="شما در حال حاضر اشتراک فعالی برای دسترسی به برنامه‌های تخصصی ندارید."
+                        action={{
+                            label: 'خرید و فعال‌سازی اشتراک',
+                            href: '/checkout/pro',
+                        }}
+                    />
                 )}
             </section>
 
