@@ -160,7 +160,7 @@ export function Modal({
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'relative z-10 w-full rounded-3xl bg-surface-container border border-outline-variant shadow-2xl flex flex-col max-h-[90vh] outline-none',
+              'relative z-10 w-full rounded-3xl bg-surface-container border border-outline-variant shadow-floating flex flex-col max-h-[90vh] outline-none',
               SIZE_CLASSES[size],
               className
             )}

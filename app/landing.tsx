@@ -358,9 +358,9 @@ function HubCard({
     const cardClass = cn(
         "bg-surface-container border border-outline-variant card p-8 rounded-3xl relative overflow-hidden group transition-all duration-300",
         active
-            ? "border-2 border-primary shadow-[0_15px_40px_rgba(37,99,235,0.15)] hover:-translate-y-2 cursor-pointer"
+            ? "border-2 border-primary shadow-floating motion-safe:hover:-translate-y-0.5 cursor-pointer"
             : available
-              ? "opacity-90 hover:-translate-y-1 cursor-pointer"
+              ? "opacity-90 motion-safe:hover:-translate-y-0.5 cursor-pointer"
               : "opacity-90 cursor-not-allowed"
     );
 

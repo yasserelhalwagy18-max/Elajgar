@@ -21,7 +21,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="ناوبری اصلی"
-      className="fixed bottom-0 left-0 w-full z-50 rounded-t-3xl bg-surface-container/95 backdrop-blur-xl border-t border-outline-variant shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.28)] flex flex-row justify-around items-center px-2 pt-1.5 min-h-[76px] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      className="fixed bottom-0 left-0 w-full z-50 rounded-t-3xl bg-surface-container/95 backdrop-blur-xl border-t border-outline-variant shadow-floating flex flex-row justify-around items-center px-2 pt-1.5 min-h-[76px] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
     >
       {navItems.map((item) => {
         const isActive = item.href === '/dashboard' ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);

@@ -72,6 +72,11 @@
   --radius-3xl: 2rem;
   --radius-4xl: 2.5rem;
 
+  /* Shadows - blue-tinted depth scale instead of flat grey */
+  --shadow-resting: 0 1px 3px 0 rgb(37 99 235 / 0.08), 0 1px 2px -1px rgb(37 99 235 / 0.08);
+  --shadow-raised: 0 4px 12px -2px rgb(37 99 235 / 0.12), 0 2px 4px -2px rgb(37 99 235 / 0.06);
+  --shadow-floating: 0 12px 32px -4px rgb(37 99 235 / 0.16), 0 0 16px 2px rgb(37 99 235 / 0.08);
+
   /* The self-hosted Vazirmatn, in its Arabic and Latin subsets. Each one
      carries its own unicode-range, so the browser fetches the Arabic file
      for the Persian text and the Latin file for the numbers - see
@@ -121,9 +126,7 @@ body {
     background: var(--color-surface-container);
     border: 1px solid var(--color-outline-variant);
     border-radius: var(--radius-3xl);
-    box-shadow:
-      0 1px 2px 0 rgb(15 23 42 / 0.04),
-      0 4px 12px -2px rgb(15 23 42 / 0.06);
+    box-shadow: var(--shadow-resting);
   }
 
   /* Soft gradient behind hero sections */
@@ -138,11 +141,18 @@ body {
       border-color 0.2s ease;
   }
 
-  .card-hover:hover {
-    box-shadow:
-      0 2px 4px 0 rgb(15 23 42 / 0.05),
-      0 12px 24px -6px rgb(15 23 42 / 0.12);
-    transform: translateY(-2px);
+  @media (prefers-reduced-motion: no-preference) {
+    .card-hover:hover {
+      box-shadow: var(--shadow-raised);
+      transform: translateY(-0.125rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-hover:hover {
+      box-shadow: var(--shadow-raised);
+      transform: none;
+    }
   }
 
   /* ========================================================================
@@ -164,6 +174,12 @@ body {
       transform 0.1s ease;
   }
 
+  @media (prefers-reduced-motion: no-preference) {
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+  }
+
   .btn:disabled,
   .btn[aria-disabled="true"] {
     opacity: 0.5;
@@ -183,7 +199,6 @@ body {
   }
 
   .btn-primary:active:not(:disabled) {
-    transform: scale(0.98);
     box-shadow: 0 2px 4px -1px rgb(37 99 235 / 0.2);
   }
 
@@ -201,7 +216,6 @@ body {
   }
 
   .btn-cta:active:not(:disabled) {
-    transform: scale(0.98);
     box-shadow: 0 2px 4px -1px rgb(194 65 12 / 0.2);
   }
 

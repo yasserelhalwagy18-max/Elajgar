@@ -60,6 +60,7 @@ export function ConfirmDialog({
       onClose={onClose}
       title={title}
       size="sm"
+      className="shadow-floating"
       footer={
         <>
           <button type="button" onClick={onClose} disabled={isPending} className="btn btn-secondary btn-md">
