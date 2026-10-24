@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../../lib/store';
-import { ArrowRight, ShieldCheck, KeyRound, MessageSquare, Check } from 'lucide-react';
+import { ArrowRight, ShieldCheck, KeyRound, MessageSquare, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { normalizeDigits, toPersianDigits } from '../../lib/utils';
 import { OTP_CODE_LENGTH } from '../../lib/otp';
@@ -34,8 +34,71 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
   const [step, setStep] = useState<'phone' | 'otp' | 'password' | 'set-password'>('phone');
   const [isLoading, setIsLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const router = useRouter();
   const { signIn, fetchUserFromServer } = useStore();
+
+  const handlePhoneBlur = () => {
+    setTouched((prev) => ({ ...prev, phone: true }));
+    const normalized = normalizeDigits(phoneNumber);
+    if (!normalized) {
+      setPhoneError('شماره موبایل را وارد کنید');
+    } else if (!/^09[0-9]{9}$/.test(normalized)) {
+      setPhoneError('شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود');
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  const handleOtpBlur = () => {
+    setTouched((prev) => ({ ...prev, otp: true }));
+    const normalized = normalizeDigits(otp);
+    if (!normalized) {
+      setOtpError('کد تایید را وارد کنید');
+    } else if (normalized.length !== OTP_CODE_LENGTH) {
+      setOtpError(`کد تایید باید ${toPersianDigits(OTP_CODE_LENGTH)} رقم باشد`);
+    } else {
+      setOtpError('');
+    }
+  };
+
+  const handleLoginPhoneBlur = () => {
+    setTouched((prev) => ({ ...prev, loginPhone: true }));
+    const normalized = normalizeDigits(phoneNumber);
+    if (!normalized) {
+      setPhoneError('شماره موبایل را وارد کنید');
+    } else if (!/^09[0-9]{9}$/.test(normalized)) {
+      setPhoneError('شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود');
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  const handleLoginPasswordBlur = () => {
+    setTouched((prev) => ({ ...prev, loginPassword: true }));
+    if (!password) {
+      setPasswordError('رمز عبور را وارد کنید');
+    } else {
+      setPasswordError('');
+    }
+  };
+
+  const handleSetPasswordBlur = () => {
+    setTouched((prev) => ({ ...prev, setPassword: true }));
+    if (!password) {
+      setPasswordError('رمز عبور را وارد کنید');
+    } else if (password.length < 8) {
+      setPasswordError('رمز عبور باید حداقل ۸ کاراکتر باشد');
+    } else {
+      setPasswordError('');
+    }
+  };
+
+  const isPhoneValid = touched.phone && /^09[0-9]{9}$/.test(normalizeDigits(phoneNumber)) && !phoneError;
+  const isOtpValid = touched.otp && normalizeDigits(otp).length === OTP_CODE_LENGTH && !otpError;
+  const isLoginPhoneValid = touched.loginPhone && /^09[0-9]{9}$/.test(normalizeDigits(phoneNumber)) && !phoneError;
+  const isLoginPasswordValid = touched.loginPassword && !!password && !passwordError;
+  const isSetPasswordValid = touched.setPassword && password.length >= 8 && !passwordError;
 
   /**
    * Finish the sign-in: tell the store who the user is, pull their profile
@@ -66,6 +129,7 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched((prev) => ({ ...prev, phone: true }));
     setPhoneError('');
 
     const normalized = normalizeDigits(phoneNumber);
@@ -153,6 +217,7 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
   /** Sign in with the password the user set earlier. */
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched((prev) => ({ ...prev, loginPhone: true, loginPassword: true }));
     setPasswordError('');
 
     const normalized = normalizeDigits(phoneNumber);
@@ -193,6 +258,7 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
   /** Save the password the user chose after their first sign-in. */
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched((prev) => ({ ...prev, setPassword: true }));
     setPasswordError('');
 
     if (password.length < 8) {
@@ -301,21 +367,35 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
                 <label className="block text-sm font-medium mb-1" htmlFor="phone">
                   شماره موبایل
                 </label>
-                <input
-                  id="phone"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(normalizeDigits(e.target.value))}
-                  placeholder="09123456789"
-                  aria-invalid={!!phoneError}
-                  aria-describedby={phoneError ? 'phone-error' : undefined}
-                  className={`input text-left ${phoneError ? 'border-error' : ''}`}
-                  dir="ltr"
-                  required
-                  disabled={isLoading}
-                />
+                <div className="relative" dir="ltr">
+                  <input
+                    id="phone"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      const val = normalizeDigits(e.target.value);
+                      setPhoneNumber(val);
+                      if (touched.phone && /^09[0-9]{9}$/.test(val)) {
+                        setPhoneError('');
+                      }
+                    }}
+                    onBlur={handlePhoneBlur}
+                    placeholder="09123456789"
+                    aria-invalid={!!phoneError}
+                    aria-describedby={phoneError ? 'phone-error' : undefined}
+                    className={`input text-left ${isPhoneValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${phoneError ? 'border-error' : ''}`}
+                    dir="ltr"
+                    required
+                    disabled={isLoading}
+                  />
+                  {isPhoneValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
                 {phoneError && (
                   <p id="phone-error" role="alert" className="text-error text-xs mt-1">{phoneError}</p>
                 )}
@@ -323,9 +403,16 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="btn btn-primary w-full py-2.5"
+                className="btn btn-primary w-full py-2.5 flex items-center justify-center gap-2"
               >
-                {isLoading ? 'در حال ارسال...' : 'ارسال کد'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>در حال ارسال...</span>
+                  </>
+                ) : (
+                  'ارسال کد'
+                )}
               </button>
 
               {/* A user who has a password does not have to wait for a code. */}
@@ -337,7 +424,7 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
               <button
                 type="button"
                 disabled={isLoading}
-                onClick={() => setStep('password')}
+                onClick={() => { setStep('password'); setPhoneError(''); setPasswordError(''); }}
                 className="btn btn-ghost btn-md w-full"
               >
                 <KeyRound className="w-4 h-4" />
@@ -351,30 +438,38 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
                   کد تایید
                 </label>
                 <div className="text-sm text-on-surface-variant mb-2" dir="ltr">{toPersianDigits(phoneNumber)}</div>
-                <input
-                  id="otp"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={OTP_CODE_LENGTH}
-                  pattern="[0-9]*"
-                  value={otp}
-                  onChange={(e) => {
-                    const value = normalizeDigits(e.target.value);
-                    setOtp(value);
-                    setOtpError('');
-                    if (value.length === OTP_CODE_LENGTH && !isLoading) {
-                      submitOtp(value);
-                    }
-                  }}
-                  placeholder="123456"
-                  aria-invalid={!!otpError}
-                  aria-describedby={otpError ? 'otp-error' : undefined}
-                  className={`input text-center tracking-widest ${otpError ? 'border-error' : ''}`}
-                  dir="ltr"
-                  required
-                  disabled={isLoading}
-                />
+                <div className="relative" dir="ltr">
+                  <input
+                    id="otp"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={OTP_CODE_LENGTH}
+                    pattern="[0-9]*"
+                    value={otp}
+                    onChange={(e) => {
+                      const value = normalizeDigits(e.target.value);
+                      setOtp(value);
+                      setOtpError('');
+                      if (value.length === OTP_CODE_LENGTH && !isLoading) {
+                        submitOtp(value);
+                      }
+                    }}
+                    onBlur={handleOtpBlur}
+                    placeholder="123456"
+                    aria-invalid={!!otpError}
+                    aria-describedby={otpError ? 'otp-error' : undefined}
+                    className={`input text-center tracking-widest ${isOtpValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${otpError ? 'border-error' : ''}`}
+                    dir="ltr"
+                    required
+                    disabled={isLoading}
+                  />
+                  {isOtpValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
                 {otpError && (
                   <p id="otp-error" role="alert" className="text-error text-xs mt-1 text-center">{otpError}</p>
                 )}
@@ -382,9 +477,16 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
               <button
                 type="submit"
                 disabled={!!otpError || isLoading}
-                className="btn btn-primary w-full py-2.5"
+                className="btn btn-primary w-full py-2.5 flex items-center justify-center gap-2"
               >
-                {isLoading ? 'در حال بررسی...' : 'تایید'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>در حال بررسی...</span>
+                  </>
+                ) : (
+                  'تایید'
+                )}
               </button>
 
               {/* The countdown is a status message, not a disabled button -
@@ -419,38 +521,68 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
                 <label className="block text-sm font-medium mb-1" htmlFor="login-phone">
                   شماره موبایل
                 </label>
-                <input
-                  id="login-phone"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(normalizeDigits(e.target.value))}
-                  placeholder="09123456789"
-                  className="input text-left"
-                  dir="ltr"
-                  required
-                  disabled={isLoading}
-                />
+                <div className="relative" dir="ltr">
+                  <input
+                    id="login-phone"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      const val = normalizeDigits(e.target.value);
+                      setPhoneNumber(val);
+                      if (touched.loginPhone && /^09[0-9]{9}$/.test(val)) {
+                        setPhoneError('');
+                      }
+                    }}
+                    onBlur={handleLoginPhoneBlur}
+                    placeholder="09123456789"
+                    aria-invalid={!!phoneError}
+                    aria-describedby={phoneError ? 'login-phone-error' : undefined}
+                    className={`input text-left ${isLoginPhoneValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${phoneError ? 'border-error' : ''}`}
+                    dir="ltr"
+                    required
+                    disabled={isLoading}
+                  />
+                  {isLoginPhoneValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                {phoneError && (
+                  <p id="login-phone-error" role="alert" className="text-error text-xs mt-1">{phoneError}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1" htmlFor="login-password">
                   رمز عبور
                 </label>
-                <input
-                  id="login-password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }}
-                  placeholder="••••••••"
-                  aria-invalid={!!passwordError}
-                  aria-describedby={passwordError ? 'login-password-error' : undefined}
-                  className={`input text-left ${passwordError ? 'border-error' : ''}`}
-                  dir="ltr"
-                  required
-                  disabled={isLoading}
-                />
+                <div className="relative" dir="ltr">
+                  <input
+                    id="login-password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (e.target.value) setPasswordError('');
+                    }}
+                    onBlur={handleLoginPasswordBlur}
+                    placeholder="••••••••"
+                    aria-invalid={!!passwordError}
+                    aria-describedby={passwordError ? 'login-password-error' : undefined}
+                    className={`input text-left ${isLoginPasswordValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${passwordError ? 'border-error' : ''}`}
+                    dir="ltr"
+                    required
+                    disabled={isLoading}
+                  />
+                  {isLoginPasswordValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
                 {passwordError && (
                   <p id="login-password-error" role="alert" className="text-error text-xs mt-1">{passwordError}</p>
                 )}
@@ -458,13 +590,20 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="btn btn-primary w-full py-2.5"
+                className="btn btn-primary w-full py-2.5 flex items-center justify-center gap-2"
               >
-                {isLoading ? 'در حال ورود...' : 'ورود'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>در حال ورود...</span>
+                  </>
+                ) : (
+                  'ورود'
+                )}
               </button>
               <button
                 type="button"
-                onClick={() => { setStep('phone'); setPasswordError(''); setPassword(''); }}
+                onClick={() => { setStep('phone'); setPasswordError(''); setPhoneError(''); setPassword(''); }}
                 disabled={isLoading}
                 className="btn btn-ghost btn-md w-full"
               >
@@ -485,21 +624,32 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
                 <label className="block text-sm font-medium mb-1" htmlFor="new-password">
                   رمز عبور جدید
                 </label>
-                <input
-                  id="new-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }}
-                  placeholder="حداقل ۸ کاراکتر"
-                  aria-invalid={!!passwordError}
-                  aria-describedby={passwordError ? 'new-password-error' : undefined}
-                  className={`input text-left ${passwordError ? 'border-error' : ''}`}
-                  dir="ltr"
-                  required
-                  minLength={8}
-                  disabled={isLoading}
-                />
+                <div className="relative" dir="ltr">
+                  <input
+                    id="new-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (e.target.value.length >= 8) setPasswordError('');
+                    }}
+                    onBlur={handleSetPasswordBlur}
+                    placeholder="حداقل ۸ کاراکتر"
+                    aria-invalid={!!passwordError}
+                    aria-describedby={passwordError ? 'new-password-error' : undefined}
+                    className={`input text-left ${isSetPasswordValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${passwordError ? 'border-error' : ''}`}
+                    dir="ltr"
+                    required
+                    minLength={8}
+                    disabled={isLoading}
+                  />
+                  {isSetPasswordValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
                 {passwordError && (
                   <p id="new-password-error" role="alert" className="text-error text-xs mt-1">{passwordError}</p>
                 )}
@@ -507,9 +657,16 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="btn btn-primary w-full py-2.5"
+                className="btn btn-primary w-full py-2.5 flex items-center justify-center gap-2"
               >
-                {isLoading ? 'در حال ذخیره...' : 'ذخیره و ورود'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>در حال ذخیره...</span>
+                  </>
+                ) : (
+                  'ذخیره و ورود'
+                )}
               </button>
               <button
                 type="button"

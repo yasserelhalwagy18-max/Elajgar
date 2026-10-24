@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { AlertTriangle, CheckCircle2, CreditCard, Lock, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CreditCard, Lock, ShieldCheck, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn, formatNumber, toPersianDigits } from '@/lib/utils';
 import { adminRequest } from '@/lib/admin-client';
@@ -46,6 +46,56 @@ export default function CheckoutPage() {
   const [expiry, setExpiry] = React.useState('');
   const [cvv, setCvv] = React.useState('');
   const [formError, setFormError] = React.useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
+  const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+
+  const handleCardNumberBlur = () => {
+    setTouched((prev) => ({ ...prev, cardNumber: true }));
+    const clean = cardNumber.replace(/\s/g, '');
+    if (!clean) {
+      setFieldErrors((prev) => ({ ...prev, cardNumber: 'شماره کارت را وارد کنید' }));
+    } else if (clean.length < 12) {
+      setFieldErrors((prev) => ({ ...prev, cardNumber: 'شماره کارت را کامل وارد کنید' }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, cardNumber: '' }));
+    }
+  };
+
+  const handleCardHolderBlur = () => {
+    setTouched((prev) => ({ ...prev, cardHolder: true }));
+    if (!cardHolder.trim()) {
+      setFieldErrors((prev) => ({ ...prev, cardHolder: 'نام صاحب کارت را وارد کنید' }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, cardHolder: '' }));
+    }
+  };
+
+  const handleExpiryBlur = () => {
+    setTouched((prev) => ({ ...prev, expiry: true }));
+    if (!expiry.trim()) {
+      setFieldErrors((prev) => ({ ...prev, expiry: 'تاریخ انقضا را وارد کنید' }));
+    } else if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+      setFieldErrors((prev) => ({ ...prev, expiry: 'تاریخ انقضا را به شکل MM/YY وارد کنید' }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, expiry: '' }));
+    }
+  };
+
+  const handleCvvBlur = () => {
+    setTouched((prev) => ({ ...prev, cvv: true }));
+    if (!cvv.trim()) {
+      setFieldErrors((prev) => ({ ...prev, cvv: 'کد CVV را وارد کنید' }));
+    } else if (!/^\d{3,4}$/.test(cvv)) {
+      setFieldErrors((prev) => ({ ...prev, cvv: 'کد CVV را وارد کنید' }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, cvv: '' }));
+    }
+  };
+
+  const isCardNumberValid = touched.cardNumber && cardNumber.replace(/\s/g, '').length >= 12 && !fieldErrors.cardNumber;
+  const isCardHolderValid = touched.cardHolder && cardHolder.trim().length > 0 && !fieldErrors.cardHolder;
+  const isExpiryValid = touched.expiry && /^\d{2}\/\d{2}$/.test(expiry) && !fieldErrors.expiry;
+  const isCvvValid = touched.cvv && /^\d{3,4}$/.test(cvv) && !fieldErrors.cvv;
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -78,6 +128,23 @@ export default function CheckoutPage() {
     event.preventDefault();
 
     if (!plan) return;
+
+    setTouched({ cardNumber: true, cardHolder: true, expiry: true, cvv: true });
+
+    const newFieldErrors: Record<string, string> = {};
+    if (cardNumber.replace(/\s/g, '').length < 12) {
+      newFieldErrors.cardNumber = 'شماره کارت را کامل وارد کنید';
+    }
+    if (!cardHolder.trim()) {
+      newFieldErrors.cardHolder = 'نام صاحب کارت را وارد کنید';
+    }
+    if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+      newFieldErrors.expiry = 'تاریخ انقضا را به شکل MM/YY وارد کنید';
+    }
+    if (!/^\d{3,4}$/.test(cvv)) {
+      newFieldErrors.cvv = 'کد CVV را وارد کنید';
+    }
+    setFieldErrors(newFieldErrors);
 
     if (cardNumber.replace(/\s/g, '').length < 12) {
       setFormError('شماره کارت را کامل وارد کنید');
@@ -264,70 +331,189 @@ export default function CheckoutPage() {
 
           <form onSubmit={handlePay} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="card-number">
-                شماره کارت
-              </label>
-              <input
-                id="card-number"
-                type="text"
-                inputMode="numeric"
-                dir="ltr"
-                value={cardNumber}
-                onChange={(event) => setCardNumber(event.target.value)}
-                placeholder="6037 9999 9999 9999"
-                className="input font-mono"
-                autoComplete="off"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium" htmlFor="card-number">
+                  شماره کارت
+                </label>
+                {isCardNumberValid && (
+                  <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                    <Check className="w-3.5 h-3.5" />
+                    معتبر
+                  </span>
+                )}
+              </div>
+              <div className="relative" dir="ltr">
+                <input
+                  id="card-number"
+                  type="text"
+                  inputMode="numeric"
+                  dir="ltr"
+                  value={cardNumber}
+                  onChange={(event) => {
+                    setCardNumber(event.target.value);
+                    if (fieldErrors.cardNumber && event.target.value.replace(/\s/g, '').length >= 12) {
+                      setFieldErrors((prev) => ({ ...prev, cardNumber: '' }));
+                    }
+                  }}
+                  onBlur={handleCardNumberBlur}
+                  placeholder="6037 9999 9999 9999"
+                  aria-invalid={!!fieldErrors.cardNumber}
+                  aria-describedby={fieldErrors.cardNumber ? 'card-number-error' : undefined}
+                  className={cn(
+                    "input font-mono text-left",
+                    isCardNumberValid && "pe-10 border-success/60 focus:border-success",
+                    fieldErrors.cardNumber && "border-error"
+                  )}
+                  autoComplete="off"
+                />
+                {isCardNumberValid && (
+                  <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                    <Check className="w-4 h-4" />
+                  </span>
+                )}
+              </div>
+              {fieldErrors.cardNumber && (
+                <p id="card-number-error" role="alert" className="text-error text-xs mt-1">{fieldErrors.cardNumber}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="card-holder">
-                نام صاحب کارت
-              </label>
-              <input
-                id="card-holder"
-                type="text"
-                value={cardHolder}
-                onChange={(event) => setCardHolder(event.target.value)}
-                placeholder="نام و نام خانوادگی"
-                className="input"
-                autoComplete="off"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium" htmlFor="card-holder">
+                  نام صاحب کارت
+                </label>
+                {isCardHolderValid && (
+                  <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                    <Check className="w-3.5 h-3.5" />
+                    معتبر
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  id="card-holder"
+                  type="text"
+                  value={cardHolder}
+                  onChange={(event) => {
+                    setCardHolder(event.target.value);
+                    if (fieldErrors.cardHolder && event.target.value.trim().length > 0) {
+                      setFieldErrors((prev) => ({ ...prev, cardHolder: '' }));
+                    }
+                  }}
+                  onBlur={handleCardHolderBlur}
+                  placeholder="نام و نام خانوادگی"
+                  aria-invalid={!!fieldErrors.cardHolder}
+                  aria-describedby={fieldErrors.cardHolder ? 'card-holder-error' : undefined}
+                  className={cn(
+                    "input",
+                    isCardHolderValid && "pe-10 border-success/60 focus:border-success",
+                    fieldErrors.cardHolder && "border-error"
+                  )}
+                  autoComplete="off"
+                />
+                {isCardHolderValid && (
+                  <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                    <Check className="w-4 h-4" />
+                  </span>
+                )}
+              </div>
+              {fieldErrors.cardHolder && (
+                <p id="card-holder-error" role="alert" className="text-error text-xs mt-1">{fieldErrors.cardHolder}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="card-expiry">
-                  انقضا
-                </label>
-                <input
-                  id="card-expiry"
-                  type="text"
-                  dir="ltr"
-                  maxLength={5}
-                  value={expiry}
-                  onChange={(event) => setExpiry(event.target.value)}
-                  placeholder="MM/YY"
-                  className="input font-mono"
-                  autoComplete="off"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium" htmlFor="card-expiry">
+                    انقضا
+                  </label>
+                  {isExpiryValid && (
+                    <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                      <Check className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                </div>
+                <div className="relative" dir="ltr">
+                  <input
+                    id="card-expiry"
+                    type="text"
+                    dir="ltr"
+                    maxLength={5}
+                    value={expiry}
+                    onChange={(event) => {
+                      setExpiry(event.target.value);
+                      if (fieldErrors.expiry && /^\d{2}\/\d{2}$/.test(event.target.value)) {
+                        setFieldErrors((prev) => ({ ...prev, expiry: '' }));
+                      }
+                    }}
+                    onBlur={handleExpiryBlur}
+                    placeholder="MM/YY"
+                    aria-invalid={!!fieldErrors.expiry}
+                    aria-describedby={fieldErrors.expiry ? 'card-expiry-error' : undefined}
+                    className={cn(
+                      "input font-mono text-left",
+                      isExpiryValid && "pe-10 border-success/60 focus:border-success",
+                      fieldErrors.expiry && "border-error"
+                    )}
+                    autoComplete="off"
+                  />
+                  {isExpiryValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                {fieldErrors.expiry && (
+                  <p id="card-expiry-error" role="alert" className="text-error text-xs mt-1">{fieldErrors.expiry}</p>
+                )}
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="card-cvv">
-                  CVV
-                </label>
-                <input
-                  id="card-cvv"
-                  type="text"
-                  inputMode="numeric"
-                  dir="ltr"
-                  maxLength={4}
-                  value={cvv}
-                  onChange={(event) => setCvv(event.target.value)}
-                  placeholder="123"
-                  className="input font-mono"
-                  autoComplete="off"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium" htmlFor="card-cvv">
+                    CVV
+                  </label>
+                  {isCvvValid && (
+                    <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                      <Check className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                </div>
+                <div className="relative" dir="ltr">
+                  <input
+                    id="card-cvv"
+                    type="text"
+                    inputMode="numeric"
+                    dir="ltr"
+                    maxLength={4}
+                    value={cvv}
+                    onChange={(event) => {
+                      setCvv(event.target.value);
+                      if (fieldErrors.cvv && /^\d{3,4}$/.test(event.target.value)) {
+                        setFieldErrors((prev) => ({ ...prev, cvv: '' }));
+                      }
+                    }}
+                    onBlur={handleCvvBlur}
+                    placeholder="123"
+                    aria-invalid={!!fieldErrors.cvv}
+                    aria-describedby={fieldErrors.cvv ? 'card-cvv-error' : undefined}
+                    className={cn(
+                      "input font-mono text-left",
+                      isCvvValid && "pe-10 border-success/60 focus:border-success",
+                      fieldErrors.cvv && "border-error"
+                    )}
+                    autoComplete="off"
+                  />
+                  {isCvvValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                {fieldErrors.cvv && (
+                  <p id="card-cvv-error" role="alert" className="text-error text-xs mt-1">{fieldErrors.cvv}</p>
+                )}
               </div>
             </div>
 
@@ -337,9 +523,22 @@ export default function CheckoutPage() {
               </p>
             )}
 
-            <button type="submit" disabled={isPaying} className="btn btn-cta btn-lg w-full mt-2">
-              <Lock className="w-5 h-5" />
-              {isPaying ? 'در حال پرداخت...' : `پرداخت ${formatNumber(plan.price)} تومان`}
+            <button
+              type="submit"
+              disabled={isPaying}
+              className="btn btn-cta btn-lg w-full mt-2 flex items-center justify-center gap-2"
+            >
+              {isPaying ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                  <span>در حال پرداخت...</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-5 h-5" />
+                  <span>پرداخت {formatNumber(plan.price)} تومان</span>
+                </>
+              )}
             </button>
 
             <p className="text-caption text-on-surface-variant text-center flex items-center justify-center gap-2">

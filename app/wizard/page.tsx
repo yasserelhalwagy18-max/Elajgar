@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useStore } from '../../lib/store';
 import { UserProfile } from '../../types';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
-import { ArrowLeft, ShieldAlert, Plus, X } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, Plus, X, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toPersianDigits } from '@/lib/utils';
 import { useProfileSync } from '@/hooks/use-profile-sync';
@@ -102,6 +102,7 @@ function WizardForm() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isFinishing, setIsFinishing] = useState(false);
 
   const formRef = useRef<HTMLDivElement>(null);
@@ -115,13 +116,24 @@ function WizardForm() {
 
   const step = userProfile?.currentWizardStep || 1;
 
+  const parsedAge = parseInt(age);
+  const isAgeValid = touched.age && !isNaN(parsedAge) && parsedAge >= 1 && parsedAge <= 120 && !errors.age;
+  const isFullNameValid = touched.fullName && fullName.trim().length >= 2 && !errors.fullName;
+
+  const parsedHeight = parseInt(height);
+  const isHeightValid = touched.height && !isNaN(parsedHeight) && parsedHeight >= 50 && parsedHeight <= 250 && !errors.height;
+  const parsedWeight = parseInt(weight);
+  const isWeightValid = touched.weight && !isNaN(parsedWeight) && parsedWeight >= 10 && parsedWeight <= 300 && !errors.weight;
+
   const validateStep = () => {
     const newErrors: Record<string, string> = {};
     if (step === 1) {
+      setTouched((prev) => ({ ...prev, fullName: true, age: true }));
       if (!fullName || fullName.length < 2) newErrors.fullName = 'نام و نام خانوادگی باید حداقل ۲ حرف باشد';
       const parsedAge = parseInt(age);
       if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) newErrors.age = 'سن باید بین ۱ تا ۱۲۰ باشد';
     } else if (step === 2) {
+      setTouched((prev) => ({ ...prev, height: true, weight: true }));
       const parsedHeight = parseInt(height);
       if (isNaN(parsedHeight) || parsedHeight < 50 || parsedHeight > 250) newErrors.height = 'قد باید بین ۵۰ تا ۲۵۰ سانتی‌متر باشد';
       const parsedWeight = parseInt(weight);
@@ -129,6 +141,17 @@ function WizardForm() {
     } else if (step === 5) {
       if ((userProfile?.painZones?.length || 0) === 0) newErrors.painZones = 'حداقل یک ناحیه درد باید انتخاب شود';
     } else if (step === WIZARD_LAST_STEP) {
+      setTouched((prev) => ({
+        ...prev,
+        sittingHoursPerDay: true,
+        exerciseDaysPerWeek: true,
+        aggravatedByActivity: true,
+        relievedByRest: true,
+        injuryHistory: true,
+        surgeryHistory: true,
+        sleepQuality: true,
+        stressLevel: true,
+      }));
       const parsedSittingHours = parseInt(questionnaireAnswers.sittingHoursPerDay);
       if (isNaN(parsedSittingHours) || parsedSittingHours < 0 || parsedSittingHours > 24) newErrors.sittingHoursPerDay = 'ساعات نشستن باید بین ۰ تا ۲۴ باشد';
       const parsedExerciseDays = parseInt(questionnaireAnswers.exerciseDaysPerWeek);
@@ -291,32 +314,85 @@ function WizardForm() {
         {step === 1 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="wizard-full-name">نام و نام خانوادگی</label>
-              <input
-                id="wizard-full-name"
-                type="text"
-                value={fullName}
-                onChange={(e) => {
-                  setFullName(e.target.value);
-                  if (errors.fullName) setErrors({ ...errors, fullName: '' });
-                }}
-                className={`input ${errors.fullName ? 'border-error' : ''}`} aria-invalid={!!errors.fullName}
-              />
-              {errors.fullName && <p className="text-error text-xs mt-1 error-message">{errors.fullName}</p>}
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium" htmlFor="wizard-full-name">نام و نام خانوادگی</label>
+                {isFullNameValid && (
+                  <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                    <Check className="w-3.5 h-3.5" />
+                    معتبر
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  id="wizard-full-name"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    if (errors.fullName && e.target.value.trim().length >= 2) setErrors({ ...errors, fullName: '' });
+                  }}
+                  onBlur={() => {
+                    setTouched((prev) => ({ ...prev, fullName: true }));
+                    if (!fullName || fullName.trim().length < 2) {
+                      setErrors((prev) => ({ ...prev, fullName: 'نام و نام خانوادگی باید حداقل ۲ حرف باشد' }));
+                    } else {
+                      setErrors((prev) => ({ ...prev, fullName: '' }));
+                    }
+                  }}
+                  aria-invalid={!!errors.fullName}
+                  aria-describedby={errors.fullName ? 'wizard-full-name-error' : undefined}
+                  className={`input ${isFullNameValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${errors.fullName ? 'border-error' : ''}`}
+                />
+                {isFullNameValid && (
+                  <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                    <Check className="w-4 h-4" />
+                  </span>
+                )}
+              </div>
+              {errors.fullName && <p id="wizard-full-name-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.fullName}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="wizard-age">سن</label>
-              <input
-                id="wizard-age"
-                type="number"
-                value={age}
-                onChange={(e) => {
-                  setAge(e.target.value);
-                  if (errors.age) setErrors({ ...errors, age: '' });
-                }}
-                className={`input ${errors.age ? 'border-error' : ''}`} aria-invalid={!!errors.age}
-              />
-              {errors.age && <p className="text-error text-xs mt-1 error-message">{errors.age}</p>}
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium" htmlFor="wizard-age">سن</label>
+                {isAgeValid && (
+                  <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                    <Check className="w-3.5 h-3.5" />
+                    معتبر
+                  </span>
+                )}
+              </div>
+              <div className="relative" dir="ltr">
+                <input
+                  id="wizard-age"
+                  type="number"
+                  value={age}
+                  onChange={(e) => {
+                    setAge(e.target.value);
+                    const p = parseInt(e.target.value);
+                    if (errors.age && !isNaN(p) && p >= 1 && p <= 120) setErrors({ ...errors, age: '' });
+                  }}
+                  onBlur={() => {
+                    setTouched((prev) => ({ ...prev, age: true }));
+                    const p = parseInt(age);
+                    if (isNaN(p) || p < 1 || p > 120) {
+                      setErrors((prev) => ({ ...prev, age: 'سن باید بین ۱ تا ۱۲۰ باشد' }));
+                    } else {
+                      setErrors((prev) => ({ ...prev, age: '' }));
+                    }
+                  }}
+                  aria-invalid={!!errors.age}
+                  aria-describedby={errors.age ? 'wizard-age-error' : undefined}
+                  className={`input text-left ${isAgeValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${errors.age ? 'border-error' : ''}`}
+                  dir="ltr"
+                />
+                {isAgeValid && (
+                  <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                    <Check className="w-4 h-4" />
+                  </span>
+                )}
+              </div>
+              {errors.age && <p id="wizard-age-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.age}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" htmlFor="wizard-gender">جنسیت</label>
@@ -336,30 +412,84 @@ function WizardForm() {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col gap-4">
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1" htmlFor="wizard-height">قد (سانتی‌متر)</label>
-                <input id="wizard-height"
-                  type="number"
-                  value={height}
-                  onChange={(e) => {
-                    setHeight(e.target.value);
-                    if (errors.height) setErrors({ ...errors, height: '' });
-                  }}
-                  className={`input ${errors.height ? 'border-error' : ''}`} aria-invalid={!!errors.height}
-                />
-                {errors.height && <p className="text-error text-xs mt-1 error-message">{errors.height}</p>}
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium" htmlFor="wizard-height">قد (سانتی‌متر)</label>
+                  {isHeightValid && (
+                    <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                      <Check className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                </div>
+                <div className="relative" dir="ltr">
+                  <input id="wizard-height"
+                    type="number"
+                    value={height}
+                    onChange={(e) => {
+                      setHeight(e.target.value);
+                      const p = parseInt(e.target.value);
+                      if (errors.height && !isNaN(p) && p >= 50 && p <= 250) setErrors({ ...errors, height: '' });
+                    }}
+                    onBlur={() => {
+                      setTouched((prev) => ({ ...prev, height: true }));
+                      const p = parseInt(height);
+                      if (isNaN(p) || p < 50 || p > 250) {
+                        setErrors((prev) => ({ ...prev, height: 'قد باید بین ۵۰ تا ۲۵۰ سانتی‌متر باشد' }));
+                      } else {
+                        setErrors((prev) => ({ ...prev, height: '' }));
+                      }
+                    }}
+                    aria-invalid={!!errors.height}
+                    aria-describedby={errors.height ? 'wizard-height-error' : undefined}
+                    className={`input text-left ${isHeightValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${errors.height ? 'border-error' : ''}`}
+                    dir="ltr"
+                  />
+                  {isHeightValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                {errors.height && <p id="wizard-height-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.height}</p>}
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1" htmlFor="wizard-weight">وزن (کیلوگرم)</label>
-                <input id="wizard-weight"
-                  type="number"
-                  value={weight}
-                  onChange={(e) => {
-                    setWeight(e.target.value);
-                    if (errors.weight) setErrors({ ...errors, weight: '' });
-                  }}
-                  className={`input ${errors.weight ? 'border-error' : ''}`} aria-invalid={!!errors.weight}
-                />
-                {errors.weight && <p className="text-error text-xs mt-1 error-message">{errors.weight}</p>}
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium" htmlFor="wizard-weight">وزن (کیلوگرم)</label>
+                  {isWeightValid && (
+                    <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                      <Check className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                </div>
+                <div className="relative" dir="ltr">
+                  <input id="wizard-weight"
+                    type="number"
+                    value={weight}
+                    onChange={(e) => {
+                      setWeight(e.target.value);
+                      const p = parseInt(e.target.value);
+                      if (errors.weight && !isNaN(p) && p >= 10 && p <= 300) setErrors({ ...errors, weight: '' });
+                    }}
+                    onBlur={() => {
+                      setTouched((prev) => ({ ...prev, weight: true }));
+                      const p = parseInt(weight);
+                      if (isNaN(p) || p < 10 || p > 300) {
+                        setErrors((prev) => ({ ...prev, weight: 'وزن باید بین ۱۰ تا ۳۰۰ کیلوگرم باشد' }));
+                      } else {
+                        setErrors((prev) => ({ ...prev, weight: '' }));
+                      }
+                    }}
+                    aria-invalid={!!errors.weight}
+                    aria-describedby={errors.weight ? 'wizard-weight-error' : undefined}
+                    className={`input text-left ${isWeightValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${errors.weight ? 'border-error' : ''}`}
+                    dir="ltr"
+                  />
+                  {isWeightValid && (
+                    <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                      <Check className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                {errors.weight && <p id="wizard-weight-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.weight}</p>}
               </div>
             </div>
             <div>
@@ -514,7 +644,7 @@ function WizardForm() {
             >
                 <Step6Questionnaire answers={questionnaireAnswers} setAnswers={(newAnswers) => {
                     setQuestionnaireAnswers(newAnswers);
-                }} errors={errors} setErrors={setErrors} />
+                }} errors={errors} setErrors={setErrors} touched={touched} setTouched={setTouched} />
             </motion.div>
         )}
         </AnimatePresence>
@@ -531,6 +661,7 @@ function WizardForm() {
             <button
               type="button"
               onClick={prevStep}
+              disabled={isFinishing}
               className="btn btn-secondary btn-md"
             >
               قبلی
@@ -543,13 +674,21 @@ function WizardForm() {
             onClick={nextStep}
             disabled={(step === 4 && !termsAccepted) || isFinishing}
             className={cn(
-              "btn btn-md",
+              "btn btn-md flex items-center justify-center gap-2",
               (step === 4 && !termsAccepted) ? "btn-secondary" : "btn-primary"
             )}
           >
-            {isFinishing
-              ? 'در حال ذخیره...'
-              : step === WIZARD_LAST_STEP ? 'تکمیل' : 'بعدی'} {step < WIZARD_LAST_STEP && <ArrowLeft className="w-4 h-4" />}
+            {isFinishing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                <span>در حال ذخیره...</span>
+              </>
+            ) : (
+              <>
+                <span>{step === WIZARD_LAST_STEP ? 'تکمیل' : 'بعدی'}</span>
+                {step < WIZARD_LAST_STEP && <ArrowLeft className="w-4 h-4" />}
+              </>
+            )}
           </button>
           </div>
         </div>
@@ -647,7 +786,7 @@ function Step5BodyMap() {
     );
 }
 
-function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
+function Step6Questionnaire({ answers, setAnswers, errors, setErrors, touched, setTouched }: {
     answers: {
         duration: string;
         aggravatedByActivity: string;
@@ -671,7 +810,9 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
         exerciseDaysPerWeek: string;
     }>>,
     errors?: Record<string, string>,
-    setErrors?: React.Dispatch<React.SetStateAction<Record<string, string>>>
+    setErrors?: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+    touched?: Record<string, boolean>,
+    setTouched?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 }) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -681,13 +822,49 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
         }
     };
 
+    const handleSelectBlur = (name: string, label: string) => {
+        setTouched?.((prev) => ({ ...prev, [name]: true }));
+        if (!answers[name as keyof typeof answers]) {
+            setErrors?.((prev) => ({ ...prev, [name]: `لطفاً «${label}» را انتخاب کنید` }));
+        } else {
+            setErrors?.((prev) => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const handleSittingHoursBlur = () => {
+        setTouched?.((prev) => ({ ...prev, sittingHoursPerDay: true }));
+        const p = parseInt(answers.sittingHoursPerDay);
+        if (isNaN(p) || p < 0 || p > 24) {
+            setErrors?.((prev) => ({ ...prev, sittingHoursPerDay: 'ساعات نشستن باید بین ۰ تا ۲۴ باشد' }));
+        } else {
+            setErrors?.((prev) => ({ ...prev, sittingHoursPerDay: '' }));
+        }
+    };
+
+    const handleExerciseDaysBlur = () => {
+        setTouched?.((prev) => ({ ...prev, exerciseDaysPerWeek: true }));
+        const p = parseInt(answers.exerciseDaysPerWeek);
+        if (isNaN(p) || p < 0 || p > 7) {
+            setErrors?.((prev) => ({ ...prev, exerciseDaysPerWeek: 'روزهای ورزش باید بین ۰ تا ۷ باشد' }));
+        } else {
+            setErrors?.((prev) => ({ ...prev, exerciseDaysPerWeek: '' }));
+        }
+    };
+
+    const parsedSitting = parseInt(answers.sittingHoursPerDay);
+    const isSittingValid = !!touched?.sittingHoursPerDay && !isNaN(parsedSitting) && parsedSitting >= 0 && parsedSitting <= 24 && !errors?.sittingHoursPerDay;
+
+    const parsedExercise = parseInt(answers.exerciseDaysPerWeek);
+    const isExerciseValid = !!touched?.exerciseDaysPerWeek && !isNaN(parsedExercise) && parsedExercise >= 0 && parsedExercise <= 7 && !errors?.exerciseDaysPerWeek;
+
     return (
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col h-full">
             <h2 className="text-2xl font-bold mb-6 text-on-surface">پرسشنامه هوشمند درد</h2>
             <div className="space-y-4 overflow-y-auto pb-4 pr-2 custom-scrollbar flex-1">
-                <label className="block">
-                    <span className="text-sm font-medium mb-1 block">مدت زمان درد</span>
+                <div>
+                    <label className="text-sm font-medium mb-1 block" htmlFor="q-duration">مدت زمان درد</label>
                     <input
+                        id="q-duration"
                         type="text"
                         name="duration"
                         value={answers.duration}
@@ -695,100 +872,236 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors }: {
                         className="input w-full"
                         placeholder="مثال: ۲ ماه"
                     />
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className="block">
-                        <span className="text-sm font-medium mb-1 block">تشدید با فعالیت</span>
-                        <select name="aggravatedByActivity" value={answers.aggravatedByActivity} onChange={handleChange} className={`select w-full ${errors?.aggravatedByActivity ? 'border-error' : ''}`}>
-                            <option value="">انتخاب کنید</option>
-                            <option value="بله">بله</option>
-                            <option value="خیر">خیر</option>
-                        </select>
-                        {errors?.aggravatedByActivity && <p className="text-error text-xs mt-1 error-message">{errors.aggravatedByActivity}</p>}
-                    </label>
-                    <label className="block">
-                        <span className="text-sm font-medium mb-1 block">تسکین با استراحت</span>
-                        <select name="relievedByRest" value={answers.relievedByRest} onChange={handleChange} className={`select w-full ${errors?.relievedByRest ? 'border-error' : ''}`}>
-                            <option value="">انتخاب کنید</option>
-                            <option value="بله">بله</option>
-                            <option value="خیر">خیر</option>
-                        </select>
-                        {errors?.relievedByRest && <p className="text-error text-xs mt-1 error-message">{errors.relievedByRest}</p>}
-                    </label>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className="block">
-                        <span className="text-sm font-medium mb-1 block">سابقه آسیب</span>
-                        <select name="injuryHistory" value={answers.injuryHistory} onChange={handleChange} className={`select w-full ${errors?.injuryHistory ? 'border-error' : ''}`}>
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block" htmlFor="q-aggravated">تشدید با فعالیت</label>
+                            {!!touched?.aggravatedByActivity && !!answers.aggravatedByActivity && !errors?.aggravatedByActivity && (
+                                <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                                    <Check className="w-3.5 h-3.5" />
+                                </span>
+                            )}
+                        </div>
+                        <select
+                            id="q-aggravated"
+                            name="aggravatedByActivity"
+                            value={answers.aggravatedByActivity}
+                            onChange={handleChange}
+                            onBlur={() => handleSelectBlur('aggravatedByActivity', 'تشدید با فعالیت')}
+                            aria-invalid={!!errors?.aggravatedByActivity}
+                            aria-describedby={errors?.aggravatedByActivity ? 'aggravatedByActivity-error' : undefined}
+                            className={`select w-full ${!!touched?.aggravatedByActivity && !!answers.aggravatedByActivity && !errors?.aggravatedByActivity ? 'border-success/60 focus:border-success' : ''} ${errors?.aggravatedByActivity ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
-                        {errors?.injuryHistory && <p className="text-error text-xs mt-1 error-message">{errors.injuryHistory}</p>}
-                    </label>
-                    <label className="block">
-                        <span className="text-sm font-medium mb-1 block">سابقه جراحی</span>
-                        <select name="surgeryHistory" value={answers.surgeryHistory} onChange={handleChange} className={`select w-full ${errors?.surgeryHistory ? 'border-error' : ''}`}>
+                        {errors?.aggravatedByActivity && <p id="aggravatedByActivity-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.aggravatedByActivity}</p>}
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block" htmlFor="q-relieved">تسکین با استراحت</label>
+                            {!!touched?.relievedByRest && !!answers.relievedByRest && !errors?.relievedByRest && (
+                                <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                                    <Check className="w-3.5 h-3.5" />
+                                </span>
+                            )}
+                        </div>
+                        <select
+                            id="q-relieved"
+                            name="relievedByRest"
+                            value={answers.relievedByRest}
+                            onChange={handleChange}
+                            onBlur={() => handleSelectBlur('relievedByRest', 'تسکین با استراحت')}
+                            aria-invalid={!!errors?.relievedByRest}
+                            aria-describedby={errors?.relievedByRest ? 'relievedByRest-error' : undefined}
+                            className={`select w-full ${!!touched?.relievedByRest && !!answers.relievedByRest && !errors?.relievedByRest ? 'border-success/60 focus:border-success' : ''} ${errors?.relievedByRest ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="بله">بله</option>
                             <option value="خیر">خیر</option>
                         </select>
-                        {errors?.surgeryHistory && <p className="text-error text-xs mt-1 error-message">{errors.surgeryHistory}</p>}
-                    </label>
+                        {errors?.relievedByRest && <p id="relievedByRest-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.relievedByRest}</p>}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className="block">
-                        <span className="text-sm font-medium mb-1 block">کیفیت خواب</span>
-                        <select name="sleepQuality" value={answers.sleepQuality} onChange={handleChange} className={`select w-full ${errors?.sleepQuality ? 'border-error' : ''}`}>
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block" htmlFor="q-injury">سابقه آسیب</label>
+                            {!!touched?.injuryHistory && !!answers.injuryHistory && !errors?.injuryHistory && (
+                                <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                                    <Check className="w-3.5 h-3.5" />
+                                </span>
+                            )}
+                        </div>
+                        <select
+                            id="q-injury"
+                            name="injuryHistory"
+                            value={answers.injuryHistory}
+                            onChange={handleChange}
+                            onBlur={() => handleSelectBlur('injuryHistory', 'سابقه آسیب')}
+                            aria-invalid={!!errors?.injuryHistory}
+                            aria-describedby={errors?.injuryHistory ? 'injuryHistory-error' : undefined}
+                            className={`select w-full ${!!touched?.injuryHistory && !!answers.injuryHistory && !errors?.injuryHistory ? 'border-success/60 focus:border-success' : ''} ${errors?.injuryHistory ? 'border-error' : ''}`}
+                        >
+                            <option value="">انتخاب کنید</option>
+                            <option value="بله">بله</option>
+                            <option value="خیر">خیر</option>
+                        </select>
+                        {errors?.injuryHistory && <p id="injuryHistory-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.injuryHistory}</p>}
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block" htmlFor="q-surgery">سابقه جراحی</label>
+                            {!!touched?.surgeryHistory && !!answers.surgeryHistory && !errors?.surgeryHistory && (
+                                <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                                    <Check className="w-3.5 h-3.5" />
+                                </span>
+                            )}
+                        </div>
+                        <select
+                            id="q-surgery"
+                            name="surgeryHistory"
+                            value={answers.surgeryHistory}
+                            onChange={handleChange}
+                            onBlur={() => handleSelectBlur('surgeryHistory', 'سابقه جراحی')}
+                            aria-invalid={!!errors?.surgeryHistory}
+                            aria-describedby={errors?.surgeryHistory ? 'surgeryHistory-error' : undefined}
+                            className={`select w-full ${!!touched?.surgeryHistory && !!answers.surgeryHistory && !errors?.surgeryHistory ? 'border-success/60 focus:border-success' : ''} ${errors?.surgeryHistory ? 'border-error' : ''}`}
+                        >
+                            <option value="">انتخاب کنید</option>
+                            <option value="بله">بله</option>
+                            <option value="خیر">خیر</option>
+                        </select>
+                        {errors?.surgeryHistory && <p id="surgeryHistory-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.surgeryHistory}</p>}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block" htmlFor="q-sleep">کیفیت خواب</label>
+                            {!!touched?.sleepQuality && !!answers.sleepQuality && !errors?.sleepQuality && (
+                                <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                                    <Check className="w-3.5 h-3.5" />
+                                </span>
+                            )}
+                        </div>
+                        <select
+                            id="q-sleep"
+                            name="sleepQuality"
+                            value={answers.sleepQuality}
+                            onChange={handleChange}
+                            onBlur={() => handleSelectBlur('sleepQuality', 'کیفیت خواب')}
+                            aria-invalid={!!errors?.sleepQuality}
+                            aria-describedby={errors?.sleepQuality ? 'sleepQuality-error' : undefined}
+                            className={`select w-full ${!!touched?.sleepQuality && !!answers.sleepQuality && !errors?.sleepQuality ? 'border-success/60 focus:border-success' : ''} ${errors?.sleepQuality ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="بد">بد</option>
                             <option value="متوسط">متوسط</option>
                             <option value="خوب">خوب</option>
                         </select>
-                        {errors?.sleepQuality && <p className="text-error text-xs mt-1 error-message">{errors.sleepQuality}</p>}
-                    </label>
-                    <label className="block">
-                        <span className="text-sm font-medium mb-1 block">سطح استرس</span>
-                        <select name="stressLevel" value={answers.stressLevel} onChange={handleChange} className={`select w-full ${errors?.stressLevel ? 'border-error' : ''}`}>
+                        {errors?.sleepQuality && <p id="sleepQuality-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.sleepQuality}</p>}
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block" htmlFor="q-stress">سطح استرس</label>
+                            {!!touched?.stressLevel && !!answers.stressLevel && !errors?.stressLevel && (
+                                <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                                    <Check className="w-3.5 h-3.5" />
+                                </span>
+                            )}
+                        </div>
+                        <select
+                            id="q-stress"
+                            name="stressLevel"
+                            value={answers.stressLevel}
+                            onChange={handleChange}
+                            onBlur={() => handleSelectBlur('stressLevel', 'سطح استرس')}
+                            aria-invalid={!!errors?.stressLevel}
+                            aria-describedby={errors?.stressLevel ? 'stressLevel-error' : undefined}
+                            className={`select w-full ${!!touched?.stressLevel && !!answers.stressLevel && !errors?.stressLevel ? 'border-success/60 focus:border-success' : ''} ${errors?.stressLevel ? 'border-error' : ''}`}
+                        >
                             <option value="">انتخاب کنید</option>
                             <option value="کم">کم</option>
                             <option value="متوسط">متوسط</option>
                             <option value="زیاد">زیاد</option>
                         </select>
-                        {errors?.stressLevel && <p className="text-error text-xs mt-1 error-message">{errors.stressLevel}</p>}
-                    </label>
+                        {errors?.stressLevel && <p id="stressLevel-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.stressLevel}</p>}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className="block">
-                        <span className="text-sm font-medium mb-1 block">ساعات نشستن در روز</span>
-                        <input
-                            type="number"
-                            name="sittingHoursPerDay"
-                            value={answers.sittingHoursPerDay}
-                            onChange={handleChange}
-                            className={`input w-full ${errors?.sittingHoursPerDay ? 'border-error focus:ring-error' : ''}`}
-                            min="0"
-                            max="24"
-                        />
-                        {errors?.sittingHoursPerDay && <p className="text-error text-xs mt-1 error-message">{errors.sittingHoursPerDay}</p>}
-                    </label>
-                    <label className="block">
-                        <span className="text-sm font-medium mb-1 block">روزهای ورزش در هفته</span>
-                        <input
-                            type="number"
-                            name="exerciseDaysPerWeek"
-                            value={answers.exerciseDaysPerWeek}
-                            onChange={handleChange}
-                            className={`input w-full ${errors?.exerciseDaysPerWeek ? 'border-error focus:ring-error' : ''}`}
-                            min="0"
-                            max="7"
-                        />
-                        {errors?.exerciseDaysPerWeek && <p className="text-error text-xs mt-1 error-message">{errors.exerciseDaysPerWeek}</p>}
-                    </label>
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block" htmlFor="q-sitting">ساعات نشستن در روز</label>
+                            {isSittingValid && (
+                                <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                                    <Check className="w-3.5 h-3.5" />
+                                </span>
+                            )}
+                        </div>
+                        <div className="relative" dir="ltr">
+                            <input
+                                id="q-sitting"
+                                type="number"
+                                name="sittingHoursPerDay"
+                                value={answers.sittingHoursPerDay}
+                                onChange={handleChange}
+                                onBlur={handleSittingHoursBlur}
+                                aria-invalid={!!errors?.sittingHoursPerDay}
+                                aria-describedby={errors?.sittingHoursPerDay ? 'sittingHoursPerDay-error' : undefined}
+                                className={`input text-left w-full ${isSittingValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${errors?.sittingHoursPerDay ? 'border-error focus:ring-error' : ''}`}
+                                min="0"
+                                max="24"
+                            />
+                            {isSittingValid && (
+                                <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                                    <Check className="w-4 h-4" />
+                                </span>
+                            )}
+                        </div>
+                        {errors?.sittingHoursPerDay && <p id="sittingHoursPerDay-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.sittingHoursPerDay}</p>}
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-sm font-medium block" htmlFor="q-exercise">روزهای ورزش در هفته</label>
+                            {isExerciseValid && (
+                                <span className="inline-flex items-center gap-1 text-xs text-success font-medium" aria-hidden="true">
+                                    <Check className="w-3.5 h-3.5" />
+                                </span>
+                            )}
+                        </div>
+                        <div className="relative" dir="ltr">
+                            <input
+                                id="q-exercise"
+                                type="number"
+                                name="exerciseDaysPerWeek"
+                                value={answers.exerciseDaysPerWeek}
+                                onChange={handleChange}
+                                onBlur={handleExerciseDaysBlur}
+                                aria-invalid={!!errors?.exerciseDaysPerWeek}
+                                aria-describedby={errors?.exerciseDaysPerWeek ? 'exerciseDaysPerWeek-error' : undefined}
+                                className={`input text-left w-full ${isExerciseValid ? 'pe-10 border-success/60 focus:border-success' : ''} ${errors?.exerciseDaysPerWeek ? 'border-error focus:ring-error' : ''}`}
+                                min="0"
+                                max="7"
+                            />
+                            {isExerciseValid && (
+                                <span className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-success flex items-center" aria-hidden="true">
+                                    <Check className="w-4 h-4" />
+                                </span>
+                            )}
+                        </div>
+                        {errors?.exerciseDaysPerWeek && <p id="exerciseDaysPerWeek-error" role="alert" className="text-error text-xs mt-1 error-message">{errors.exerciseDaysPerWeek}</p>}
+                    </div>
                 </div>
             </div>
         </motion.div>
