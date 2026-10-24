@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -57,6 +57,7 @@ export function Modal({
   const previouslyFocusedRef = React.useRef<HTMLElement | null>(null);
   const titleId = React.useId();
   const descriptionId = React.useId();
+  const shouldReduceMotion = useReducedMotion();
 
   // Move focus into the dialog on open and restore it on close.
   React.useEffect(() => {
@@ -141,9 +142,10 @@ export function Modal({
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: shouldReduceMotion ? 1 : 0 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
             onClick={dismissable ? onClose : undefined}
             className="absolute inset-0 bg-on-surface/50 backdrop-blur-sm"
           />
@@ -155,10 +157,10 @@ export function Modal({
             aria-labelledby={title ? titleId : undefined}
             aria-describedby={description ? descriptionId : undefined}
             tabIndex={-1}
-            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            initial={shouldReduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 24, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.97 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            exit={shouldReduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.97 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
             className={cn(
               'relative z-10 w-full rounded-3xl bg-surface-container border border-outline-variant shadow-floating flex flex-col max-h-[90vh] outline-none',
               SIZE_CLASSES[size],

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ArrowLeft, HeartPulse, Lock, Waves, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 import { cn, toPersianDigits, formatPersianNumber } from '@/lib/utils';
 import { useStore } from '@/lib/store';
@@ -19,6 +19,7 @@ const BRAND = 'علاج‌گر';
  * on screen at first paint instead of flashing zeros while a fetch lands.
  */
 export default function Landing({ stats }: { stats: LandingStats }) {
+  const shouldReduceMotion = useReducedMotion();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   // The hero body map writes to the same store the wizard reads, so a visitor
@@ -145,9 +146,9 @@ export default function Landing({ stats }: { stats: LandingStats }) {
             marks where it hurts and those zones are waiting in the wizard. */}
         <div className="flex-1 relative z-10 w-full">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.6 }}
             className="rounded-4xl overflow-hidden bg-surface-container border border-outline-variant card flex flex-col items-center justify-center gap-2 p-6 md:p-8"
           >
             <PainHeatmap view="front" />

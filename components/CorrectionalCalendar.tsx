@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Check, Clock, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { toDateKey } from '@/lib/utils';
 
 type SessionStatus = 'completed' | 'pending' | 'skipped';
@@ -147,6 +147,7 @@ function addMonths(date: Date, delta: number): Date {
 }
 
 export function CorrectionalCalendar() {
+    const shouldReduceMotion = useReducedMotion();
     const today = useMemo(() => startOfDay(new Date()), []);
 
     const [selectedDate, setSelectedDate] = useState<Date>(today);
@@ -348,10 +349,10 @@ export function CorrectionalCalendar() {
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={`${selectedKey}-${currentSession?.status}`}
-                            initial={{ opacity: 0, x: -10 }}
+                            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 10 }}
-                            transition={{ duration: 0.2 }}
+                            exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 10 }}
+                            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
                             className="flex justify-between items-center h-full w-full"
                         >
                             {currentSession ? (

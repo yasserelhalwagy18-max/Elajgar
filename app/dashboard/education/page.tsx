@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Lock, Verified, Check, Play, CreditCard, GraduationCap } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { cn, formatNumber, toPersianDigits } from '@/lib/utils';
 import { CorrectionalCalendar } from '@/components/CorrectionalCalendar';
 import { ExerciseGallery } from '@/components/ExerciseGallery';
@@ -47,6 +47,7 @@ export default function EducationPage() {
     const { isAuthenticated, hasHydrated } = useAuthGuard();
     const mounted = useMounted();
     const { setAuthenticated } = useStore();
+    const shouldReduceMotion = useReducedMotion();
 
     const [activeTag, setActiveTag] = React.useState('همه');
     const [showPremiumModal, setShowPremiumModal] = React.useState(false);
@@ -136,18 +137,29 @@ export default function EducationPage() {
 
                 {/* Horizontal scroll tags - the chip component keeps the active
                     state identical to every other filter rail in the app. */}
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 rail-fade">
-                    {tags.map((tag) => (
-                        <button
-                            key={tag}
-                            type="button"
-                            onClick={() => setActiveTag(tag)}
-                            aria-pressed={activeTag === tag}
-                            className="chip"
-                        >
-                            {tag}
-                        </button>
-                    ))}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 rail-fade" role="tablist" aria-label="دسته‌بندی مطالب">
+                    {tags.map((tag) => {
+                        const isSelected = activeTag === tag;
+                        return (
+                            <button
+                                key={tag}
+                                type="button"
+                                role="tab"
+                                aria-selected={isSelected}
+                                onClick={() => setActiveTag(tag)}
+                                className={cn('chip relative overflow-hidden transition-colors', isSelected && 'text-white')}
+                            >
+                                {isSelected && (
+                                    <motion.div
+                                        layoutId="education-active-tag"
+                                        className="absolute inset-0 bg-primary -z-0"
+                                        transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.15, duration: 0.4 }}
+                                    />
+                                )}
+                                <span className="relative z-10">{tag}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </header>
 

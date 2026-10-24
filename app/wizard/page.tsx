@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '../../lib/store';
 import { UserProfile } from '../../types';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { ArrowLeft, ShieldAlert, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toPersianDigits } from '@/lib/utils';
@@ -54,7 +54,11 @@ export default function WizardPage() {
     );
   }
 
-  return <WizardForm />;
+  return (
+    <MotionConfig reducedMotion="user">
+      <WizardForm />
+    </MotionConfig>
+  );
 }
 
 function WizardForm() {

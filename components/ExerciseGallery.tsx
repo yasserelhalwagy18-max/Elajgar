@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Play, X, RotateCcw } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { cn, formatDuration, toPersianDigits } from '@/lib/utils';
 import { useStore } from '@/lib/store';
 import { Modal } from '@/components/ui/Modal';
@@ -30,6 +30,7 @@ interface Exercise {
  * request fails.
  */
 export function ExerciseGallery() {
+    const shouldReduceMotion = useReducedMotion();
     const [exercises, setExercises] = React.useState<Exercise[]>([]);
     const [activeVideo, setActiveVideo] = React.useState<string | null>(null);
     const [activeCategory, setActiveCategory] = React.useState('همه');
@@ -143,12 +144,9 @@ export function ExerciseGallery() {
                     <h3 className="text-sm font-bold text-on-surface-variant mb-3 px-1">پیشنهادی بر اساس درد شما</h3>
                     <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 rail-fade">
                         {recommendedExercises.map((exercise) => (
-                            <motion.button
+                            <button
                                 type="button"
                                 key={`rec-${exercise.id}`}
-                                layout
-                                whileHover={{ y: -5 }}
-                                whileTap={{ scale: 0.98 }}
                                 onClick={() => setActiveVideo(exercise.id)}
                                 className="relative min-w-[140px] w-[140px] rounded-3xl overflow-hidden card card-hover group cursor-pointer aspect-square flex-shrink-0 text-start"
                             >
@@ -170,7 +168,7 @@ export function ExerciseGallery() {
                                         <span>{exercise.level}</span>
                                     </div>
                                 </div>
-                            </motion.button>
+                            </button>
                         ))}
                     </div>
                 </div>
@@ -178,32 +176,37 @@ export function ExerciseGallery() {
 
             {/* Categories Filter */}
             {categories.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2 rail-fade">
-                    {categories.map((category) => (
-                        <button
-                            key={category}
-                            type="button"
-                            onClick={() => setActiveCategory(category)}
-                            aria-pressed={activeCategory === category}
-                            className="chip"
-                        >
-                            {category}
-                        </button>
-                    ))}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-2 rail-fade" role="tablist" aria-label="دسته‌بندی تمرینات">
+                    {categories.map((category) => {
+                        const isSelected = activeCategory === category;
+                        return (
+                            <button
+                                key={category}
+                                type="button"
+                                role="tab"
+                                aria-selected={isSelected}
+                                onClick={() => setActiveCategory(category)}
+                                className={cn('chip relative overflow-hidden transition-colors', isSelected && 'text-white')}
+                            >
+                                {isSelected && (
+                                    <motion.div
+                                        layoutId="exercise-active-category"
+                                        className="absolute inset-0 bg-primary -z-0"
+                                        transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.15, duration: 0.4 }}
+                                    />
+                                )}
+                                <span className="relative z-10">{category}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
                 {filteredExercises.map((exercise) => (
-                    <motion.button
+                    <button
                         type="button"
                         key={exercise.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        whileHover={{ y: -5 }}
-                        whileTap={{ scale: 0.98 }}
                         onClick={() => setActiveVideo(exercise.id)}
                         className="relative rounded-3xl overflow-hidden card card-hover group cursor-pointer aspect-square text-start"
                     >
@@ -225,7 +228,7 @@ export function ExerciseGallery() {
                                 <span>{exercise.level}</span>
                             </div>
                         </div>
-                    </motion.button>
+                    </button>
                 ))}
             </div>
 

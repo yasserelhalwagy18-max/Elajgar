@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { BODY_REGIONS, type BodyRegion } from '@/lib/body-regions';
@@ -19,6 +19,7 @@ export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
   const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltipStyle, setTooltipStyle] = useState({ top: 0, left: 0, transform: 'translate(-50%, -100%)' });
+  const shouldReduceMotion = useReducedMotion();
 
   const activeRegions = regionsData.filter((r) => r.view === view);
 
@@ -127,10 +128,10 @@ export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
         <AnimatePresence>
           {hoveredRegion && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.15 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
               className="absolute z-50 px-3 py-1.5 rounded-lg backdrop-blur-md bg-on-surface/90 border border-white/10 shadow-2xl pointer-events-none"
               style={{
                 top: `${tooltipStyle.top}px`,

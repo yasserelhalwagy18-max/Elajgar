@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'motion/react';
+import { motion, useMotionValue, useTransform, animate, AnimatePresence, useReducedMotion, type Variants } from 'motion/react';
 import { Plus, Droplet, Activity, Scale, Activity as Pulse, Check, User, Utensils } from 'lucide-react';
 import { cn, toDateKey, toPersianDigits, formatNumber, formatPersianNumber } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
@@ -215,22 +215,26 @@ export default function DashboardIndex() {
     // The component weights are global and set by an admin.
     weights: userProfile?.healthWeights,
   });
+  const shouldReduceMotion = useReducedMotion();
   const count = useMotionValue(0);
   // Render the score with Persian digits, matching the rest of the UI.
   const roundedCount = useTransform(count, (latest) => toPersianDigits(Math.round(latest)));
 
-  // Animate the score from its previous value, not from zero - counting up
-  // from 0 every time a glass of water was logged made the dial feel broken.
+  // Animate the score from its previous value on updates, or count up from 0 on first load.
   const previousScoreRef = useRef<number | null>(null);
   useEffect(() => {
     const previous = previousScoreRef.current;
     previousScoreRef.current = targetScore;
 
-    if (previous === null) {
-      count.set(0);
-    } else if (previous !== targetScore) {
-      count.set(previous);
-    } else {
+    if (shouldReduceMotion) {
+      count.set(targetScore);
+      return;
+    }
+
+    const startValue = previous === null ? 0 : previous;
+    count.set(startValue);
+
+    if (startValue === targetScore && previous !== null) {
       return;
     }
 
@@ -240,7 +244,34 @@ export default function DashboardIndex() {
     });
 
     return animation.stop;
-  }, [count, targetScore]);
+  }, [count, targetScore, shouldReduceMotion]);
+
+  // Dashboard cards staggered fade-and-rise variants for first load
+  const containerVariants: Variants = {
+    hidden: { opacity: shouldReduceMotion ? 1 : 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.08,
+        delayChildren: shouldReduceMotion ? 0 : 0.04,
+      },
+    },
+  };
+
+  const cardVariants: Variants = {
+    hidden: {
+      opacity: shouldReduceMotion ? 1 : 0,
+      y: shouldReduceMotion ? 0 : 16,
+    },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: shouldReduceMotion ? 0 : 0.45,
+        ease: 'easeOut',
+      },
+    },
+  };
 
   // Medical Disclaimer logic
   useEffect(() => {
@@ -410,21 +441,28 @@ export default function DashboardIndex() {
                             aria-current={option.key === todayDate ? 'date' : undefined}
                             title={`${option.weekday} ${option.day} ${option.month}`}
                             className={cn(
-                                'shrink-0 w-14 min-h-[64px] rounded-2xl border flex flex-col items-center justify-center gap-0.5 transition-colors',
+                                'relative shrink-0 w-14 min-h-[64px] rounded-2xl border flex flex-col items-center justify-center gap-0.5 transition-colors overflow-hidden',
                                 isSelected
-                                    ? 'bg-primary text-white border-primary shadow-md'
+                                    ? 'text-white border-primary shadow-md'
                                     : 'bg-surface-container border-outline-variant text-on-surface-variant hover:border-primary/40'
                             )}
                         >
-                            <span className={cn('text-caption font-medium', isSelected ? 'text-white' : 'text-on-surface-variant')}>
+                            {isSelected && (
+                                <motion.div
+                                    layoutId="active-date-indicator"
+                                    className="absolute inset-0 bg-primary -z-0"
+                                    transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.15, duration: 0.4 }}
+                                />
+                            )}
+                            <span className={cn('relative z-10 text-caption font-medium', isSelected ? 'text-white' : 'text-on-surface-variant')}>
                                 {option.weekday}
                             </span>
-                            <span className={cn('text-base font-bold leading-none', isSelected && 'text-white')}>
+                            <span className={cn('relative z-10 text-base font-bold leading-none', isSelected && 'text-white')}>
                                 {option.day}
                             </span>
                             <span
                                 className={cn(
-                                    'w-1.5 h-1.5 rounded-full mt-0.5',
+                                    'relative z-10 w-1.5 h-1.5 rounded-full mt-0.5',
                                     hasData ? (isSelected ? 'bg-white' : 'bg-primary') : 'bg-transparent'
                                 )}
                                 aria-hidden="true"
@@ -456,97 +494,94 @@ export default function DashboardIndex() {
             </p>
         )}
 
-        {/* Health Score Dial */}
-        <section className="card p-8 rounded-3xl flex flex-col items-center mb-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl mix-blend-multiply" aria-hidden="true"></div>
-            <h2 className="text-xl text-on-surface font-bold z-10">شاخص سلامت شما</h2>
-            <p className="text-primary font-medium text-sm mb-8 z-10">
-                {hasDayData ? getStatusText(targetScore) : 'هنوز برای این روز چیزی ثبت نشده'}
-            </p>
+        {/* Dashboard Cards Container with staggered fade-and-rise */}
+        <motion.div variants={containerVariants} initial="hidden" animate="show">
+            {/* Health Score Dial */}
+            <motion.section variants={cardVariants} className="card p-8 rounded-3xl flex flex-col items-center mb-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl mix-blend-multiply" aria-hidden="true"></div>
+                <h2 className="text-xl text-on-surface font-bold z-10">شاخص سلامت شما</h2>
+                <p className="text-primary font-medium text-sm mb-8 z-10">
+                    {hasDayData ? getStatusText(targetScore) : 'هنوز برای این روز چیزی ثبت نشده'}
+                </p>
 
-            <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1, type: 'spring' }}
-                className="relative w-56 h-56 z-10 flex items-center justify-center mb-4"
-            >
-                <svg className="absolute inset-0 w-56 h-56" viewBox="0 0 100 100" aria-hidden="true">
-                    <circle cx="50" cy="50" r="42" stroke="var(--color-primary-fixed)" strokeWidth={9} fill="none" />
-                    <g transform="rotate(-90 50 50)">
-                        <motion.circle
-                            cx={50}
-                            cy={50}
-                            r={42}
-                            stroke="var(--color-primary)"
-                            strokeWidth={9}
-                            strokeLinecap="round"
-                            fill="none"
-                            strokeDasharray={2 * Math.PI * 42}
-                            initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
-                            animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - targetScore / 100) }}
-                            transition={{ duration: 1.2, ease: 'easeOut' }}
+                <div className="relative w-56 h-56 z-10 flex items-center justify-center mb-4">
+                    <svg className="absolute inset-0 w-56 h-56" viewBox="0 0 100 100" aria-hidden="true">
+                        <circle cx="50" cy="50" r="42" stroke="var(--color-primary-fixed)" strokeWidth={9} fill="none" />
+                        <g transform="rotate(-90 50 50)">
+                            <motion.circle
+                                cx={50}
+                                cy={50}
+                                r={42}
+                                stroke="var(--color-primary)"
+                                strokeWidth={9}
+                                strokeLinecap="round"
+                                fill="none"
+                                strokeDasharray={2 * Math.PI * 42}
+                                initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                                animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - targetScore / 100) }}
+                                transition={{ duration: shouldReduceMotion ? 0 : 1.2, ease: 'easeOut' }}
+                            />
+                        </g>
+                    </svg>
+                    <div className="w-40 h-40 bg-surface-container rounded-full border-4 border-surface-container shadow-2xl flex flex-col items-center justify-center">
+                        {hasDayData ? (
+                            <>
+                                <motion.span className="text-6xl font-black text-primary tabular-nums" aria-live="polite">
+                                    {roundedCount}
+                                </motion.span>
+                                <span className="text-sm font-bold text-on-surface-variant tabular-nums">
+                                    {formatPersianNumber(100)}
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="text-5xl font-black text-on-surface-variant/40" aria-hidden="true">—</span>
+                                <span className="text-sm font-bold text-on-surface-variant mt-1">بدون امتیاز</span>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* A day with nothing in it gets a prompt instead of a number.
+                    The prompt carries the buttons itself - they used to sit on
+                    the cards further down the page, so the instruction pointed
+                    at something the user had to go and find. */}
+                {!hasDayData && (
+                    <div className="z-10 mt-4 w-full max-w-sm">
+                        <EmptyState
+                            variant="daily"
+                            className="bg-surface-variant/40 border-outline-variant/40"
+                            message="هنوز هیچ فعالیت یا شاخصی برای این روز در سامانه ثبت نشده است."
+                            action={{
+                                label: 'ثبت اطلاعات و شاخص‌های امروز',
+                                onClick: () => scrollToLogSection('calorie-section', 'log-food-button'),
+                            }}
                         />
-                    </g>
-                </svg>
-                <div className="w-40 h-40 bg-surface-container rounded-full border-4 border-surface-container shadow-2xl flex flex-col items-center justify-center">
-                    {hasDayData ? (
-                        <>
-                            <motion.span className="text-6xl font-black text-primary tabular-nums" aria-live="polite">
-                                {roundedCount}
-                            </motion.span>
-                            <span className="text-sm font-bold text-on-surface-variant tabular-nums">
-                                {formatPersianNumber(100)}
-                            </span>
-                        </>
-                    ) : (
-                        <>
-                            <span className="text-5xl font-black text-on-surface-variant/40" aria-hidden="true">—</span>
-                            <span className="text-sm font-bold text-on-surface-variant mt-1">بدون امتیاز</span>
-                        </>
-                    )}
+                    </div>
+                )}
+            </motion.section>
+
+            {/* Quick Metrics Grid */}
+            <motion.section variants={cardVariants} className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+                <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
+                  <IconBadge variant="primary" icon={Scale} size={24} className="mb-2" />
+                  <p className="text-xs text-on-surface-variant mb-1">وزن</p>
+                  <p className="text-lg font-bold text-on-surface tabular-nums">{weight ? formatPersianNumber(weight) : '-'} <span className="text-xs font-normal">کیلوگرم</span></p>
                 </div>
-            </motion.div>
-
-            {/* A day with nothing in it gets a prompt instead of a number.
-                The prompt carries the buttons itself - they used to sit on
-                the cards further down the page, so the instruction pointed
-                at something the user had to go and find. */}
-            {!hasDayData && (
-                <div className="z-10 mt-4 w-full max-w-sm">
-                    <EmptyState
-                        variant="daily"
-                        className="bg-surface-variant/40 border-outline-variant/40"
-                        message="هنوز هیچ فعالیت یا شاخصی برای این روز در سامانه ثبت نشده است."
-                        action={{
-                            label: 'ثبت اطلاعات و شاخص‌های امروز',
-                            onClick: () => scrollToLogSection('calorie-section', 'log-food-button'),
-                        }}
-                    />
+                <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
+                  <IconBadge variant="secondary" icon={Activity} size={24} className="mb-2" />
+                  <p className="text-xs text-on-surface-variant mb-1">شاخص توده بدنی</p>
+                  <p className="text-lg font-bold text-on-surface tabular-nums">{bmi ? formatPersianNumber(bmi) : '-'}</p>
                 </div>
-            )}
-        </section>
+                <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center col-span-2 sm:col-span-1">
+                  <IconBadge variant="pain" icon={Pulse} size={24} className="mb-2" />
+                  <p className="text-xs text-on-surface-variant mb-1">وضعیت درد</p>
+                  <p className="text-lg font-bold text-error tabular-nums">{hasPainData ? `${formatPersianNumber(averagePain.toFixed(1))} / ۱۰` : <span className="text-xs font-normal text-on-surface-variant">ثبت نشده</span>}</p>
+                </div>
+            </motion.section>
 
-        {/* Quick Metrics Grid */}
-        <section className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-            <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
-              <IconBadge variant="primary" icon={Scale} size={24} className="mb-2" />
-              <p className="text-xs text-on-surface-variant mb-1">وزن</p>
-              <p className="text-lg font-bold text-on-surface tabular-nums">{weight ? formatPersianNumber(weight) : '-'} <span className="text-xs font-normal">کیلوگرم</span></p>
-            </div>
-            <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
-              <IconBadge variant="secondary" icon={Activity} size={24} className="mb-2" />
-              <p className="text-xs text-on-surface-variant mb-1">شاخص توده بدنی</p>
-              <p className="text-lg font-bold text-on-surface tabular-nums">{bmi ? formatPersianNumber(bmi) : '-'}</p>
-            </div>
-            <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center col-span-2 sm:col-span-1">
-              <IconBadge variant="pain" icon={Pulse} size={24} className="mb-2" />
-              <p className="text-xs text-on-surface-variant mb-1">وضعیت درد</p>
-              <p className="text-lg font-bold text-error tabular-nums">{hasPainData ? `${formatPersianNumber(averagePain.toFixed(1))} / ۱۰` : <span className="text-xs font-normal text-on-surface-variant">ثبت نشده</span>}</p>
-            </div>
-        </section>
-
-        {/* Today's Activity Grid */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Today's Activity Grid */}
+            <motion.section variants={cardVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Calorie */}
             <div id="calorie-section" className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" aria-hidden="true"></div>
@@ -650,12 +685,13 @@ export default function DashboardIndex() {
                 <AnimatePresence>
                     {showWaterConf && (
                         <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.5 }}
-                            animate={{ opacity: 1, y: 0, scale: 1.5 }}
-                            exit={{ opacity: 0, scale: 2 }}
+                            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
                             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 text-water pointer-events-none"
                         >
-                            <Droplet className="w-12 h-12 fill-water/30" />
+                            <Droplet className="w-10 h-10 fill-water/30" />
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -747,10 +783,13 @@ export default function DashboardIndex() {
                     <Check className="w-4 h-4" /> ذخیره
                 </button>
             </div>
-        </section>
+        </motion.section>
 
         {/* Progress Report Section */}
-        <ProgressReport />
+        <motion.div variants={cardVariants}>
+            <ProgressReport />
+        </motion.div>
+    </motion.div>
 
         {/* Medical Disclaimer */}
         <Modal

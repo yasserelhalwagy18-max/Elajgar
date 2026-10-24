@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutGrid, Dumbbell, GraduationCap, User, Utensils } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 
 export function BottomNav() {
   const pathname = usePathname();
+  const shouldReduceMotion = useReducedMotion();
 
   const navItems = [
     { href: '/dashboard', icon: LayoutGrid, label: 'خانه' },
@@ -42,7 +43,11 @@ export function BottomNav() {
               <motion.div
                 layoutId="nav-bg"
                 className="absolute inset-0 bg-primary/10 rounded-2xl"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { type: "spring", bounce: 0.2, duration: 0.5 }
+                }
               />
             )}
             <div className={cn("relative z-10 flex items-center justify-center w-11 h-11 rounded-full", isActive ? "bg-primary text-white shadow-lg shadow-primary/30" : "")}>
