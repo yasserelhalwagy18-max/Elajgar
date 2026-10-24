@@ -95,6 +95,74 @@
 }
 
 /* ==========================================================================
+   Dark Mode Tokens (prefers-color-scheme: dark)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Brand */
+    --color-primary: #3b82f6;
+    --color-primary-hover: #60a5fa;
+    --color-primary-dark: #1d4ed8;
+    --color-primary-fixed: #1e3a8a;
+    --color-primary-container: #1e3a8a;
+    --color-on-primary: #ffffff;
+    --color-on-primary-container: #dbeafe;
+
+    --color-secondary: #38bdf8;
+    --color-secondary-hover: #7dd3fc;
+    --color-secondary-container: #0c4a6e;
+    --color-on-secondary: #ffffff;
+    --color-on-secondary-container: #e0f2fe;
+
+    --color-tertiary: #fb923c;
+    --color-tertiary-hover: #fdba74;
+    --color-tertiary-container: #7c2d12;
+    --color-on-tertiary: #ffffff;
+    --color-on-tertiary-container: #ffedd5;
+
+    /* Hydration */
+    --color-water: #38bdf8;
+    --color-water-hover: #7dd3fc;
+    --color-water-container: #082f49;
+
+    /* Neutrals - dark surfaces and high contrast text (>= 4.5:1) */
+    --color-surface: #0b1120;
+    --color-surface-variant: #1e293b;
+    --color-surface-container: #151f32;
+    --color-surface-container-low: #0f172a;
+    --color-surface-container-high: #1e293b;
+    --color-on-surface: #f8fafc;
+    --color-on-surface-variant: #cbd5e1;
+    --color-outline: #94a3b8;
+    --color-outline-variant: #334155;
+
+    /* Status containers and high contrast status text */
+    --color-error: #f87171;
+    --color-error-strong: #fca5a5;
+    --color-on-error: #ffffff;
+    --color-error-container: #450a0a;
+
+    --color-warning: #fb923c;
+    --color-on-warning: #ffffff;
+    --color-warning-container: #431407;
+    --color-on-warning-container: #ffedd5;
+
+    --color-success: #4ade80;
+    --color-on-success: #ffffff;
+    --color-success-container: #052e16;
+
+    /* Shadows */
+    --shadow-resting: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+    --shadow-raised: 0 4px 14px -2px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+    --shadow-floating: 0 14px 36px -4px rgb(0 0 0 / 0.75), 0 0 18px 2px rgb(0 0 0 / 0.5);
+  }
+
+  .input::placeholder {
+    color: #94a3b8;
+  }
+}
+
+/* ==========================================================================
    Base
    ========================================================================== */
 html {

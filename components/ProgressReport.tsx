@@ -13,8 +13,10 @@ import { BarChart2 } from 'lucide-react';
 
 const chartTooltipStyle = {
   borderRadius: '16px',
-  border: '1px solid #e2e8f0',
-  boxShadow: '0 4px 20px rgba(15,23,42,0.1)',
+  border: '1px solid var(--color-outline-variant)',
+  backgroundColor: 'var(--color-surface-container)',
+  color: 'var(--color-on-surface)',
+  boxShadow: 'var(--shadow-raised)',
   fontSize: '12px',
   direction: 'rtl' as const,
 };
@@ -97,11 +99,12 @@ export default function ProgressReport() {
             <div className="h-64 w-full" dir="ltr" role="img" aria-label="نمودار روند وزن">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
-                  <YAxis domain={weightDomain} tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
+                  <XAxis dataKey="date" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                  <YAxis domain={weightDomain} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
                   <Tooltip
                     contentStyle={chartTooltipStyle}
+                    itemStyle={{ color: 'var(--color-on-surface)' }}
                     labelStyle={{ fontWeight: 'bold', color: 'var(--color-primary)' }}
                     formatter={(value: any) => [`${formatPersianNumber(value)} کیلوگرم`, 'وزن']}
                   />
@@ -117,11 +120,12 @@ export default function ProgressReport() {
             <div className="h-48 w-full" dir="ltr" role="img" aria-label="نمودار شاخص توده بدنی">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
-                  <YAxis domain={bmiDomain} tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
+                  <XAxis dataKey="date" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                  <YAxis domain={bmiDomain} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
                   <Tooltip
                     contentStyle={chartTooltipStyle}
+                    itemStyle={{ color: 'var(--color-on-surface)' }}
                     labelStyle={{ fontWeight: 'bold', color: 'var(--color-secondary)' }}
                     formatter={(value: any) => [formatPersianNumber(value), 'شاخص توده بدنی']}
                   />
@@ -139,15 +143,16 @@ export default function ProgressReport() {
                 <AreaChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorPain" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-error)" stopOpacity={0.3} />
+                      <stop offset="5%" stopColor="var(--color-error)" stopOpacity={0.4} />
                       <stop offset="95%" stopColor="var(--color-error)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
-                  <YAxis domain={[0, 10]} tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
+                  <XAxis dataKey="date" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                  <YAxis domain={[0, 10]} tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
                   <Tooltip
                     contentStyle={chartTooltipStyle}
+                    itemStyle={{ color: 'var(--color-on-surface)' }}
                     formatter={(value: any) => [formatPersianNumber(value), 'شدت درد']}
                   />
                   <Area type="monotone" dataKey="pain" stroke="var(--color-error)" strokeWidth={3} fillOpacity={1} fill="url(#colorPain)" connectNulls />
@@ -164,12 +169,13 @@ export default function ProgressReport() {
               <div className="h-48 w-full" dir="ltr" role="img" aria-label="نمودار فعالیت فیزیکی">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
-                    <YAxis tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
+                    <XAxis dataKey="date" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                    <YAxis tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
                     <Tooltip
                       cursor={{ fill: 'rgba(37,99,235,0.08)' }}
                       contentStyle={chartTooltipStyle}
+                      itemStyle={{ color: 'var(--color-on-surface)' }}
                       formatter={(value: any) => [`${formatPersianNumber(value)} دقیقه`, 'فعالیت']}
                     />
                     <Bar dataKey="activity" fill="var(--color-secondary)" radius={[4, 4, 0, 0]} />
@@ -184,12 +190,13 @@ export default function ProgressReport() {
               <div className="h-48 w-full" dir="ltr" role="img" aria-label="نمودار کالری و آب">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={rtlData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
-                    <YAxis yAxisId="left" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, 4]} tickFormatter={(v) => formatPersianNumber(v)} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
+                    <XAxis dataKey="date" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                    <YAxis yAxisId="left" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatPersianNumber(v)} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, 4]} tickFormatter={(v) => formatPersianNumber(v)} />
                     <Tooltip
                       contentStyle={chartTooltipStyle}
+                      itemStyle={{ color: 'var(--color-on-surface)' }}
                       formatter={(value: any, name: any) => [
                         name === 'calories' ? `${formatPersianNumber(value)} کالری` : `${formatPersianNumber(value)} لیتر`,
                         name === 'calories' ? 'کالری' : 'آب'

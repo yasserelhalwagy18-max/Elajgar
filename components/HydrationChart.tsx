@@ -101,10 +101,10 @@ export default function HydrationChart() {
 
         gradient.append('stop')
             .attr('offset', '0%')
-            .attr('stop-color', '#dbe1ff'); // Primary container color
+            .attr('stop-color', 'var(--color-primary-fixed)');
         gradient.append('stop')
             .attr('offset', '100%')
-            .attr('stop-color', 'rgba(219, 225, 255, 0)');
+            .attr('stop-color', 'transparent');
 
         // Build the path strings once - d3's `.attr('d', fn)` typing does not
         // accept the area/line generators directly.
@@ -120,7 +120,7 @@ export default function HydrationChart() {
         // Draw line
         g.append('path')
             .attr('fill', 'none')
-            .attr('stroke', '#2563EB')
+            .attr('stroke', 'var(--color-primary)')
             .attr('stroke-width', 3)
             .attr('d', linePath);
 
@@ -132,8 +132,8 @@ export default function HydrationChart() {
             .attr('cx', d => x(d.day) as number)
             .attr('cy', d => y(d.amount))
             .attr('r', 5)
-            .attr('fill', '#fff')
-            .attr('stroke', '#2563EB')
+            .attr('fill', 'var(--color-surface-container)')
+            .attr('stroke', 'var(--color-primary)')
             .attr('stroke-width', 2);
 
         // Add X axis only (simpler)
@@ -146,7 +146,7 @@ export default function HydrationChart() {
         // Customize X axis text
         g.selectAll('.tick text')
             .attr('font-size', '12px')
-            .attr('fill', '#475569')
+            .attr('fill', 'var(--color-on-surface-variant)')
             .attr('font-weight', '600')
             .attr('font-family', 'inherit')
             .text((d: unknown) => formatPersianNumber(String(d)));
@@ -161,7 +161,7 @@ export default function HydrationChart() {
             .attr('x2', graphWidth)
             .attr('y1', d => y(d))
             .attr('y2', d => y(d))
-            .attr('stroke', '#e2e8f0')
+            .attr('stroke', 'var(--color-outline-variant)')
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '4,4');
 
