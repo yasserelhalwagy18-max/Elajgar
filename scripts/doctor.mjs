@@ -165,19 +165,23 @@ if (prisma && !dbReachable) {
   ];
 
   const counts = [];
-  let missingTable = null;
+  let schemaMismatch = null;
   for (const [model, label] of models) {
     try {
       const n = await prisma[model].count();
+      // findFirst queries all model columns, catching missing columns (e.g. tokenVersion)
+      await prisma[model].findFirst();
       counts.push(`${label}: ${n}`);
     } catch (error) {
-      missingTable = label;
+      const msg = error instanceof Error ? error.message : String(error);
+      const firstUsefulLine = msg.split('\n').map(l => l.trim()).filter(l => Boolean(l) && !l.startsWith('Invalid `prisma'))[0] || 'schema out of sync';
+      schemaMismatch = `${label} (${firstUsefulLine})`;
       break;
     }
   }
 
-  if (missingTable) {
-    record(false, 'the schema matches prisma/schema.prisma', `the table for "${missingTable}" is missing - run: npm run db:push`);
+  if (schemaMismatch) {
+    record(false, 'the schema matches prisma/schema.prisma', `schema mismatch in "${schemaMismatch}" - run: npm run db:push`);
   } else {
     record(true, 'the schema matches prisma/schema.prisma', counts.join(', '));
   }
