@@ -8,6 +8,7 @@ import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { useRouter } from 'next/navigation';
 import { IconBadge } from '@/components/ui/IconBadge';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface Gym {
   id: string;
@@ -195,9 +196,25 @@ export default function GymsPage() {
             {/* List */}
             <div className="flex flex-col gap-6 mt-4">
                 {isLoading ? (
-                    <div className="flex flex-col gap-6" aria-busy="true" aria-label="در حال بارگذاری">
-                        {[1, 2].map(i => (
-                            <div key={i} className="card h-72 rounded-3xl animate-pulse" />
+                    <div className="flex flex-col gap-6" aria-busy="true" aria-label="در حال بارگذاری باشگاه‌ها">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="card rounded-3xl overflow-hidden">
+                                <Skeleton className="h-48 w-full rounded-none" />
+                                <div className="p-6 space-y-4">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div className="space-y-2 flex-1">
+                                            <Skeleton className="h-6 w-48 rounded-lg" />
+                                            <Skeleton className="h-4 w-32 rounded-md" />
+                                        </div>
+                                        <Skeleton className="h-8 w-16 rounded-full" />
+                                    </div>
+                                    <Skeleton className="h-4 w-full rounded-md" />
+                                    <div className="pt-2 flex justify-between items-center">
+                                        <Skeleton className="h-10 w-28 rounded-full" />
+                                        <Skeleton className="h-10 w-28 rounded-full" />
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 ) : loadError ? (

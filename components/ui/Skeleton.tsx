@@ -1,13 +1,22 @@
-'use client';
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+
+export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  className?: string;
+}
 
 /**
- * One shimmering placeholder block.
- *
- * Matches the skeleton style of `app/dashboard/loading.tsx`
- * (`bg-outline-variant` + `animate-pulse`).
+ * Reusable placeholder block with shimmer animation.
+ * Automatically disabled under prefers-reduced-motion.
  */
-export function Skeleton({ className = 'h-4 w-32' }: { className?: string }) {
-  return <div aria-hidden="true" className={`animate-pulse rounded bg-outline-variant/30 ${className}`} />;
+export function Skeleton({ className, ...props }: SkeletonProps) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cn('shimmer rounded-lg', className)}
+      {...props}
+    />
+  );
 }
 
 export default Skeleton;

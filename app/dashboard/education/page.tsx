@@ -15,6 +15,7 @@ import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { Modal } from '@/components/ui/Modal';
 import { IconBadge } from '@/components/ui/IconBadge';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface Plan {
   key: string;
@@ -194,15 +195,17 @@ export default function EducationPage() {
                                 </div>
                             ))
                         ) : (
-                            [1, 2, 3].map(i => (
+                            <div className="space-y-4" aria-busy="true" aria-label="در حال بارگذاری ویدیوها">
+                              {[1, 2, 3].map(i => (
                                  <div key={i} className="flex gap-4 p-2 bg-surface-variant/30 rounded-2xl items-center">
-                                     <div className="w-24 h-16 bg-surface-variant rounded-xl border border-white/20"></div>
+                                     <Skeleton className="w-24 h-16 rounded-xl shrink-0" />
                                      <div className="flex-1 space-y-2">
-                                          <div className="h-4 bg-outline-variant/30 rounded w-3/4"></div>
-                                          <div className="h-3 bg-outline-variant/30 rounded w-1/2"></div>
+                                          <Skeleton className="h-4 rounded-md w-3/4" />
+                                          <Skeleton className="h-3 rounded-md w-1/2" />
                                      </div>
                                  </div>
-                            ))
+                              ))}
+                            </div>
                         )}
                     </div>
 

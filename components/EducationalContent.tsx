@@ -6,6 +6,7 @@ import { AlertCircle } from 'lucide-react';
 import { seedArticles } from '@/lib/education-content';
 import { resolveContentIcon } from '@/lib/content-icons';
 import { Modal } from '@/components/ui/Modal';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 /** An article as the API returns it. */
 interface Article {
@@ -79,8 +80,20 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
       )}
 
       {status === 'loading' && articles.length === 0 ? (
-        <div className="card p-8 rounded-3xl text-center text-on-surface-variant font-bold">
-          در حال دریافت مطالب...
+        <div className="flex flex-col gap-4" aria-busy="true" aria-label="در حال بارگذاری مطالب آموزشی">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card p-4 rounded-3xl flex items-center gap-4">
+              <Skeleton className="w-20 h-20 rounded-2xl shrink-0" />
+              <div className="flex-1 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="w-5 h-5 rounded-md" />
+                  <Skeleton className="h-3 w-16 rounded" />
+                </div>
+                <Skeleton className="h-4 w-3/4 rounded-md" />
+                <Skeleton className="h-3 w-28 rounded" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : filteredArticles.length === 0 ? (
         <div className="card p-8 rounded-3xl text-center text-on-surface-variant">

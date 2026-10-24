@@ -18,9 +18,36 @@ import {
 import { Modal } from '@/components/ui/Modal';
 import { MacroBar } from '@/components/ui/MacroBar';
 import { IconBadge } from '@/components/ui/IconBadge';
+import { Skeleton } from '@/components/ui/Skeleton';
+import DashboardLoading from './loading';
 
-const ProgressReport = dynamic(() => import('@/components/ProgressReport'), { ssr: false });
-const HydrationChart = dynamic(() => import('@/components/HydrationChart'), { ssr: false });
+const ProgressReport = dynamic(() => import('@/components/ProgressReport'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col gap-6 mt-8" aria-busy="true" aria-label="در حال بارگذاری گزارش پیشرفت">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-6 w-32 rounded-lg" />
+        <Skeleton className="h-9 w-24 rounded-full" />
+      </div>
+      <div className="card p-6 h-[280px]">
+        <div className="flex justify-between items-center mb-4">
+          <Skeleton className="h-5 w-40 rounded" />
+          <Skeleton className="h-5 w-16 rounded" />
+        </div>
+        <Skeleton className="h-[200px] w-full rounded-2xl" />
+      </div>
+    </div>
+  ),
+});
+
+const HydrationChart = dynamic(() => import('@/components/HydrationChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[150px] mt-4" aria-busy="true" aria-label="در حال بارگذاری نمودار مصرف آب">
+      <Skeleton className="w-full h-full rounded-2xl" />
+    </div>
+  ),
+});
 
 /** Quick-log presets carry real macro estimates - logging 350 kcal with 0g of
  *  every macro made the macro bars read 0g right next to a logged meal. */
@@ -224,8 +251,8 @@ export default function DashboardIndex() {
     }
   }, [mounted]);
 
+  if (!mounted) return <DashboardLoading />;
   if (!hasHydrated || !isAuthenticated) return null;
-  if (!mounted) return null;
 
   const handleAcceptDisclaimer = () => {
     if (disclaimerAccepted) {
