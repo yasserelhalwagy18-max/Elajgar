@@ -12,10 +12,10 @@ export const metadata: Metadata = {
  *
  * The numbers are read from the database on the server and passed down, so
  * they are on screen at first paint instead of flashing zeros while a client
- * fetch lands. Dynamic, because the counts must be real whenever the page is
- * served - a build machine may not have database access.
+ * fetch lands. Revalidates every 60 seconds to provide instantaneous responses
+ * while keeping statistics fresh.
  */
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export default async function LandingPage() {
   // The counts are vanity numbers: a database hiccup must not take the whole

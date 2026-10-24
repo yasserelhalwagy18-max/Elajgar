@@ -73,9 +73,7 @@ export const vazirmatnArabic = localFont({
   ],
   variable: '--font-vazir-arabic',
   display: 'swap',
-  // The files are fetched when the text that needs them is rendered, so
-  // there is nothing to preload - preloading would fetch all twelve files.
-  preload: false,
+  preload: true,
   fallback: ['system-ui', 'sans-serif'],
   declarations: [
     {

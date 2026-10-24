@@ -4,10 +4,19 @@ import * as React from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ArrowLeft, HeartPulse, Lock, Waves, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { cn, toPersianDigits, formatPersianNumber } from '@/lib/utils';
 import { useStore } from '@/lib/store';
-import PainHeatmap from '@/components/PainHeatmap';
 import type { LandingStats } from '@/lib/stats';
+
+const PainHeatmap = dynamic(() => import('@/components/PainHeatmap'), {
+  ssr: false,
+  loading: () => (
+    <div className="relative w-full max-w-[420px] mx-auto min-h-[380px] aspect-[1984/2136] rounded-3xl overflow-hidden card border border-white/60 bg-surface-variant/30 flex items-center justify-center shadow-inner animate-pulse">
+      <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+    </div>
+  ),
+});
 
 const BRAND = 'علاج‌گر';
 

@@ -114,8 +114,8 @@
     --color-on-secondary: #ffffff;
     --color-on-secondary-container: #e0f2fe;
 
-    --color-tertiary: #fb923c;
-    --color-tertiary-hover: #fdba74;
+    --color-tertiary: #c2410c;
+    --color-tertiary-hover: #9a3412;
     --color-tertiary-container: #7c2d12;
     --color-on-tertiary: #ffffff;
     --color-on-tertiary-container: #ffedd5;
@@ -142,7 +142,7 @@
     --color-on-error: #ffffff;
     --color-error-container: #450a0a;
 
-    --color-warning: #fb923c;
+    --color-warning: #c2410c;
     --color-on-warning: #ffffff;
     --color-warning-container: #431407;
     --color-on-warning-container: #ffedd5;

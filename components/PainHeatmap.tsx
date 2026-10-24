@@ -77,20 +77,20 @@ export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
     <div className="flex flex-col gap-4">
       <div
         ref={containerRef}
-        className="relative w-full max-w-[420px] mx-auto aspect-[1984/2136] rounded-3xl overflow-hidden card border border-white/60 bg-surface-variant/30 flex items-center justify-center shadow-inner"
+        className="relative w-full max-w-[420px] mx-auto min-h-[380px] aspect-[1984/2136] rounded-3xl overflow-hidden card border border-white/60 bg-surface-variant/30 flex items-center justify-center shadow-inner"
       >
         <div className="absolute inset-0 w-full h-full pointer-events-none">
           <Image
             src={view === 'front' ? '/body-front.png' : '/body-back.png'}
             alt={view === 'front' ? 'آناتومی جلو' : 'آناتومی پشت'}
             fill
+            sizes="(max-width: 640px) 320px, 400px"
             className="object-contain opacity-90"
             priority
           />
         </div>
 
-        {/* Markers overlay - the hit area is a full 44px target while the
-            visible dot stays small, so neighbouring regions stay readable. */}
+        {/* Markers overlay - 28px touch targets (meets WCAG 2.2 24px target size) with sufficient spacing */}
         <div className="absolute inset-0 w-full h-full">
           <div className="relative w-full h-full">
             {activeRegions.map((region) => {
@@ -101,7 +101,7 @@ export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
                   key={region.id}
                   type="button"
                   style={{ top: region.top, left: region.left, transform: 'translate(-50%, -50%)' }}
-                  className="absolute w-11 h-11 rounded-full flex items-center justify-center transition-transform z-10 hover:scale-110 active:scale-95"
+                  className="absolute w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-transform z-10 hover:scale-110 active:scale-95"
                   onClick={() => toggleRegion(region.label)}
                   onMouseEnter={(e) => handleHover(e, region)}
                   onMouseLeave={(e) => handleHover(e, null)}
@@ -112,7 +112,7 @@ export default function PainHeatmap({ view }: { view: 'front' | 'back' }) {
                 >
                   <span
                     className={cn(
-                      'w-5 h-5 rounded-full transition-all',
+                      'w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-all',
                       isSelected
                         ? 'scale-125 border-2 border-error shadow-[0_0_15px_rgba(220,38,38,0.8)] bg-error/30'
                         : 'border border-primary/50 bg-white/40 shadow-[0_0_8px_rgba(37,99,235,0.3)] hover:scale-125 hover:border-primary hover:bg-white/60 hover:shadow-[0_0_12px_rgba(37,99,235,0.5)]'
