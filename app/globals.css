@@ -125,6 +125,11 @@ h6 {
   font-weight: 700;
 }
 
+/* Lucide icons standard stroke width */
+.lucide {
+  stroke-width: 1.75px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

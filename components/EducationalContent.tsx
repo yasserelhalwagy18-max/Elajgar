@@ -103,14 +103,14 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                   {/* A designed tile instead of a random stock photo: the
                       placeholder service is an external dependency and
                       unrelated photos read as unreliable medical content. */}
-                  <Icon className={`w-8 h-8 ${color}`} />
+                  <Icon className={`w-6 h-6 ${color}`} />
                 </div>
 
                 <div className="flex-1 flex flex-col justify-between h-full">
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
                       <div className={`p-1 ${bg} rounded-md`}>
-                        <Icon className={`w-3 h-3 ${color}`} />
+                        <Icon className={`w-4 h-4 ${color}`} />
                       </div>
                       <span className="text-xs font-bold text-on-surface-variant">{article.category}</span>
                     </div>

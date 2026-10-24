@@ -359,7 +359,7 @@ export function CorrectionalCalendar() {
                                     <div className="flex flex-col gap-1">
                                         <h3 className="font-bold text-on-surface">{currentSession.text}</h3>
                                         <div className="flex gap-2 text-xs font-medium text-on-surface-variant items-center">
-                                            <Clock className="w-3.5 h-3.5" />
+                                            <Clock className="w-4 h-4" />
                                             <span>۲۰ دقیقه</span>
                                         </div>
                                     </div>

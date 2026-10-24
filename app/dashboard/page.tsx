@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'motion/react';
-import { Plus, Droplet, Activity, Scale, Activity as Pulse, Check, User } from 'lucide-react';
+import { Plus, Droplet, Activity, Scale, Activity as Pulse, Check, User, Utensils } from 'lucide-react';
 import { cn, toDateKey, toPersianDigits, formatNumber, formatPersianNumber } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
@@ -17,6 +17,7 @@ import {
 } from '@/lib/nutrition-targets';
 import { Modal } from '@/components/ui/Modal';
 import { MacroBar } from '@/components/ui/MacroBar';
+import { IconBadge } from '@/components/ui/IconBadge';
 
 const ProgressReport = dynamic(() => import('@/components/ProgressReport'), { ssr: false });
 const HydrationChart = dynamic(() => import('@/components/HydrationChart'), { ssr: false });
@@ -517,17 +518,17 @@ export default function DashboardIndex() {
         {/* Quick Metrics Grid */}
         <section className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
-              <Scale className="w-6 h-6 text-primary mb-2" />
+              <IconBadge variant="primary" icon={Scale} size={24} className="mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وزن</p>
               <p className="text-lg font-bold text-on-surface tabular-nums">{weight ? formatPersianNumber(weight) : '-'} <span className="text-xs font-normal">کیلوگرم</span></p>
             </div>
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
-              <Activity className="w-6 h-6 text-secondary mb-2" />
+              <IconBadge variant="secondary" icon={Activity} size={24} className="mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">شاخص توده بدنی</p>
               <p className="text-lg font-bold text-on-surface tabular-nums">{bmi ? formatPersianNumber(bmi) : '-'}</p>
             </div>
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center col-span-2 sm:col-span-1">
-              <Pulse className="w-6 h-6 text-error mb-2" />
+              <IconBadge variant="pain" icon={Pulse} size={24} className="mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وضعیت درد</p>
               <p className="text-lg font-bold text-error tabular-nums">{hasPainData ? `${formatPersianNumber(averagePain.toFixed(1))} / ۱۰` : <span className="text-xs font-normal text-on-surface-variant">ثبت نشده</span>}</p>
             </div>
@@ -539,11 +540,14 @@ export default function DashboardIndex() {
             <div id="calorie-section" className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col gap-6 relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" aria-hidden="true"></div>
                  <div className="flex justify-between items-start z-10 w-full">
-                    <div>
-                        <h3 className="font-bold text-lg">کالری {dayWord}</h3>
-                        <p className={`text-sm tabular-nums mt-0.5 ${caloriesOver ? 'text-error font-bold' : 'text-on-surface-variant'}`}>
-                            {formatPersianNumber(consumedCalories)} / {formatPersianNumber(targetCalories)} کالری
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <IconBadge variant="calories" icon={Utensils} size={20} />
+                        <div>
+                            <h3 className="font-bold text-lg">کالری {dayWord}</h3>
+                            <p className={`text-sm tabular-nums mt-0.5 ${caloriesOver ? 'text-error font-bold' : 'text-on-surface-variant'}`}>
+                                {formatPersianNumber(consumedCalories)} / {formatPersianNumber(targetCalories)} کالری
+                            </p>
+                        </div>
                     </div>
                     {/* Quick Log Action */}
                     <button
@@ -599,16 +603,19 @@ export default function DashboardIndex() {
             <div id="water-section" className="col-span-1 md:col-span-2 card p-6 rounded-3xl flex flex-col relative overflow-hidden min-h-[160px]">
                 <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-water/10 to-transparent blur-sm" aria-hidden="true"></div>
                 <div className="flex justify-between items-start z-10 w-full mb-2">
-                    <div>
-                        <h3 className="font-bold text-on-surface mb-1">آب مصرفی</h3>
-                        {waterAmountMl > 0 ? (
-                            <>
-                                <p className="text-2xl font-black text-water tabular-nums">{formatPersianNumber(waterAmountLiters)} لیتر</p>
-                                <p className="text-xs text-on-surface-variant tabular-nums">{formatPersianNumber(waterAmountMl)} / {formatPersianNumber(waterTarget)} میلی‌لیتر</p>
-                            </>
-                        ) : (
-                            <p className="text-sm text-on-surface-variant">هنوز آبی ثبت نشده</p>
-                        )}
+                    <div className="flex items-center gap-3">
+                        <IconBadge variant="hydration" icon={Droplet} size={20} />
+                        <div>
+                            <h3 className="font-bold text-on-surface mb-1">آب مصرفی</h3>
+                            {waterAmountMl > 0 ? (
+                                <>
+                                    <p className="text-2xl font-black text-water tabular-nums">{formatPersianNumber(waterAmountLiters)} لیتر</p>
+                                    <p className="text-xs text-on-surface-variant tabular-nums">{formatPersianNumber(waterAmountMl)} / {formatPersianNumber(waterTarget)} میلی‌لیتر</p>
+                                </>
+                            ) : (
+                                <p className="text-sm text-on-surface-variant">هنوز آبی ثبت نشده</p>
+                            )}
+                        </div>
                     </div>
                 </div>
 

@@ -57,7 +57,7 @@ export default function Landing({ stats }: { stats: LandingStats }) {
               aria-label="بستن منو"
               className="absolute top-6 end-6 icon-btn"
             >
-              <X className="w-8 h-8" />
+              <X className="w-6 h-6" />
             </button>
             <div className="flex flex-col gap-8 text-2xl font-bold text-center">
               <Link href="#services" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">اکوسیستم</Link>
@@ -182,7 +182,7 @@ export default function Landing({ stats }: { stats: LandingStats }) {
           ].map((step) => (
             <div key={step.title} className="relative z-10 flex flex-col items-center text-center card p-6 rounded-3xl">
               <div className="w-16 h-16 bg-primary-container text-primary rounded-full flex items-center justify-center mb-4">
-                <step.icon className="w-8 h-8" />
+                <step.icon className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-on-surface mb-2">{step.title}</h3>
               <p className="text-sm text-on-surface-variant">{step.body}</p>
@@ -338,7 +338,7 @@ function HubCard({
 
             <div className="flex justify-between items-start mb-6">
                 <div className={cn("p-4 rounded-2xl", active ? "bg-primary/10" : "bg-surface-variant")}>
-                    <Icon className={cn("w-8 h-8", active ? "text-primary" : "text-on-surface-variant")} />
+                    <Icon className={cn("w-6 h-6", active ? "text-primary" : "text-on-surface-variant")} />
                 </div>
                 {active && <span className="bg-primary text-white text-xs px-4 py-1.5 rounded-full font-bold shadow-md">فعال</span>}
             </div>

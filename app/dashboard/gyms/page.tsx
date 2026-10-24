@@ -2,11 +2,12 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Search, MapPin, Star, Tag, CheckCircle2, Ticket, X, Percent } from 'lucide-react';
+import { Search, MapPin, Star, Tag, CheckCircle2, Ticket, X, Percent, Dumbbell } from 'lucide-react';
 import { cn, normalizeText, toPersianDigits } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { useRouter } from 'next/navigation';
+import { IconBadge } from '@/components/ui/IconBadge';
 
 interface Gym {
   id: string;
@@ -157,9 +158,12 @@ export default function GymsPage() {
                     </div>
                 ) : (
                     <div className="flex justify-between items-center">
-                        <div>
-                            <h1 className="text-2xl font-bold text-primary tracking-tight">شبکه سلامت</h1>
-                            <p className="text-sm text-on-surface-variant mt-1">باشگاه‌های شریک و تخفیف‌ها</p>
+                        <div className="flex items-center gap-3">
+                            <IconBadge variant="gyms" icon={Dumbbell} size={24} />
+                            <div>
+                                <h1 className="text-2xl font-bold text-primary tracking-tight">شبکه سلامت</h1>
+                                <p className="text-sm text-on-surface-variant mt-1">باشگاه‌های شریک و تخفیف‌ها</p>
+                            </div>
                         </div>
                         <button
                             type="button"
@@ -237,7 +241,7 @@ function GymCard({ gym }: { gym: Gym }) {
               <GymImage gym={gym} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden="true" />
                 <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
+                    <MapPin className="w-4 h-4" />
                     {gym.location}
                 </div>
             </div>
@@ -272,7 +276,7 @@ function GymCard({ gym }: { gym: Gym }) {
                     <div id={detailsId} className="mb-4 p-4 bg-surface rounded-2xl border border-outline-variant/30">
                         {isClaimed ? (
                             <div className="flex flex-col items-center text-center gap-2">
-                                <CheckCircle2 className="w-8 h-8 text-success mb-1" />
+                                <CheckCircle2 className="w-6 h-6 text-success mb-1" />
                                 <p className="text-sm font-medium text-on-surface-variant">کد تخفیف شما با موفقیت صادر شد!</p>
                                 <div className="bg-surface-container px-6 py-3 rounded-xl border border-dashed border-primary text-primary font-mono font-bold text-lg mt-2 w-full select-all">
                                     {discountCode}
@@ -281,7 +285,7 @@ function GymCard({ gym }: { gym: Gym }) {
                             </div>
                         ) : (
                             <div className="flex flex-col items-center text-center gap-3">
-                                <Ticket className="w-8 h-8 text-primary opacity-80" />
+                                <Ticket className="w-6 h-6 text-primary opacity-80" />
                                 <p className="text-sm text-on-surface-variant">
                                     شما می‌توانید از تخفیف اختصاصی علاج‌گر برای این مجموعه استفاده کنید.
                                 </p>

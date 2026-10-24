@@ -13,6 +13,7 @@ import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { IconBadge } from '@/components/ui/IconBadge';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes';
 import toast from 'react-hot-toast';
 
@@ -253,7 +254,7 @@ export default function ProfilePage() {
                 <h2 className="text-xl font-bold">{displayName}</h2>
                 {userProfile?.phoneNumber && (
                     <p className="text-on-surface-variant font-medium text-sm flex items-center gap-1.5 mt-1" dir="ltr">
-                        <Phone className="w-3.5 h-3.5" />
+                        <Phone className="w-4 h-4" />
                         {toPersianDigits(userProfile.phoneNumber)}
                     </p>
                 )}
@@ -313,9 +314,7 @@ export default function ProfilePage() {
                 <div className="card rounded-3xl overflow-hidden flex flex-col gap-px bg-outline-variant/20">
                     <div className="bg-surface-container p-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                <Droplet className="w-5 h-5" />
-                            </div>
+                            <IconBadge variant="hydration" icon={Droplet} size={20} />
                             <div>
                                 <p className="font-bold text-on-surface text-sm">یادآور نوشیدن آب</p>
                                 <p className="text-xs text-on-surface-variant">هر ۲ ساعت</p>
@@ -329,9 +328,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="bg-surface-container p-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0">
-                                <Activity className="w-5 h-5" />
-                            </div>
+                            <IconBadge variant="secondary" icon={Activity} size={20} />
                             <div>
                                 <p className="font-bold text-on-surface text-sm">یادآور فعالیت</p>
                                 <p className="text-xs text-on-surface-variant">یادآوری برای تحرک</p>

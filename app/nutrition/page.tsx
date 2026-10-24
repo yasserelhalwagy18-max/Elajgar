@@ -16,6 +16,7 @@ import {
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { MacroBar } from '@/components/ui/MacroBar';
+import { IconBadge } from '@/components/ui/IconBadge';
 
 export default function NutritionPage() {
   const { isAuthenticated, hasHydrated } = useAuthGuard();
@@ -248,7 +249,7 @@ export default function NutritionPage() {
       {/* Macros Overview */}
       <section className="card p-6 rounded-3xl mb-6 relative overflow-hidden">
          <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-            <Utensils className="w-5 h-5 text-primary" />
+            <IconBadge variant="calories" icon={Utensils} size={20} />
             خلاصه روزانه
          </h2>
 
@@ -353,7 +354,7 @@ export default function NutritionPage() {
          <div className="flex justify-between items-center mb-6 relative z-10 gap-3">
             <div>
                 <h2 className="font-bold text-lg flex items-center gap-2">
-                    <Droplet className="w-5 h-5 text-water" />
+                    <IconBadge variant="hydration" icon={Droplet} size={20} />
                     مصرف آب
                 </h2>
                 <p className="text-sm text-on-surface-variant mt-1 tabular-nums">

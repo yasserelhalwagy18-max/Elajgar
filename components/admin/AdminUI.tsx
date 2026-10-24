@@ -133,7 +133,7 @@ export function AdminTable<T>({
   if (isLoading && items.length === 0) {
     return (
       <div className="card p-12 rounded-3xl flex flex-col items-center gap-3 text-on-surface-variant" aria-busy="true">
-        <Loader2 className="w-7 h-7 animate-spin" />
+        <Loader2 className="w-6 h-6 animate-spin" />
         <span className="text-sm font-bold">در حال دریافت اطلاعات...</span>
       </div>
     );
@@ -142,7 +142,7 @@ export function AdminTable<T>({
   if (items.length === 0) {
     return (
       <div className="card p-12 rounded-3xl flex flex-col items-center gap-3 text-on-surface-variant">
-        <Inbox className="w-8 h-8 opacity-60" />
+        <Inbox className="w-6 h-6 opacity-60" />
         <span className="text-sm font-bold">{emptyMessage}</span>
       </div>
     );

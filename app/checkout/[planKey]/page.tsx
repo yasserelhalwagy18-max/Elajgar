@@ -143,7 +143,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-surface">
         <div className="card rounded-3xl p-8 text-center max-w-md">
-          <AlertTriangle className="w-10 h-10 text-warning mx-auto mb-4" />
+          <AlertTriangle className="w-6 h-6 text-warning mx-auto mb-4" />
           <p className="font-bold text-on-surface">{loadError}</p>
           <button
             type="button"
@@ -178,8 +178,8 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-surface">
         <div className="card rounded-3xl p-8 text-center max-w-md w-full">
-          <div className="w-16 h-16 rounded-full bg-success-container flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 className="w-8 h-8 text-success" />
+          <div className="w-12 h-12 rounded-full bg-success-container flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 className="w-6 h-6 text-success" />
           </div>
           <h1 className="text-xl font-black text-on-surface mb-2">پرداخت با موفقیت انجام شد</h1>
           <p className="text-sm text-on-surface-variant leading-relaxed mb-1">

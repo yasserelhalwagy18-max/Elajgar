@@ -24,19 +24,19 @@ export function SaveIndicator() {
     >
       {saveState === 'saving' && (
         <span className="flex items-center gap-1.5 text-on-surface-variant">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
+          <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
           در حال ذخیره...
         </span>
       )}
       {saveState === 'saved' && (
         <span className="flex items-center gap-1.5 text-success">
-          <Check className="w-3.5 h-3.5" aria-hidden />
+          <Check className="w-4 h-4" aria-hidden />
           ذخیره شد
         </span>
       )}
       {saveState === 'error' && (
         <span className="flex items-center gap-1.5 text-error">
-          <AlertCircle className="w-3.5 h-3.5" aria-hidden />
+          <AlertCircle className="w-4 h-4" aria-hidden />
           ذخیره نشد
           <button
             type="button"

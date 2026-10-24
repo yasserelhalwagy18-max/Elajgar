@@ -13,8 +13,8 @@ export function SmartAnalysis() {
   if (!hasData) {
     return (
       <div className="mb-8 card p-6 rounded-3xl text-center flex flex-col items-center">
-        <div className="w-16 h-16 bg-surface-variant/50 rounded-full flex items-center justify-center mb-4">
-          <AlertCircle className="w-8 h-8 text-on-surface-variant" />
+        <div className="w-12 h-12 bg-surface-variant/50 rounded-full flex items-center justify-center mb-4">
+          <AlertCircle className="w-6 h-6 text-on-surface-variant" />
         </div>
         <h2 className="text-lg font-bold text-on-surface mb-2">اطلاعات شما کامل نیست</h2>
         <p className="text-sm text-on-surface-variant mb-4">

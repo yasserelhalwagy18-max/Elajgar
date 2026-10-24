@@ -46,7 +46,7 @@ export function BottomNav() {
               />
             )}
             <div className={cn("relative z-10 flex items-center justify-center w-11 h-11 rounded-full", isActive ? "bg-primary text-white shadow-lg shadow-primary/30" : "")}>
-              <Icon className={cn("w-6 h-6", isActive ? "stroke-[2.5px]" : "stroke-2")} />
+              <Icon className="w-6 h-6" strokeWidth={1.75} />
             </div>
             <span className={cn("text-caption mt-0.5 font-medium z-10", isActive ? "text-primary-dark font-bold" : "text-on-surface-variant")}>
               {item.label}

@@ -4,6 +4,8 @@ import { useEffect, useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import { useStore } from '@/lib/store';
 import { toDateKey, toPersianDigits, formatPersianNumber } from '@/lib/utils';
+import { Droplet } from 'lucide-react';
+import { IconBadge } from '@/components/ui/IconBadge';
 
 export default function HydrationChart() {
     const svgRef = useRef<SVGSVGElement>(null);
@@ -185,9 +187,7 @@ export default function HydrationChart() {
     if (!hasEnoughData) {
         return (
             <div className="flex flex-col items-center justify-center h-[150px] mt-4 text-center gap-2">
-                <svg className="w-6 h-6 text-on-surface-variant/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
+                <IconBadge variant="hydration" icon={Droplet} size={20} />
                 <p className="text-on-surface-variant text-xs">
                     هنوز داده کافی ندارید. بعد از چند روز استفاده، نمودار نمایش داده می‌شود.
                 </p>

@@ -432,7 +432,7 @@ export default function AdminUserDetailPage() {
                       </td>
                       <td className="p-3 text-xs">
                         <span className="inline-flex items-center gap-1">
-                          <Droplet className="w-3.5 h-3.5 text-primary" />
+                          <Droplet className="w-4 h-4 text-primary" />
                           {toPersianDigits(log.waterIntake)} میلی‌لیتر
                         </span>
                       </td>

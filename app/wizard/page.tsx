@@ -424,7 +424,7 @@ function WizardForm() {
                       aria-label={`حذف ${d}`}
                       className="w-6 h-6 -me-1 rounded-full flex items-center justify-center hover:text-error transition-colors"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </span>
                 ))}
@@ -469,7 +469,7 @@ function WizardForm() {
                       aria-label={`حذف ${m}`}
                       className="w-6 h-6 -me-1 rounded-full flex items-center justify-center hover:text-error transition-colors"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </span>
                 ))}
@@ -559,8 +559,8 @@ function Step4Terms({ termsAccepted, setTermsAccepted }: { termsAccepted: boolea
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col h-full items-center justify-center">
             <div className="card card-hover p-8 rounded-3xl w-full border border-error/20 relative overflow-hidden">
                  <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 blur-3xl rounded-full"></div>
-                 <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mb-6 mx-auto">
-                    <ShieldAlert className="w-8 h-8 text-error" />
+                 <div className="w-12 h-12 bg-error-container rounded-full flex items-center justify-center mb-6 mx-auto">
+                    <ShieldAlert className="w-6 h-6 text-error" />
                  </div>
                  <h2 className="text-2xl font-bold text-on-surface mb-4 text-center">هشدار پزشکی</h2>
                  <p className="text-on-surface-variant leading-relaxed text-lg mb-8 text-center">

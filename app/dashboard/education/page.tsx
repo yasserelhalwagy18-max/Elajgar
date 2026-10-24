@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock, Verified, Check, Play, CreditCard } from 'lucide-react';
+import { Lock, Verified, Check, Play, CreditCard, GraduationCap } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn, formatNumber, toPersianDigits } from '@/lib/utils';
 import { CorrectionalCalendar } from '@/components/CorrectionalCalendar';
@@ -14,6 +14,7 @@ import { useStore } from '@/lib/store';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { Modal } from '@/components/ui/Modal';
+import { IconBadge } from '@/components/ui/IconBadge';
 
 interface Plan {
   key: string;
@@ -127,7 +128,10 @@ export default function EducationPage() {
   return (
         <div className="p-6 pb-28">
             <header className="mb-6 sticky top-0 pt-4 z-40 bg-surface/85 backdrop-blur-md">
-                <h1 className="text-2xl font-bold text-on-surface mb-4">آموزش و تحلیل هوشمند</h1>
+                <h1 className="text-2xl font-bold text-on-surface mb-4 flex items-center gap-2.5">
+                    <IconBadge variant="education" icon={GraduationCap} size={24} />
+                    آموزش و تحلیل هوشمند
+                </h1>
 
                 {/* Horizontal scroll tags - the chip component keeps the active
                     state identical to every other filter rail in the app. */}
@@ -206,8 +210,8 @@ export default function EducationPage() {
                     {!hasPremiumAccess && (
                         <div className="absolute inset-0 flex items-center justify-center p-6 bg-gradient-to-t from-surface via-surface/80 to-surface/20 z-10 backdrop-blur-[2px]">
                             <div className="card rounded-3xl p-8 text-center border-t-2 border-secondary-container w-full max-w-sm">
-                                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-                                    <Lock className="w-8 h-8 text-white" />
+                                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                                    <Lock className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold text-on-surface mb-2">دسترسی به پکیج کامل</h3>
                                 <p className="text-sm text-on-surface-variant mb-8 leading-relaxed">
