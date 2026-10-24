@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomInt } from 'crypto';
 import prisma from '@/lib/prisma';
 import { sendOtpSms, smsFailureMessage } from '@/lib/sms';
+import { hashPassword } from '@/lib/password';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import {
   OTP_MAX_SENDS,
@@ -70,7 +71,10 @@ export async function POST(request: Request) {
     const otpRecord = await prisma.otpCode.create({
       data: {
         phoneNumber,
-        code,
+        // Stored as a salted scrypt hash, like passwords: a database read
+        // must not hand out live login codes. The plaintext goes to the SMS
+        // gateway only.
+        code: await hashPassword(code),
         expiresAt,
       },
     });

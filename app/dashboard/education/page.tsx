@@ -28,7 +28,8 @@ interface Plan {
 interface PremiumVideo {
   id: string;
   title: string;
-  url: string;
+  /** `null` for a locked premium video - the server never sends its URL. */
+  url: string | null;
   thumbnailUrl: string | null;
   durationInMinutes: number;
   isPremium: boolean;

@@ -14,6 +14,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { adminDelete, adminPatch, adminPost } from '@/lib/admin-client';
 import { useAdminResource, useDebouncedValue, usePageNumber } from '@/hooks/use-admin-resource';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes';
 import { toPersianDigits } from '@/lib/utils';
 
 const PAGE_SIZE = 25;
@@ -63,6 +64,9 @@ export default function AdminFoodsPage() {
     '/api/admin/foods',
     params,
   );
+
+  // shortcut: warns even when the form was opened but not touched, compare against the initial values if that annoys users
+  useUnsavedChangesWarning(isCreating || editing !== null);
 
   const openCreate = () => {
     setEditing(null);
@@ -150,23 +154,23 @@ export default function AdminFoodsPage() {
       key: 'calories',
       header: 'کالری',
       render: (food) => (
-        <span className="font-mono font-bold">{toPersianDigits(food.calories)}</span>
+        <span className="tabular-nums font-bold">{toPersianDigits(food.calories)}</span>
       ),
     },
     {
       key: 'protein',
       header: 'پروتئین (گرم)',
-      render: (food) => <span className="font-mono">{toPersianDigits(food.protein)}</span>,
+      render: (food) => <span className="tabular-nums">{toPersianDigits(food.protein)}</span>,
     },
     {
       key: 'carbs',
       header: 'کربوهیدرات (گرم)',
-      render: (food) => <span className="font-mono">{toPersianDigits(food.carbs)}</span>,
+      render: (food) => <span className="tabular-nums">{toPersianDigits(food.carbs)}</span>,
     },
     {
       key: 'fat',
       header: 'چربی (گرم)',
-      render: (food) => <span className="font-mono">{toPersianDigits(food.fat)}</span>,
+      render: (food) => <span className="tabular-nums">{toPersianDigits(food.fat)}</span>,
     },
     {
       key: 'actions',

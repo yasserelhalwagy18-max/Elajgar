@@ -98,6 +98,7 @@ function WizardForm() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isFinishing, setIsFinishing] = useState(false);
 
   const formRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,16 +166,31 @@ function WizardForm() {
     return true;
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (!validateStep()) return;
 
+    saveCurrentStepData();
+
     if (step < WIZARD_LAST_STEP) {
-      saveCurrentStepData();
       setWizardStep(step + 1);
-    } else {
-      saveCurrentStepData();
-      router.push('/dashboard');
+      return;
     }
+
+    // Finish: navigate away only once the server confirms the profile was
+    // saved, so a failed save is shown instead of silently lost.
+    setIsFinishing(true);
+    const saved = await useStore.getState().saveUserToServer();
+    setIsFinishing(false);
+
+    if (!saved) {
+      setErrors((previous) => ({
+        ...previous,
+        finish: 'ذخیره اطلاعات انجام نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید',
+      }));
+      return;
+    }
+
+    router.push('/dashboard');
   };
 
   const prevStep = () => {
@@ -241,7 +257,7 @@ function WizardForm() {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-primary">تکمیل پروفایل</h1>
           <span className="text-sm font-medium bg-primary-container text-on-primary-container px-3 py-1 rounded-full">
-            مرحله {toPersianDigits(step)} از ۶
+            مرحله {toPersianDigits(step)} از {toPersianDigits(WIZARD_LAST_STEP)}
           </span>
         </div>
 
@@ -252,7 +268,7 @@ function WizardForm() {
           aria-valuemin={1}
           aria-valuemax={WIZARD_LAST_STEP}
           aria-valuenow={step}
-          aria-label={`مرحله ${toPersianDigits(step)} از ۶`}
+          aria-label={`مرحله ${toPersianDigits(step)} از ${toPersianDigits(WIZARD_LAST_STEP)}`}
           className="h-1.5 w-full rounded-full bg-surface-variant overflow-hidden mb-6"
         >
           <div
@@ -500,7 +516,13 @@ function WizardForm() {
         </AnimatePresence>
         </div>
 
-        <div className="flex justify-between mt-8 gap-4 shrink-0">
+        <div className="mt-8 shrink-0">
+          {errors.finish && (
+            <p role="alert" className="text-error text-xs mb-3 text-center error-message">
+              {errors.finish}
+            </p>
+          )}
+          <div className="flex justify-between gap-4">
           {step > 1 ? (
             <button
               type="button"
@@ -515,14 +537,17 @@ function WizardForm() {
           <button
             type="button"
             onClick={nextStep}
-            disabled={step === 4 && !termsAccepted}
+            disabled={(step === 4 && !termsAccepted) || isFinishing}
             className={cn(
               "btn btn-md",
               (step === 4 && !termsAccepted) ? "btn-secondary" : "btn-primary"
             )}
           >
-            {step === WIZARD_LAST_STEP ? 'تکمیل' : 'بعدی'} {step < WIZARD_LAST_STEP && <ArrowLeft className="w-4 h-4" />}
+            {isFinishing
+              ? 'در حال ذخیره...'
+              : step === WIZARD_LAST_STEP ? 'تکمیل' : 'بعدی'} {step < WIZARD_LAST_STEP && <ArrowLeft className="w-4 h-4" />}
           </button>
+          </div>
         </div>
       </div>
     </div>

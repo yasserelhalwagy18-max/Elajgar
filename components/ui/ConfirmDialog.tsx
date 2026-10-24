@@ -7,7 +7,8 @@ import { Modal } from './Modal';
 export interface ConfirmDialogProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  /** When it returns a promise the dialog stays open in a pending state until it settles. */
+  onConfirm: () => void | Promise<void>;
   title: string;
   message: React.ReactNode;
   confirmLabel?: string;
@@ -32,6 +33,27 @@ export function ConfirmDialog({
   cancelLabel = 'انصراف',
   tone = 'default',
 }: ConfirmDialogProps) {
+  const [isPending, setIsPending] = React.useState(false);
+
+  const handleConfirm = () => {
+    const result = onConfirm();
+
+    if (!result) {
+      onClose();
+      return;
+    }
+
+    // An async confirm keeps the dialog open until it settles, so the user
+    // cannot confirm twice and a failure leaves the dialog on screen.
+    setIsPending(true);
+    result
+      .then(() => {
+        setIsPending(false);
+        onClose();
+      })
+      .catch(() => setIsPending(false));
+  };
+
   return (
     <Modal
       open={open}
@@ -40,18 +62,16 @@ export function ConfirmDialog({
       size="sm"
       footer={
         <>
-          <button type="button" onClick={onClose} className="btn btn-secondary btn-md">
+          <button type="button" onClick={onClose} disabled={isPending} className="btn btn-secondary btn-md">
             {cancelLabel}
           </button>
           <button
             type="button"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={handleConfirm}
+            disabled={isPending}
             className={tone === 'danger' ? 'btn btn-danger btn-md' : 'btn btn-primary btn-md'}
           >
-            {confirmLabel}
+            {isPending ? 'در حال انجام...' : confirmLabel}
           </button>
         </>
       }

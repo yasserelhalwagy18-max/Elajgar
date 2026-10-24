@@ -419,7 +419,7 @@ export default function AdminUserDetailPage() {
                 <tbody className="divide-y divide-outline-variant/20">
                   {user.dailyLogs.map((log) => (
                     <tr key={log.id}>
-                      <td className="p-3 text-xs font-mono">
+                      <td className="p-3 text-xs tabular-nums">
                         {new Intl.DateTimeFormat('fa-IR').format(new Date(log.date))}
                       </td>
                       <td className="p-3 text-xs">

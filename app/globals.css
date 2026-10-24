@@ -270,7 +270,8 @@ body {
   }
 
   .input::placeholder {
-    color: var(--color-outline);
+    /* #5f6b7a keeps placeholders at 4.5:1+ on white; --color-outline is too light for text */
+    color: #5f6b7a;
   }
 
   .input:focus {

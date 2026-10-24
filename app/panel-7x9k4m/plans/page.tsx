@@ -14,6 +14,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { adminDelete, adminPatch, adminPost } from '@/lib/admin-client';
 import { useAdminResource } from '@/hooks/use-admin-resource';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes';
 import { formatNumber, toPersianDigits } from '@/lib/utils';
 
 interface Plan {
@@ -65,6 +66,9 @@ export default function AdminPlansPage() {
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
   const { items, isLoading, error, reload } = useAdminResource<Plan>('/api/admin/plans', {});
+
+  // shortcut: warns even when the form was opened but not touched, compare against the initial values if that annoys users
+  useUnsavedChangesWarning(isCreating || editing !== null);
 
   const filtered = React.useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -118,21 +122,37 @@ export default function AdminPlansPage() {
       return;
     }
 
+    const price = Number(form.price);
+    if (form.price.trim() === '' || !Number.isFinite(price) || price <= 0) {
+      setFormError('قیمت پلن باید عددی بزرگ‌تر از صفر باشد');
+      return;
+    }
+    const durationDays = Number(form.durationDays);
+    if (form.durationDays.trim() === '' || !Number.isFinite(durationDays) || durationDays < 1) {
+      setFormError('مدت اشتراک باید حداقل ۱ روز باشد');
+      return;
+    }
+    const sortOrder = Number(form.sortOrder);
+    if (form.sortOrder.trim() === '' || !Number.isFinite(sortOrder)) {
+      setFormError('ترتیب نمایش باید عدد معتبر باشد');
+      return;
+    }
+
     setIsSaving(true);
 
     const payload = {
       key: form.key.trim().toLowerCase(),
       title: form.title.trim(),
-      price: Number(form.price) || 0,
+      price,
       description: form.description.trim() || null,
       features: form.features
         .split(/[،,]/)
         .map((entry) => entry.trim())
         .filter(Boolean),
-      durationDays: Number(form.durationDays) || 30,
+      durationDays,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
-      sortOrder: Number(form.sortOrder) || 0,
+      sortOrder,
     };
 
     const result = editing

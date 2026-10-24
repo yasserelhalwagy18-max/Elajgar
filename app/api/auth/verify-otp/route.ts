@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { issueSession } from '@/lib/session';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
-import { codesMatch, isValidOtpFormat, OTP_MAX_VERIFY_ATTEMPTS } from '@/lib/otp';
+import { verifyPassword } from '@/lib/password';
+import { isValidOtpFormat, OTP_MAX_VERIFY_ATTEMPTS } from '@/lib/otp';
 
 export async function POST(request: Request) {
   try {
@@ -71,7 +72,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!codesMatch(otpRecord.code, code)) {
+    // The stored code is a scrypt hash; verification is constant-time inside
+    // `verifyPassword`.
+    if (!(await verifyPassword(code, otpRecord.code))) {
       // Count the failed guess and burn the code once the budget is spent.
       const attempts = otpRecord.attempts + 1;
       await prisma.otpCode.update({
@@ -93,6 +96,21 @@ export async function POST(request: Request) {
       data: { consumed: true },
     });
 
+    // A deactivated account must not sign in, and must not even get its
+    // lastLoginAt bumped. Checked before the upsert so the sign-in leaves no
+    // trace of success.
+    const existing = await prisma.user.findUnique({
+      where: { phoneNumber },
+      select: { isActive: true },
+    });
+
+    if (existing && !existing.isActive) {
+      return NextResponse.json(
+        { error: 'حساب کاربری شما غیرفعال شده است. برای فعال‌سازی با پشتیبانی تماس بگیرید.' },
+        { status: 403 }
+      );
+    }
+
     // Upsert user
     const user = await prisma.user.upsert({
       where: { phoneNumber },
@@ -104,7 +122,7 @@ export async function POST(request: Request) {
 
     // Sign the user in. The same session is issued by the password login, so
     // the two ways of signing in are interchangeable from here on.
-    await issueSession(user.id, user.phoneNumber);
+    await issueSession(user.id, user.phoneNumber, user.tokenVersion);
 
     return NextResponse.json({ success: true });
   } catch (error) {

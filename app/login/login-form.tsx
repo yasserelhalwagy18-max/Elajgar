@@ -247,10 +247,11 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
         toast.success('کد تایید ارسال شد');
         setResendSeconds(60);
       } else {
-        setPhoneError(data.error || 'خطا در ارسال کد تایید');
+        // The resend happens on the OTP step, where only otpError is shown.
+        setOtpError(data.error || 'خطا در ارسال کد تایید');
       }
     } catch (error) {
-      setPhoneError('ارتباط با سرور برقرار نشد');
+      setOtpError('ارتباط با سرور برقرار نشد');
     } finally {
       setIsLoading(false);
     }
@@ -355,14 +356,14 @@ function LoginForm({ nextPath }: { nextPath: string | null }) {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  maxLength={6}
+                  maxLength={OTP_CODE_LENGTH}
                   pattern="[0-9]*"
                   value={otp}
                   onChange={(e) => {
                     const value = normalizeDigits(e.target.value);
                     setOtp(value);
                     setOtpError('');
-                    if (value.length === 6 && !isLoading) {
+                    if (value.length === OTP_CODE_LENGTH && !isLoading) {
                       submitOtp(value);
                     }
                   }}

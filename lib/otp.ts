@@ -1,4 +1,10 @@
-import { timingSafeEqual } from 'crypto';
+/**
+ * OTP policy constants and format validation.
+ *
+ * Codes are stored as salted scrypt hashes (`hashPassword` from
+ * `lib/password`), the same way passwords are: a database read must not hand
+ * out live login codes.
+ */
 
 /** How long an OTP stays valid. */
 export const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -18,20 +24,4 @@ const CODE_PATTERN = /^[0-9]{6}$/;
 
 export function isValidOtpFormat(code: unknown): code is string {
   return typeof code === 'string' && CODE_PATTERN.test(code);
-}
-
-/**
- * Constant-time comparison of two 6-digit codes.
- *
- * The previous implementation used `!==`, which short-circuits on the first
- * differing character and leaks how much of the code was guessed correctly.
- */
-export function codesMatch(a: string, b: string): boolean {
-  if (!isValidOtpFormat(a) || !isValidOtpFormat(b)) return false;
-
-  const bufA = Buffer.from(a, 'utf8');
-  const bufB = Buffer.from(b, 'utf8');
-  if (bufA.length !== bufB.length) return false;
-
-  return timingSafeEqual(bufA, bufB);
 }

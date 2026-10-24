@@ -16,6 +16,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { adminDelete, adminPatch, adminPost } from '@/lib/admin-client';
 import { useAdminResource, useDebouncedValue, usePageNumber } from '@/hooks/use-admin-resource';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes';
 import { toPersianDigits } from '@/lib/utils';
 
 const PAGE_SIZE = 20;
@@ -97,6 +98,9 @@ export default function AdminGymsPage() {
     '/api/admin/gyms',
     params,
   );
+
+  // shortcut: warns even when the form was opened but not touched, compare against the initial values if that annoys users
+  useUnsavedChangesWarning(isCreating || editing !== null);
 
   const openCreate = () => {
     setEditing(null);
@@ -209,7 +213,7 @@ export default function AdminGymsPage() {
       key: 'rating',
       header: 'امتیاز',
       render: (gym) => (
-        <span className="font-mono font-bold">{toPersianDigits(gym.rating)}</span>
+        <span className="tabular-nums font-bold">{toPersianDigits(gym.rating)}</span>
       ),
     },
     {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionUserId } from '@/lib/session';
-import { activateSubscription } from '@/lib/subscription';
+import { activateSubscription, CheckoutError } from '@/lib/subscription';
 import { jsonError } from '@/lib/admin-api';
 
 /**
@@ -50,7 +50,11 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error confirming checkout:', error);
-    const message = error instanceof Error ? error.message : 'خطا در تایید پرداخت';
-    return NextResponse.json({ error: message }, { status: 400 });
+    // Only the deliberate payment problems are echoed back; anything else is
+    // internal and answers with a generic message.
+    if (error instanceof CheckoutError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'خطا در تایید پرداخت' }, { status: 500 });
   }
 }

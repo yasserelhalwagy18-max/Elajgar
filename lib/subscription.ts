@@ -60,6 +60,18 @@ export async function getActivePlans() {
 }
 
 /**
+ * A payment problem the caller can act on - the message is safe to show.
+ * Anything else that escapes is an internal error and must not be echoed
+ * back to the client.
+ */
+export class CheckoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CheckoutError';
+  }
+}
+
+/**
  * Mark a payment as paid and start the subscription it paid for.
  *
  * Idempotent: confirming the same payment twice does not create a second
@@ -75,11 +87,11 @@ export async function activateSubscription(
     });
 
     if (!payment) {
-      throw new Error('پرداخت یافت نشد');
+      throw new CheckoutError('پرداخت یافت نشد');
     }
 
     if (payment.status === 'REFUNDED') {
-      throw new Error('این پرداخت قبلاً بازگشت داده شده است');
+      throw new CheckoutError('این پرداخت قبلاً بازگشت داده شده است');
     }
 
     if (payment.status === 'PAID' && payment.subscription) {
@@ -132,11 +144,11 @@ export async function refundPayment(paymentId: string) {
     const payment = await tx.payment.findUnique({ where: { id: paymentId } });
 
     if (!payment) {
-      throw new Error('پرداخت یافت نشد');
+      throw new CheckoutError('پرداخت یافت نشد');
     }
 
     if (payment.status === 'REFUNDED') {
-      throw new Error('این پرداخت قبلاً بازگشت داده شده است');
+      throw new CheckoutError('این پرداخت قبلاً بازگشت داده شده است');
     }
 
     await tx.subscription.updateMany({

@@ -65,6 +65,7 @@ export default function AdminUsersPage() {
   const [activeFilter, setActiveFilter] = React.useState<'all' | 'true' | 'false'>('all');
 
   const [pendingDelete, setPendingDelete] = React.useState<AdminUser | null>(null);
+  const [pendingRoleChange, setPendingRoleChange] = React.useState<AdminUser | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
   const debouncedSearch = useDebouncedValue(search);
@@ -108,6 +109,11 @@ export default function AdminUsersPage() {
     }
 
     setBusyId(null);
+  };
+
+  const confirmRoleChange = async () => {
+    if (!pendingRoleChange) return;
+    await toggleRole(pendingRoleChange);
   };
 
   const toggleActive = async (user: AdminUser) => {
@@ -219,7 +225,7 @@ export default function AdminUsersPage() {
 
           <button
             type="button"
-            onClick={() => toggleRole(user)}
+            onClick={() => setPendingRoleChange(user)}
             disabled={busyId === user.id}
             aria-label={user.role === 'ADMIN' ? 'لغو دسترسی مدیریتی' : 'ارتقا به مدیر'}
             title={user.role === 'ADMIN' ? 'لغو دسترسی مدیریتی' : 'ارتقا به مدیر'}
@@ -315,6 +321,28 @@ export default function AdminUsersPage() {
         total={total}
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
+      />
+
+      <ConfirmDialog
+        open={pendingRoleChange !== null}
+        onClose={() => setPendingRoleChange(null)}
+        onConfirm={confirmRoleChange}
+        title={pendingRoleChange?.role === 'ADMIN' ? 'لغو دسترسی مدیریتی' : 'ارتقا به مدیر'}
+        tone="danger"
+        confirmLabel="بله، تغییر دهد"
+        message={
+          pendingRoleChange?.role === 'ADMIN' ? (
+            <>
+              دسترسی مدیریتی <strong>{pendingRoleChange?.phoneNumber ?? 'این کاربر'}</strong> لغو
+              می‌شود و او دیگر به پنل مدیریت و اطلاعات کاربران دسترسی نخواهد داشت.
+            </>
+          ) : (
+            <>
+              به <strong>{pendingRoleChange?.phoneNumber ?? 'این کاربر'}</strong> دسترسی کامل
+              مدیریت داده می‌شود؛ مدیر می‌تواند همه کاربران، پلن‌ها و تنظیمات سامانه را تغییر دهد.
+            </>
+          )
+        }
       />
 
       <ConfirmDialog

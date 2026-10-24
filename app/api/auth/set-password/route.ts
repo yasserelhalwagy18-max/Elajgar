@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getSessionUserId } from '@/lib/session';
-import { hashPassword, checkPasswordStrength } from '@/lib/password';
+import { getSessionUserId, issueSession } from '@/lib/session';
+import { hashPassword, verifyPassword, checkPasswordStrength } from '@/lib/password';
 
 /**
  * Set or change the password of the signed-in user.
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, password: { select: { hash: true } } },
+      select: { id: true, phoneNumber: true, password: { select: { hash: true } } },
     });
 
     if (!user) {
@@ -53,7 +53,6 @@ export async function POST(request: Request) {
         );
       }
 
-      const { verifyPassword } = await import('@/lib/password');
       if (!(await verifyPassword(body.currentPassword, user.password.hash))) {
         return NextResponse.json(
           { error: 'رمز عبور فعلی درست نیست' },
@@ -69,6 +68,17 @@ export async function POST(request: Request) {
       create: { userId, hash },
       update: { hash },
     });
+
+    // A password change revokes every outstanding session - a stolen cookie
+    // must not survive it. The version bump invalidates this request's own
+    // token too, so issue a fresh one right away.
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { tokenVersion: { increment: 1 } },
+      select: { tokenVersion: true },
+    });
+
+    await issueSession(userId, user.phoneNumber, updated.tokenVersion);
 
     return NextResponse.json({ success: true });
   } catch (error) {

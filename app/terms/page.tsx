@@ -38,7 +38,7 @@ export default function TermsPage() {
       {/* Main Content */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8">
         <div className="card p-8 rounded-3xl">
-          <div className="prose prose-lg prose-slate dark:prose-invert max-w-none">
+          <div className="prose prose-lg prose-slate max-w-none">
             <h2 className="text-2xl font-bold mb-4 text-primary">۱. تعریف خدمات</h2>
             <p className="text-on-surface-variant mb-6 leading-relaxed">
               لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ، و با استفاده از طراحان گرافیک است، چاپگرها و متون بلکه روزنامه و مجله در ستون و سطرآنچنان که لازم است، و برای شرایط فعلی تکنولوژی مورد نیاز، و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد.

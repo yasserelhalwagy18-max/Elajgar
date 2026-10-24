@@ -1,17 +1,17 @@
 # Graph Report - Elajgar  (2026-10-24)
 
 ## Corpus Check
-- 246 files · ~324,413 words
+- 257 files · ~329,555 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 65 file(s) not represented in the graph (top: .csv 37, (none) 23, .log 2)
 
 ## Summary
-- 2119 nodes · 4215 edges · 103 communities (85 shown, 18 thin omitted)
+- 2191 nodes · 4366 edges · 118 communities (99 shown, 19 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 42 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `64150474`
+- Built from commit: `2eed523b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,16 +19,16 @@
 - next
 - content/page.tsx
 - session.ts
-- toPersianDigits
+- react
 - design_system.py
 - user/route.ts
 - promote-admin.mjs
 - Hardening Controls
 - package.json
-- vitest
+- login/page.tsx
 - validate_data.py
 - DesignSystemGenerator
-- dashboard/page.tsx
+- toPersianDigits
 - search_stack
 - dependencies
 - _select_palette_for_mode
@@ -37,16 +37,16 @@
 - Test-Driven Development
 - Code Review and Quality
 - Context Engineering
-- core.py
+- _domain_keywords
 - Optimization Patterns
-- lucide-react
+- toPersianDigits
 - search
 - test_data_contracts.py
 - PainHeatmap3D.tsx
 - API and Interface Design
 - BM25
+- store.ts
 - test_core_data_quality.py
-- utils.ts
 - Browser Testing with DevTools
 - Frontend UI Engineering
 - Deprecation and Migration
@@ -54,10 +54,10 @@
 - Claude Automation Recommender
 - seed.ts
 - Debugging and Error Recovery
-- [id]/page.tsx
+- format_ascii_box
 - db
 - compilerOptions
-- test_design_system_mode.py
+- vitest
 - scripts
 - Planning and Task Breakdown
 - test_core.py
@@ -85,22 +85,22 @@
 - Documentation Lookup
 - Refinement & Evaluation Criteria
 - screenshots
-- unittest
-- test_text_layout_resilience.py
+- prisma-retry.test.ts
+- test_skill_script_paths.py
 - Step-by-Step Guide to Deploying the Elajgar Project on cPanel
 - Elajgar (علاج‌گر)
 - app/layout.tsx
 - test_catalog_summary_line_endings.py
 - Ideation Frameworks Reference
-- test_relevance_evaluator.py
-- pathlib
+- TestMetricMath
+- settings/route.test.ts
 - How to Upload and Run Elajgar on Your Webhost
 - TestThresholdGate
 - Frontend Design
 - No `await import()` — static imports only
 - accessibility-fix/SKILL.md
-- TestGeneratedCatalogContract
-- settings/page.tsx
+- _row_identities
+- plans/route.test.ts
 - accessibility-audit/SKILL.md
 - accessibility-diff/SKILL.md
 - accessibility-scan/SKILL.md
@@ -108,24 +108,39 @@
 - Ponytail
 - Web Interface Guidelines
 - server.js
-- TestFixtureValidation
+- clear-password/route.test.ts
 - 5. Database Setup
 - postcss.config.mjs
 - sw.js
 - idea-refine.sh
 - palette.md
 - liara_pre_start.sh
+- page.test.ts
+- settings.ts
+- [id]/page.tsx
+- TestDiagnosticsContracts
+- settings/page.tsx
+- healthScore.ts
+- _search_csv_detailed
+- checkout.test.ts
+- set-password/route.test.ts
+- stats.ts
+- TestTextLayoutDataContracts
+- videos/route.test.ts
+- content-icons.ts
+- user/route.test.ts
+- TestFixtureValidation
 
 ## God Nodes (most connected - your core abstractions)
 1. `next` - 71 edges
 2. `requireAdmin()` - 69 edges
 3. `adminErrorResponse()` - 68 edges
 4. `jsonError()` - 55 edges
-5. `toPersianDigits()` - 50 edges
+5. `toPersianDigits()` - 52 edges
 6. `search()` - 44 edges
-7. `writeAudit()` - 42 edges
-8. `prisma` - 42 edges
-9. `react` - 41 edges
+7. `prisma` - 43 edges
+8. `writeAudit()` - 42 edges
+9. `react` - 42 edges
 10. `DesignSystemGenerator` - 38 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -133,41 +148,41 @@
   .claude/skills/mempalace/SKILL.md → .agents/skills/ui-ux-pro-max/scripts/core.py
 - `Seed the food database (optional but recommended)` --references--> `Food`  [INFERRED]
   howto.md → app/panel-7x9k4m/foods/page.tsx
-- `POST()` --calls--> `getSessionUserId()`  [EXTRACTED]
-  app/api/checkout/confirm/route.ts → lib/session.ts
-- `POST()` --calls--> `getSessionUserId()`  [EXTRACTED]
-  app/api/checkout/route.ts → lib/session.ts
-- `GET()` --calls--> `getProgramSteps()`  [EXTRACTED]
-  app/api/content/program/route.ts → lib/settings.ts
+- `GET()` --calls--> `getSettings()`  [EXTRACTED]
+  app/api/admin/settings/route.ts → lib/settings.ts
+- `PATCH()` --calls--> `getSettings()`  [EXTRACTED]
+  app/api/admin/settings/route.ts → lib/settings.ts
+- `PATCH()` --calls--> `validateSetting()`  [EXTRACTED]
+  app/api/admin/settings/route.ts → lib/settings.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (103 total, 18 thin omitted)
+## Communities (118 total, 19 thin omitted)
 
 ### Community 0 - "next"
-Cohesion: 0.06
-Nodes (99): Context, DELETE(), GET(), PATCH(), GET(), POST(), GET(), Context (+91 more)
+Cohesion: 0.05
+Nodes (117): Context, DELETE(), GET(), PATCH(), GET(), POST(), GET(), Context (+109 more)
 
 ### Community 1 - "content/page.tsx"
 Cohesion: 0.09
-Nodes (66): ACTION_LABELS, ACTION_TONES, AdminAuditPage(), AuditEntry, ENTITIES, ENTITY_LABELS, formatDate(), AdminContentPage() (+58 more)
+Nodes (69): ACTION_LABELS, ACTION_TONES, AdminAuditPage(), AuditEntry, ENTITIES, ENTITY_LABELS, formatDate(), AdminContentPage() (+61 more)
 
 ### Community 2 - "session.ts"
 Cohesion: 0.06
-Nodes (47): DELETE(), POST(), cookieSet, prismaMock, sendOtpSmsMock, sign(), signMock, smsFailureMessageMock (+39 more)
+Nodes (38): POST(), cookieSet, prismaMock, sign(), signMock, signPayloads, userWithPassword, verifyPasswordMock (+30 more)
 
-### Community 3 - "toPersianDigits"
+### Community 3 - "react"
 Cohesion: 0.10
-Nodes (36): EducationPage(), Plan, PremiumVideo, SubscriptionState, CATEGORY_LABELS, Gym, GymCard(), GymImage() (+28 more)
+Nodes (37): EducationPage(), Plan, PremiumVideo, SubscriptionState, DashboardLayout(), HubCard(), Landing(), Step4Terms() (+29 more)
 
 ### Community 4 - "design_system.py"
 Cohesion: 0.06
-Nodes (19): ansi_ljust(), _detect_page_type(), format_ascii_box(), add_wrapped(), wrap_text(), format_markdown(), format_page_override_md(), generate_design_system() (+11 more)
+Nodes (11): _detect_page_type(), format_markdown(), format_page_override_md(), generate_design_system(), _generate_intelligent_overrides(), persist_design_system(), safe_slug(), _write_persisted_file() (+3 more)
 
 ### Community 5 - "user/route.ts"
-Cohesion: 0.06
-Nodes (46): GET(), ACTIVITY_LEVEL_MAP, ACTIVITY_LEVEL_TO_CLIENT, booleanToClient(), buildDailyLogs(), buildProfileUpdate(), buildQuestionnaire(), ClientDailyLog (+38 more)
+Cohesion: 0.09
+Nodes (29): ACTIVITY_LEVEL_MAP, ACTIVITY_LEVEL_TO_CLIENT, booleanToClient(), buildDailyLogs(), buildProfileUpdate(), buildQuestionnaire(), ClientDailyLog, ClientFood (+21 more)
 
 ### Community 6 - "promote-admin.mjs"
 Cohesion: 0.05
@@ -181,33 +196,33 @@ Nodes (42): Broken Access Control, Broken Authentication, Cross-Site Scripting (
 Cohesion: 0.06
 Nodes (43): devDependencies, @cloudflare/next-on-pages@^1.13.16, dotenv@^17.4.2, eslint@^9.39.1, eslint-config-next@16.0.8, firebase-tools@^15.0.0, prisma@^5.22.0, tailwindcss@4.1.11 (+35 more)
 
-### Community 9 - "vitest"
-Cohesion: 0.07
-Nodes (24): cookieStore, prismaMock, verifyTokenMock, prismaMock, sessionUserId, verifyPassword, LoginPage(), prismaMock (+16 more)
+### Community 9 - "login/page.tsx"
+Cohesion: 0.49
+Nodes (5): LoginPage(), destinationFor(), safeNextPath(), isWizardComplete(), WIZARD_LAST_STEP
 
 ### Community 10 - "validate_data.py"
-Cohesion: 0.11
-Nodes (32): _catalog_date(), _check_app_interface_contract(), _check_catalog_contract(), _check_catalog_summary(), _check_chart_contract(), _check_color_contract(), _check_core_data_contract(), _check_file() (+24 more)
+Cohesion: 0.09
+Nodes (34): TestGeneratedCatalogContract, _catalog_date(), _check_app_interface_contract(), _check_catalog_contract(), _check_catalog_summary(), _check_color_contract(), _check_core_data_contract(), _check_file() (+26 more)
 
 ### Community 11 - "DesignSystemGenerator"
-Cohesion: 0.11
-Nodes (4): DesignSystemGenerator, TestReasoningMatch, read_rows(), TestReasoningContract
+Cohesion: 0.08
+Nodes (6): DesignSystemGenerator, _resolve_dial(), TestReasoningMatch, read_rows(), TestReasoningContract, TestEndToEndCoherence
 
-### Community 12 - "dashboard/page.tsx"
-Cohesion: 0.10
-Nodes (28): DashboardIndex(), HydrationChart, MEAL_PRESETS, ProgressReport, chartTooltipStyle, ProgressReport(), buildHealthDataFromLogs(), calculateHealthScore() (+20 more)
+### Community 12 - "toPersianDigits"
+Cohesion: 0.12
+Nodes (29): DashboardIndex(), HydrationChart, MEAL_PRESETS, ProgressReport, LoginForm(), LoginPage(), NutritionPage(), HydrationChart() (+21 more)
 
 ### Community 13 - "search_stack"
 Cohesion: 0.09
-Nodes (6): _exact_stack_identifier(), search_stack(), _rows(), TestNativeDesktopStackFreshness, _rows(), TestWebStackFreshness
+Nodes (9): _exact_stack_identifier(), _project_row(), search_stack(), _valid_max_results(), _rows(), TestNativeDesktopStackFreshness, TestTextLayoutRetrieval, _rows() (+1 more)
 
 ### Community 14 - "dependencies"
 Cohesion: 0.06
 Nodes (34): dependencies, autoprefixer@^10.4.21, class-variance-authority@^0.7.1, clsx@^2.1.1, d3@^7.9.0, @fontsource/vazirmatn@^5.3.0, @hookform/resolvers@^5.2.1, jose@^6.2.10 (+26 more)
 
 ### Community 15 - "_select_palette_for_mode"
-Cohesion: 0.09
-Nodes (10): _button_outline_text_color(), _contrast_ratio(), _derive_dark_palette(), format_master_md(), _palette_is_dark(), _relative_luminance(), _select_palette_for_mode(), TestEndToEndCoherence (+2 more)
+Cohesion: 0.07
+Nodes (15): _button_outline_text_color(), _contrast_ratio(), _derive_dark_palette(), _filter_anti_patterns_for_mode(), format_master_md(), _palette_is_dark(), _query_wants_dark(), _relative_luminance() (+7 more)
 
 ### Community 16 - "Next.js 16 Data Fetching — Server Components, not Server Actions in useEffect"
 Cohesion: 0.06
@@ -229,17 +244,17 @@ Nodes (29): 1. Correctness, 2. Readability & Simplicity, 3. Architecture, 4. Sec
 Cohesion: 0.07
 Nodes (28): Anti-Patterns, Common Rationalizations, Compress before dropping, Confusion Management, Context Budget Management, Context Engineering, Context Packing Strategies, Level 1: Rules Files (+20 more)
 
-### Community 21 - "core.py"
-Cohesion: 0.11
-Nodes (15): _contains_phrase(), _domain_keywords(), _file_signature(), _load_csv(), _load_csv_snapshot(), _load_product_keywords(), _load_rows_or_empty(), _passes_threshold() (+7 more)
+### Community 21 - "_domain_keywords"
+Cohesion: 0.22
+Nodes (6): _domain_keywords(), _file_signature(), _load_csv(), _load_csv_snapshot(), _load_product_keywords(), _load_rows_or_empty()
 
 ### Community 22 - "Optimization Patterns"
 Cohesion: 0.07
 Nodes (25): Connection Pool Exhaustion, Large Bundle Size, Missing Caching (Backend), Missing Image Optimization (Frontend), N+1 Queries (Backend), Optimization Patterns, Queries That Ignore Their Index, Unbounded Data Fetching (+17 more)
 
-### Community 23 - "lucide-react"
-Cohesion: 0.12
-Nodes (21): EditProfileForm(), EditProfileModal(), EditProfileModalProps, NotificationPrefs, ProfilePage(), readNotificationPrefs(), SubscriptionState, Switch() (+13 more)
+### Community 23 - "toPersianDigits"
+Cohesion: 0.14
+Nodes (17): CheckoutPage(), Plan, CATEGORY_LABELS, Gym, GymCard(), GymImage(), GymsPage(), EditProfileForm() (+9 more)
 
 ### Community 24 - "search"
 Cohesion: 0.12
@@ -258,16 +273,16 @@ Cohesion: 0.08
 Nodes (24): 1. Contract First, 2. Consistent Error Semantics, 3. Validate at Boundaries, 4. Prefer Addition Over Modification, 5. Predictable Naming, 6. Honouring an Idempotency Key, API and Interface Design, Common Rationalizations (+16 more)
 
 ### Community 28 - "BM25"
-Cohesion: 0.14
+Cohesion: 0.16
 Nodes (5): BM25, _get_bm25(), _suggest_identities(), TestBm25CoreBehavior, TestTokenizer
 
-### Community 29 - "test_core_data_quality.py"
-Cohesion: 0.14
-Nodes (11): read_rows(), TestAccessibilityGuidance, TestChartsTypographyAndIcons, TestCurrentReactGuidance, TestSemanticColors, _check_typography_contract(), _configured_font_names(), contrast_ratio() (+3 more)
+### Community 29 - "store.ts"
+Cohesion: 0.24
+Nodes (8): ACTIVITY_MULTIPLIERS, DEFAULT_NUTRITION_CONFIG, goalBucket, MacroSplit, NutritionGoalKey, NutritionProfile, NutritionTargets, profile
 
-### Community 30 - "utils.ts"
-Cohesion: 0.15
-Nodes (15): CheckoutPage(), Plan, DashboardLayout(), NutritionPage(), BottomNav(), MACRO_COLOR, MACRO_LABEL, MacroBar() (+7 more)
+### Community 30 - "test_core_data_quality.py"
+Cohesion: 0.16
+Nodes (10): read_rows(), TestAccessibilityGuidance, TestChartsTypographyAndIcons, TestCurrentReactGuidance, TestSemanticColors, _check_chart_contract(), _check_typography_contract(), _configured_font_names() (+2 more)
 
 ### Community 31 - "Browser Testing with DevTools"
 Cohesion: 0.08
@@ -297,9 +312,9 @@ Nodes (21): ARTICLE_CATEGORIES, EXERCISE_CATEGORIES, SeedArticle, seedArticles, 
 Cohesion: 0.09
 Nodes (21): Build Failure Triage, Common Rationalizations, Debugging and Error Recovery, Error-Specific Patterns, Instrumentation Guidelines, Overview, Red Flags, Runtime Error Triage (+13 more)
 
-### Community 38 - "[id]/page.tsx"
-Cohesion: 0.13
-Nodes (17): AdminLayout(), AdminOverviewPage(), PainHeatmap3D, StatsResponse, ACTIVITY_LABELS, AdminUserDetailPage(), formatDate(), GENDER_LABELS (+9 more)
+### Community 38 - "format_ascii_box"
+Cohesion: 0.14
+Nodes (8): ansi_ljust(), format_ascii_box(), add_wrapped(), wrap_text(), hex_to_ansi(), _mode_support_labels(), section_header(), TestLightResultOutputCoherence
 
 ### Community 39 - "db"
 Cohesion: 0.09
@@ -309,9 +324,9 @@ Nodes (21): command, container_name, environment, healthcheck, image, ports, res
 Cohesion: 0.10
 Nodes (21): compilerOptions, allowJs, baseUrl, esModuleInterop, incremental, isolatedModules, jsx, lib (+13 more)
 
-### Community 41 - "test_design_system_mode.py"
+### Community 41 - "vitest"
 Cohesion: 0.15
-Nodes (6): _filter_anti_patterns_for_mode(), _query_wants_dark(), _resolve_color_mode(), _style_is_dark_primary(), TestAntiPatternGating, TestModeResolution
+Nodes (8): cookieStore, prismaMock, verifyTokenMock, cookieStore, prismaMock, verifyTokenMock, prismaMock, vitest
 
 ### Community 42 - "scripts"
 Cohesion: 0.10
@@ -320,10 +335,6 @@ Nodes (20): scripts, admin:clear-password, admin:delete, admin:promote, admin:se
 ### Community 43 - "Planning and Task Breakdown"
 Cohesion: 0.11
 Nodes (18): Common Rationalizations, Output Files, Overview, Parallelization Opportunities, Plan Document Template, Planning and Task Breakdown, Red Flags, See Also (+10 more)
-
-### Community 44 - "test_core.py"
-Cohesion: 0.17
-Nodes (3): detect_domain(), TestDiagnosticsContracts, TestDomainDetection
 
 ### Community 45 - "UI/UX Pro Max - Design Intelligence"
 Cohesion: 0.11
@@ -346,8 +357,8 @@ Cohesion: 0.12
 Nodes (15): 1. Define "working" before instrumenting, 2. Pick the right signal for each question, 3. Structured logging, 4. Metrics, 5. Distributed tracing, 6. Alerting, 7. Verify the telemetry itself, Common Rationalizations (+7 more)
 
 ### Community 50 - "_normalize"
-Cohesion: 0.13
-Nodes (8): _exact_match_diagnostic(), _exact_row_identity(), _legacy_successor_guidance(), _normalize(), _row_identities(), _stack_query_requests_legacy(), _stack_row_filter(), _style_identity()
+Cohesion: 0.17
+Nodes (7): _contains_phrase(), _exact_match_diagnostic(), _legacy_successor_guidance(), _normalize(), _rewrite_query_for_domain(), _stack_query_requests_legacy(), _stack_row_filter()
 
 ### Community 51 - "manifest.json"
 Cohesion: 0.12
@@ -417,9 +428,13 @@ Nodes (11): 1. User Value, 2. Feasibility, 3. Differentiation, Assumption Audit,
 Cohesion: 0.17
 Nodes (11): Common mistakes, Decision: qa or debug?, Filename format, Folder layout, Overview, Quick recipe (bash), Red flags — STOP, Repo preconditions (verify once per session) (+3 more)
 
-### Community 70 - "test_text_layout_resilience.py"
-Cohesion: 0.20
-Nodes (3): read_rows(), TestTextLayoutDataContracts, TestTextLayoutRetrieval
+### Community 69 - "prisma-retry.test.ts"
+Cohesion: 0.33
+Nodes (5): resilient(), createResilientOperation(), isTransientConnectionError(), resilientPromise(), TRANSIENT_CONNECTION_ERRORS
+
+### Community 70 - "test_skill_script_paths.py"
+Cohesion: 0.38
+Nodes (3): resolve(), shipped_invocations(), SkillScriptPathsTest
 
 ### Community 71 - "Step-by-Step Guide to Deploying the Elajgar Project on cPanel"
 Cohesion: 0.18
@@ -437,9 +452,9 @@ Nodes (6): metadata, RootLayout(), viewport, ServiceWorkerRegistration(), vazirm
 Cohesion: 0.22
 Nodes (8): Analogous Inspiration, Constraint-Based Ideation, First Principles Thinking, How Might We (HMW), Ideation Frameworks Reference, Jobs to Be Done (JTBD), Pre-mortem, SCAMPER
 
-### Community 77 - "pathlib"
-Cohesion: 0.32
-Nodes (3): resolve(), shipped_invocations(), SkillScriptPathsTest
+### Community 77 - "settings/route.test.ts"
+Cohesion: 0.25
+Nodes (6): cookieStore, prismaMock, VALID_MACROS, VALID_NUTRITION, VALID_WEIGHTS, verifyTokenMock
 
 ### Community 78 - "How to Upload and Run Elajgar on Your Webhost"
 Cohesion: 0.25
@@ -457,9 +472,13 @@ Nodes (6): No `await import()` — static imports only, Review checklist, Test-o
 Cohesion: 0.33
 Nodes (5): Input, Output, Picking a flow (for baseline and verify), Steps, When to stop
 
-### Community 84 - "settings/page.tsx"
+### Community 83 - "_row_identities"
 Cohesion: 0.33
-Nodes (4): AdminSettingsPage(), SettingsResponse, WEIGHT_HINTS, WEIGHT_LABELS
+Nodes (3): _exact_row_identity(), _row_identities(), _style_identity()
+
+### Community 84 - "plans/route.test.ts"
+Cohesion: 0.33
+Nodes (4): cookieStore, prismaMock, VALID_BODY, verifyTokenMock
 
 ### Community 85 - "accessibility-audit/SKILL.md"
 Cohesion: 0.40
@@ -481,27 +500,79 @@ Nodes (4): Before you write, Levels, Ponytail, The smallest complete change
 Cohesion: 0.40
 Nodes (4): Guidelines Source, How It Works, Usage, Web Interface Guidelines
 
+### Community 92 - "clear-password/route.test.ts"
+Cohesion: 0.33
+Nodes (4): issueSessionMock, prismaMock, sessionUserId, verifyPassword
+
 ### Community 93 - "5. Database Setup"
 Cohesion: 0.50
 Nodes (4): Food, 5. Database Setup, Create an admin account, Seed the food database (optional but recommended)
 
+### Community 103 - "page.test.ts"
+Cohesion: 0.40
+Nodes (3): prismaMock, redirectMock, sessionUserId
+
+### Community 104 - "settings.ts"
+Cohesion: 0.25
+Nodes (14): GET(), DEFAULT_PROGRAM_STEPS, DEFAULT_SETTINGS, getHealthScoreTargets(), getHealthScoreWeights(), getNutritionConfig(), getProgramSteps(), getSettings() (+6 more)
+
+### Community 105 - "[id]/page.tsx"
+Cohesion: 0.19
+Nodes (12): AdminOverviewPage(), PainHeatmap3D, StatsResponse, ACTIVITY_LABELS, AdminUserDetailPage(), formatDate(), GENDER_LABELS, Row() (+4 more)
+
+### Community 107 - "settings/page.tsx"
+Cohesion: 0.22
+Nodes (10): AdminSettingsPage(), isHundred(), MACRO_FIELD_LABELS, MACRO_GROUP_LABELS, parseNonNegative(), parseNumber(), SettingsResponse, WEIGHT_HINTS (+2 more)
+
+### Community 108 - "healthScore.ts"
+Cohesion: 0.22
+Nodes (10): DEFAULT_HEALTH_TARGETS, DEFAULT_HEALTH_WEIGHTS, HealthScoreInput, HealthScoreOptions, HealthScoreTargets, HealthScoreWeights, optimal, NutritionConfig (+2 more)
+
+### Community 109 - "_search_csv_detailed"
+Cohesion: 0.18
+Nodes (5): _passes_threshold(), _query_coverage(), _search_csv(), _search_csv_detailed(), _suggest_terms()
+
+### Community 110 - "checkout.test.ts"
+Cohesion: 0.22
+Nodes (6): activateSubscriptionMock, CheckoutError, getActiveSubscriptionMock, getSessionUserIdMock, PLAN, prismaMock
+
+### Community 111 - "set-password/route.test.ts"
+Cohesion: 0.25
+Nodes (6): checkPasswordStrengthMock, hashPasswordMock, issueSessionMock, prismaMock, sessionUserId, verifyPasswordMock
+
+### Community 112 - "stats.ts"
+Cohesion: 0.39
+Nodes (5): GET(), dynamic, LandingPage(), getLandingStats(), LandingStats
+
+### Community 114 - "videos/route.test.ts"
+Cohesion: 0.33
+Nodes (5): freeVideo, getActiveSubscriptionMock, getSessionUserIdMock, premiumVideo, prismaMock
+
+### Community 115 - "content-icons.ts"
+Cohesion: 0.33
+Nodes (5): CONTENT_ICON_KEYS, CONTENT_ICONS, ContentIcon, DEFAULT_CONTENT_ICON, resolveContentIcon()
+
+### Community 116 - "user/route.test.ts"
+Cohesion: 0.40
+Nodes (4): activeUser, cookieStore, prismaMock, verifyTokenMock
+
 ## Knowledge Gaps
-- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `next` connect `next` to `content/page.tsx`, `session.ts`, `toPersianDigits`, `user/route.ts`, `[id]/page.tsx`, `package.json`, `app/layout.tsx`, `vitest`, `dashboard/page.tsx`, `dependencies`, `@sentry/nextjs`, `lucide-react`, `PainHeatmap3D.tsx`, `server.js`, `utils.ts`?**
-  _High betweenness centrality (0.052) - this node is a cross-community bridge._
+- **Why does `next` connect `next` to `content/page.tsx`, `session.ts`, `react`, `user/route.ts`, `settings.ts`, `app/layout.tsx`, `login/page.tsx`, `[id]/page.tsx`, `toPersianDigits`, `package.json`, `dependencies`, `stats.ts`, `@sentry/nextjs`, `toPersianDigits`, `PainHeatmap3D.tsx`, `server.js`?**
+  _High betweenness centrality (0.060) - this node is a cross-community bridge._
 - **Should `next` be split into smaller, more focused modules?**
-  _Cohesion score 0.06330491565390894 - nodes in this community are weakly interconnected._
-- **Why does `Food` connect `5. Database Setup` to `content/page.tsx`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+  _Cohesion score 0.051558036010896285 - nodes in this community are weakly interconnected._
+- **Why does `vitest` connect `vitest` to `next`, `session.ts`, `prisma-retry.test.ts`, `promote-admin.mjs`, `page.test.ts`, `package.json`, `login/page.tsx`, `toPersianDigits`, `settings/route.test.ts`, `checkout.test.ts`, `set-password/route.test.ts`, `healthScore.ts`, `videos/route.test.ts`, `plans/route.test.ts`, `user/route.test.ts`, `PainHeatmap3D.tsx`, `clear-password/route.test.ts`, `store.ts`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
 - **Should `content/page.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.09330143540669857 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09274314965371876 - nodes in this community are weakly interconnected._
+- **Why does `@prisma/client` connect `next` to `seed.ts`, `user/route.ts`, `settings.ts`, `package.json`, `dependencies`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **Should `session.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.05674044265593561 - nodes in this community are weakly interconnected._
-- **Should `toPersianDigits` be split into smaller, more focused modules?**
-  _Cohesion score 0.10303030303030303 - nodes in this community are weakly interconnected._
-- **Should `design_system.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.05731523378582202 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.062146892655367235 - nodes in this community are weakly interconnected._
+- **Should `react` be split into smaller, more focused modules?**
+  _Cohesion score 0.09899749373433583 - nodes in this community are weakly interconnected._

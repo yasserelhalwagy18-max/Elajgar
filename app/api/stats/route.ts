@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { getLandingStats } from '@/lib/stats';
 
 /**
  * The public numbers shown on the landing page.
@@ -10,29 +10,7 @@ import prisma from '@/lib/prisma';
  */
 export async function GET() {
   try {
-    const [gyms, foods, articles, exercises, users, plans] = await Promise.all([
-      prisma.gym.count(),
-      prisma.food.count(),
-      prisma.article.count({ where: { isPublished: true } }),
-      prisma.exercise.count({ where: { isPublished: true } }),
-      prisma.user.count(),
-      prisma.plan.count({ where: { isActive: true } }),
-    ]);
-
-    // The best discount any partner gym offers.
-    const bestDiscount = await prisma.gym.aggregate({
-      _max: { discountPercentage: true },
-    });
-
-    return NextResponse.json({
-      gyms,
-      foods,
-      articles,
-      exercises,
-      users,
-      plans,
-      bestDiscount: bestDiscount._max.discountPercentage ?? 0,
-    });
+    return NextResponse.json(await getLandingStats());
   } catch (error) {
     console.error('Error fetching the public stats:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

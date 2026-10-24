@@ -17,6 +17,7 @@ const prismaMock = {
     updateMany: vi.fn(),
   },
   user: {
+    findUnique: vi.fn(),
     upsert: vi.fn(),
   },
 };
@@ -49,8 +50,12 @@ vi.mock('jose', () => ({
 
 const { POST: sendOtp } = await import('./send-otp/route');
 const { POST: verifyOtp } = await import('./verify-otp/route');
+const { hashPassword } = await import('@/lib/password');
 
 const PHONE = '09123456789';
+
+/** Codes are stored hashed, so the fixture must hold the hash, not the code. */
+const HASHED_CODE = await hashPassword('123456');
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -63,7 +68,8 @@ beforeEach(() => {
     consumed: false,
   }));
   prismaMock.otpCode.update.mockResolvedValue({});
-  prismaMock.user.upsert.mockResolvedValue({ id: 'user_1', phoneNumber: PHONE });
+  prismaMock.user.findUnique.mockResolvedValue(null);
+  prismaMock.user.upsert.mockResolvedValue({ id: 'user_1', phoneNumber: PHONE, tokenVersion: 0 });
   sendOtpSmsMock.mockResolvedValue(undefined);
   smsFailureMessageMock.mockReturnValue('ارسال پیامک با خطا مواجه شد. لطفاً دوباره تلاش کنید');
 });
@@ -155,7 +161,7 @@ describe('verify-otp attempt limiting', () => {
   const makeOtp = (overrides: Record<string, unknown> = {}) => ({
     id: 'otp_1',
     phoneNumber: PHONE,
-    code: '123456',
+    code: HASHED_CODE,
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     consumed: false,
     attempts: 0,
@@ -250,5 +256,23 @@ describe('verify-otp attempt limiting', () => {
 
     expect(res.status).toBe(401);
     expect(cookieSet).not.toHaveBeenCalled();
+  });
+
+  it('refuses to sign in a deactivated account and issues no session', async () => {
+    prismaMock.otpCode.findFirst.mockResolvedValue(makeOtp());
+    prismaMock.user.findUnique.mockResolvedValue({ isActive: false });
+
+    const res = await verifyOtp(
+      new Request('http://x/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: PHONE, code: '123456' }),
+      })
+    );
+
+    expect(res.status).toBe(403);
+    expect(cookieSet).not.toHaveBeenCalled();
+    // A blocked sign-in must not leave an "active" timestamp behind.
+    expect(prismaMock.user.upsert).not.toHaveBeenCalled();
   });
 });

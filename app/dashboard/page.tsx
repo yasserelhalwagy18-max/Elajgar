@@ -47,8 +47,7 @@ export default function DashboardIndex() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
-  // Sleep & Activity Modal state
-  const [isSleepModalOpen, setIsSleepModalOpen] = useState(false);
+  // Sleep & Activity form state
   const [sleepHours, setSleepHours] = useState<number>(7);
   const [sleepQuality, setSleepQuality] = useState<'poor' | 'fair' | 'good'>('fair');
   const [activityMinutes, setActivityMinutes] = useState<number>(0);
@@ -307,7 +306,6 @@ export default function DashboardIndex() {
         ? { painIntensity: parsedPain }
         : {}),
     });
-    setIsSleepModalOpen(false);
   };
 
   // Determine status text based on health score
@@ -543,7 +541,7 @@ export default function DashboardIndex() {
                  <div className="flex justify-between items-start z-10 w-full">
                     <div>
                         <h3 className="font-bold text-lg">کالری {dayWord}</h3>
-                        <p className={`text-sm font-mono mt-0.5 ${caloriesOver ? 'text-error font-bold' : 'text-on-surface-variant'}`}>
+                        <p className={`text-sm tabular-nums mt-0.5 ${caloriesOver ? 'text-error font-bold' : 'text-on-surface-variant'}`}>
                             {formatNumber(consumedCalories)} / {formatNumber(targetCalories)} کالری
                         </p>
                     </div>
@@ -606,7 +604,7 @@ export default function DashboardIndex() {
                         {waterAmountMl > 0 ? (
                             <>
                                 <p className="text-2xl font-black text-water">{toPersianDigits(waterAmountLiters)} لیتر</p>
-                                <p className="text-xs text-on-surface-variant font-mono">{formatNumber(waterAmountMl)} / {formatNumber(waterTarget)} میلی‌لیتر</p>
+                                <p className="text-xs text-on-surface-variant tabular-nums">{formatNumber(waterAmountMl)} / {formatNumber(waterTarget)} میلی‌لیتر</p>
                             </>
                         ) : (
                             <p className="text-sm text-on-surface-variant">هنوز آبی ثبت نشده</p>
@@ -794,7 +792,7 @@ export default function DashboardIndex() {
                             <span className="font-bold text-on-surface">{preset.label}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-mono text-on-surface-variant">{formatNumber(preset.calories)} کالری</span>
+                            <span className="text-sm tabular-nums text-on-surface-variant">{formatNumber(preset.calories)} کالری</span>
                             <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                 <Plus className="w-4 h-4" />
                             </span>

@@ -69,11 +69,15 @@ model User {
   nutritionGoal      NutritionGoal?
   role               Role           @default(USER)
 
-  /// Set when the account is deactivated by an admin. A deactivated user can
-  /// still sign in, but the admin panel can exclude them from the active
-  /// counts. Kept separate from `role` so an admin never has to delete a user
-  /// to silence them.
+  /// Set when the account is deactivated by an admin. A deactivated user
+  /// cannot sign in, and sessions already issued stop working. Kept separate
+  /// from `role` so an admin never has to delete a user to silence them.
   isActive           Boolean        @default(true)
+
+  /// Bumped whenever every outstanding session must die - a password change
+  /// or removal, for example. The version is embedded in the session token
+  /// and compared on every request, so a bump revokes all issued tokens.
+  tokenVersion       Int            @default(0)
 
   /// Last successful OTP login. Null until the user signs in for the first time.
   lastLoginAt        DateTime?
@@ -479,6 +483,7 @@ enum GymCategory {
 model OtpCode {
   id          String   @id @default(cuid())
   phoneNumber String
+  /// The salted scrypt hash of the 6-digit code, never the code itself.
   code        String
   expiresAt   DateTime
   consumed    Boolean  @default(false)

@@ -53,8 +53,8 @@ export async function PATCH(request: Request, { params }: Context) {
 
     const price = readNumber(body, 'price');
     if (price !== undefined) {
-      if (price !== null && price < 0) return jsonError('قیمت نمی‌تواند منفی باشد', 400);
-      data.price = price ?? 0;
+      if (price !== null && price <= 0) return jsonError('قیمت پلن باید بزرگ‌تر از صفر باشد', 400);
+      data.price = price ?? existing.price;
     }
 
     const durationDays = readNumber(body, 'durationDays');

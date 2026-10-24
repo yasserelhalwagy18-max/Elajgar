@@ -51,10 +51,30 @@ vi.mock('@/lib/auth', () => ({ verifyToken: verifyTokenMock }));
 
 const { GET, POST } = await import('./route');
 
+/**
+ * What the session check inside `getSessionUserId` needs to see (isActive,
+ * tokenVersion) plus a complete profile for the route's own lookup. Both
+ * queries hit the same `user.findUnique` mock.
+ */
+const activeUser = {
+  id: 'user_from_session',
+  phoneNumber: '09123456789',
+  fullName: 'Victim',
+  gender: 'MALE',
+  activityLevel: 'LIGHT',
+  nutritionGoal: 'WEIGHT_LOSS',
+  painRegions: null,
+  questionnaire: null,
+  dailyLogs: [],
+  isActive: true,
+  tokenVersion: 0,
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   cookieStore.get.mockReturnValue(undefined);
   verifyTokenMock.mockResolvedValue(null);
+  prismaMock.user.findUnique.mockResolvedValue(activeUser);
 });
 
 describe('/api/user access control', () => {
@@ -88,17 +108,7 @@ describe('/api/user access control', () => {
   it('looks the user up by the session id, not by a phone number', async () => {
     cookieStore.get.mockReturnValue({ value: 'token' });
     verifyTokenMock.mockResolvedValue({ userId: 'user_from_session' });
-    prismaMock.user.findUnique.mockResolvedValue({
-      id: 'user_from_session',
-      phoneNumber: '09123456789',
-      fullName: 'Victim',
-      gender: 'MALE',
-      activityLevel: 'LIGHT',
-      nutritionGoal: 'WEIGHT_LOSS',
-      painRegions: null,
-      questionnaire: null,
-      dailyLogs: [],
-    });
+    prismaMock.user.findUnique.mockResolvedValue(activeUser);
 
     const res = await GET();
     const body = await res.json();
@@ -155,7 +165,7 @@ describe('/api/user access control', () => {
   it('treats a sync with nothing to write as a no-op, not an error', async () => {
     cookieStore.get.mockReturnValue({ value: 'token' });
     verifyTokenMock.mockResolvedValue({ userId: 'user_from_session' });
-    prismaMock.user.findUnique.mockResolvedValue({ id: 'user_from_session' });
+    prismaMock.user.findUnique.mockResolvedValue(activeUser);
 
     const req = new Request('http://x/api/user', {
       method: 'POST',
@@ -219,6 +229,7 @@ describe('/api/user null fields', () => {
     vi.clearAllMocks();
     cookieStore.get.mockReturnValue({ value: 'token' });
     verifyTokenMock.mockResolvedValue({ userId: 'user_from_session' });
+    prismaMock.user.findUnique.mockResolvedValue(activeUser);
     prismaMock.user.upsert.mockResolvedValue({ id: 'user_from_session' });
   });
 

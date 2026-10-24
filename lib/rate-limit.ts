@@ -20,7 +20,9 @@ function sweep(now: number) {
   lastSweep = now;
 
   for (const [key, bucket] of buckets) {
-    bucket.timestamps = bucket.timestamps.filter((t) => now - t < bucket.timestamps[0]! + 24 * 60 * 60 * 1000);
+    // Drop hits older than a day; anything still inside its own window has
+    // already been filtered at check time.
+    bucket.timestamps = bucket.timestamps.filter((t) => now - t < 24 * 60 * 60 * 1000);
     if (bucket.timestamps.length === 0) buckets.delete(key);
   }
 }

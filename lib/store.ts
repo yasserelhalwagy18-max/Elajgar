@@ -47,13 +47,21 @@ interface AuthState {
    */
   syncSession: () => Promise<boolean | null>;
   saveUserToServer: (profile?: Partial<UserProfile>) => Promise<boolean>;
+  /**
+   * Whether the local profile is in sync with the server. Drives the save
+   * indicator: a user must never have to guess whether their data was saved.
+   */
+  saveState: SaveState;
 }
+
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export const useStore = create<AuthState>()(
   persist(
     (set, get) => ({
       isAuthenticated: false,
       userProfile: null,
+      saveState: 'idle' as SaveState,
       setAuthenticated: (status) => set({ isAuthenticated: status }),
       signIn: (phoneNumber) =>
         set({
@@ -269,9 +277,13 @@ export const useStore = create<AuthState>()(
         }
       },
       saveUserToServer: async (profile) => {
+        set({ saveState: 'saving' });
         try {
           const payload = profile ?? get().userProfile;
-          if (!payload) return false;
+          if (!payload) {
+            set({ saveState: 'idle' });
+            return false;
+          }
 
           const res = await fetch('/api/user', {
             method: 'POST',
@@ -280,11 +292,14 @@ export const useStore = create<AuthState>()(
           });
           if (!res.ok) {
             console.error('Failed to save user to server:', res.status, await res.text());
+            set({ saveState: 'error' });
             return false;
           }
+          set({ saveState: 'saved' });
           return true;
         } catch (error) {
           console.error('Error saving user to server:', error);
+          set({ saveState: 'error' });
           return false;
         }
       },

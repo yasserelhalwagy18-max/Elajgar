@@ -15,6 +15,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { adminDelete, adminPatch, adminPost } from '@/lib/admin-client';
 import { useAdminResource, useDebouncedValue, usePageNumber } from '@/hooks/use-admin-resource';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes';
 import { CONTENT_ICON_KEYS, resolveContentIcon } from '@/lib/content-icons';
 import { toPersianDigits } from '@/lib/utils';
 
@@ -183,6 +184,9 @@ function ArticlesTab({
   const [formError, setFormError] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<Article | null>(null);
+
+  // shortcut: warns even when the form was opened but not touched, compare against the initial values if that annoys users
+  useUnsavedChangesWarning(isCreating || editing !== null);
 
   const openCreate = () => {
     setEditing(null);
@@ -598,6 +602,9 @@ function ExercisesTab({
   const [isSaving, setIsSaving] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<Exercise | null>(null);
 
+  // shortcut: warns even when the form was opened but not touched, compare against the initial values if that annoys users
+  useUnsavedChangesWarning(isCreating || editing !== null);
+
   const openCreate = () => {
     setEditing(null);
     setForm({
@@ -730,7 +737,7 @@ function ExercisesTab({
       key: 'duration',
       header: 'مدت',
       render: (exercise) => (
-        <span className="text-xs font-mono">{toPersianDigits(exercise.durationMinutes)} دقیقه</span>
+        <span className="text-xs tabular-nums">{toPersianDigits(exercise.durationMinutes)} دقیقه</span>
       ),
     },
     {
@@ -1046,6 +1053,9 @@ function VideosTab({
   const [isSaving, setIsSaving] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<VideoContent | null>(null);
 
+  // shortcut: warns even when the form was opened but not touched, compare against the initial values if that annoys users
+  useUnsavedChangesWarning(isCreating || editing !== null);
+
   const openCreate = () => {
     setEditing(null);
     setForm({
@@ -1167,7 +1177,7 @@ function VideosTab({
       key: 'duration',
       header: 'مدت',
       render: (video) => (
-        <span className="text-xs font-mono">{toPersianDigits(video.durationInMinutes)} دقیقه</span>
+        <span className="text-xs tabular-nums">{toPersianDigits(video.durationInMinutes)} دقیقه</span>
       ),
     },
     {

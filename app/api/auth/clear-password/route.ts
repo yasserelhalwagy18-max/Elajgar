@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getSessionUserId } from '@/lib/session';
+import { getSessionUserId, issueSession } from '@/lib/session';
 import { verifyPassword } from '@/lib/password';
 
 /**
@@ -32,7 +32,7 @@ export async function DELETE(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, password: { select: { hash: true } } },
+      select: { id: true, phoneNumber: true, password: { select: { hash: true } } },
     });
 
     if (!user) {
@@ -59,6 +59,16 @@ export async function DELETE(request: Request) {
     }
 
     await prisma.hashedPassword.deleteMany({ where: { userId } });
+
+    // Removing a credential revokes every outstanding session. The version
+    // bump invalidates this request's own token too, so issue a fresh one.
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { tokenVersion: { increment: 1 } },
+      select: { tokenVersion: true },
+    });
+
+    await issueSession(userId, user.phoneNumber, updated.tokenVersion);
 
     return NextResponse.json({ success: true });
   } catch (error) {

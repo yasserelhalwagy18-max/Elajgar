@@ -4,6 +4,7 @@ import * as React from 'react';
 import { CalendarDays, Save, Settings as SettingsIcon, Target, Utensils, Weight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AdminPageHeader } from '@/components/admin/AdminUI';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { adminPatch } from '@/lib/admin-client';
 import { toPersianDigits } from '@/lib/utils';
 
@@ -50,6 +51,35 @@ const WEIGHT_HINTS: Record<string, string> = {
   calories: 'کالری دریافتی روزانه',
   pain: 'شدت درد گزارش‌شده',
 };
+
+const MACRO_GROUP_LABELS: Record<string, string> = {
+  maintain: 'حفظ وزن',
+  cut: 'کاهش وزن',
+  bulk: 'افزایش وزن',
+};
+
+const MACRO_FIELD_LABELS: Record<string, string> = {
+  protein: 'پروتئین',
+  carbs: 'کربوهیدرات',
+  fat: 'چربی',
+};
+
+/** Parse an input value, rejecting empty, non-finite and negative numbers. */
+function parseNonNegative(raw: string): number | null {
+  const value = Number(raw);
+  return raw.trim() !== '' && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+/** Parse an input value, rejecting empty and non-finite numbers. */
+function parseNumber(raw: string): number | null {
+  const value = Number(raw);
+  return raw.trim() !== '' && Number.isFinite(value) ? value : null;
+}
+
+/** Percentages add up to 100 - tolerance for float sums like 33.3 + 33.3 + 33.4. */
+function isHundred(total: number): boolean {
+  return Math.abs(total - 100) < 0.001;
+}
 
 /**
  * The global settings.
@@ -147,18 +177,69 @@ export default function AdminSettingsPage() {
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
-    setIsSaving(true);
 
-    const macroPayload = Object.fromEntries(
-      Object.entries(macros).map(([bucket, split]) => [
-        bucket,
-        {
-          protein: Number(split.protein) || 0,
-          carbs: Number(split.carbs) || 0,
-          fat: Number(split.fat) || 0,
-        },
-      ]),
-    );
+    const parsedWeights: Record<string, number> = {};
+    for (const [key, raw] of Object.entries(weights)) {
+      const value = parseNonNegative(raw);
+      if (value === null) {
+        toast.error(`وزن «${WEIGHT_LABELS[key] ?? key}» باید عددی غیرمنفی باشد`);
+        return;
+      }
+      parsedWeights[key] = value;
+    }
+    if (!isHundred(Object.values(parsedWeights).reduce((sum, value) => sum + value, 0))) {
+      toast.error('مجموع وزن‌های امتیاز سلامت باید ۱۰۰ باشد');
+      return;
+    }
+
+    const targetCalories = parseNonNegative(targets.calories);
+    const targetWater = parseNonNegative(targets.water);
+    if (targetCalories === null || targetCalories <= 0) {
+      toast.error('هدف کالری روزانه باید عددی مثبت باشد');
+      return;
+    }
+    if (targetWater === null || targetWater <= 0) {
+      toast.error('هدف آب روزانه باید عددی مثبت باشد');
+      return;
+    }
+
+    const waterPerKgMl = parseNonNegative(nutrition.waterPerKgMl);
+    const defaultWaterMl = parseNonNegative(nutrition.defaultWaterMl);
+    const maintainAdjust = parseNumber(nutrition.maintainAdjust);
+    const cutAdjust = parseNumber(nutrition.cutAdjust);
+    const bulkAdjust = parseNumber(nutrition.bulkAdjust);
+    if (waterPerKgMl === null || defaultWaterMl === null) {
+      toast.error('اهداف آب باید عددی غیرمنفی باشند');
+      return;
+    }
+    if (maintainAdjust === null || cutAdjust === null || bulkAdjust === null) {
+      toast.error('تغییر کالری باید عدد معتبر باشد');
+      return;
+    }
+
+    const macroPayload: Record<string, Record<string, number>> = {};
+    for (const [bucket, split] of Object.entries(macros)) {
+      const parsedSplit: Record<string, number> = {};
+      for (const [field, raw] of Object.entries(split)) {
+        const value = parseNonNegative(raw);
+        if (value === null) {
+          toast.error(
+            `سهم «${MACRO_FIELD_LABELS[field] ?? field}» در «${MACRO_GROUP_LABELS[bucket] ?? bucket}» باید عددی غیرمنفی باشد`,
+          );
+          return;
+        }
+        parsedSplit[field] = value;
+      }
+      if (!isHundred(Object.values(parsedSplit).reduce((sum, value) => sum + value, 0))) {
+        toast.error(
+          `مجموع سهم‌های «${MACRO_GROUP_LABELS[bucket] ?? bucket}» باید ۱۰۰ درصد باشد`,
+        );
+        return;
+      }
+      macroPayload[bucket] = parsedSplit;
+    }
+
+    setIsSaving(true);
 
     const steps = programSteps
       .split('\n')
@@ -170,20 +251,18 @@ export default function AdminSettingsPage() {
       });
 
     const payload = {
-      'health.weights': Object.fromEntries(
-        Object.entries(weights).map(([key, value]) => [key, Number(value) || 0]),
-      ),
+      'health.weights': parsedWeights,
       'health.targets': {
-        calories: Number(targets.calories) || 0,
-        water: Number(targets.water) || 0,
+        calories: targetCalories,
+        water: targetWater,
       },
       'nutrition.config': {
-        waterPerKgMl: Number(nutrition.waterPerKgMl) || 0,
-        defaultWaterMl: Number(nutrition.defaultWaterMl) || 0,
+        waterPerKgMl,
+        defaultWaterMl,
         calorieAdjust: {
-          maintain: Number(nutrition.maintainAdjust) || 0,
-          cut: Number(nutrition.cutAdjust) || 0,
-          bulk: Number(nutrition.bulkAdjust) || 0,
+          maintain: maintainAdjust,
+          cut: cutAdjust,
+          bulk: bulkAdjust,
         },
         macros: macroPayload,
       },
@@ -215,8 +294,15 @@ export default function AdminSettingsPage() {
     return (
       <>
         <AdminPageHeader title="تنظیمات" />
-        <div className="card p-12 rounded-3xl text-center text-on-surface-variant font-bold">
-          در حال بارگذاری...
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label="در حال بارگذاری"
+          className="card p-12 rounded-3xl flex flex-col items-center gap-4"
+        >
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-4 w-32" />
         </div>
       </>
     );
@@ -240,7 +326,7 @@ export default function AdminSettingsPage() {
           </h3>
           <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
             هر مؤلفه سهمی از امتیاز ۱۰۰ دارد. مقدار بیشتر یعنی اهمیت بیشتر آن مؤلفه در امتیاز
-            نهایی. مجموع وزن‌ها به‌طور پیش‌فرض ۱۰۰ است و نسبت آن‌ها مهم‌تر از مجموع است.
+            نهایی. مجموع وزن‌ها باید دقیقاً ۱۰۰ باشد.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -268,7 +354,7 @@ export default function AdminSettingsPage() {
           </div>
 
           <p className="mt-4 text-xs text-on-surface-variant">
-            مجموع وزن‌ها: <span className="font-mono font-bold">{toPersianDigits(totalWeight)}</span>
+            مجموع وزن‌ها: <span className="tabular-nums font-bold">{toPersianDigits(totalWeight)}</span>
           </p>
         </section>
 

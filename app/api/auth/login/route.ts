@@ -23,6 +23,15 @@ import { rateLimit, clientIp } from '@/lib/rate-limit';
 const MAX_ATTEMPTS = 10;
 const WINDOW_MS = 15 * 60 * 1000;
 
+/**
+ * A well-formed hash of a value nobody knows, verified on the "no such
+ * account" path. Without it the route answers noticeably faster for unknown
+ * numbers than for a wrong password, which tells an attacker which phone
+ * numbers have a password set.
+ */
+const DUMMY_HASH =
+  'scrypt$16384$8$1$ca59810a982adcee682dfcf736ece953$a841c91deea800bc583817c6ea3417d033d81b9164c063b7755776d4fecfcd3b0246953800a8d69a7de943764be6a7b780188a49deb10ed162e0467e29202b8c';
+
 export async function POST(request: Request) {
   try {
     const ipKey = `password-login:ip:${clientIp(request.headers)}`;
@@ -71,6 +80,7 @@ export async function POST(request: Request) {
         id: true,
         phoneNumber: true,
         isActive: true,
+        tokenVersion: true,
         password: { select: { hash: true } },
       },
     });
@@ -82,18 +92,17 @@ export async function POST(request: Request) {
       { status: 401 },
     );
 
-    if (!user || !user.password) return wrong;
-    if (!user.isActive) return wrong;
-
-    const ok = await verifyPassword(password, user.password.hash);
-    if (!ok) return wrong;
+    // Exactly one scrypt verification runs on every path, so the response
+    // time does not distinguish an unknown number from a wrong password.
+    const ok = await verifyPassword(password, user?.password?.hash ?? DUMMY_HASH);
+    if (!ok || !user?.isActive) return wrong;
 
     await prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
 
-    await issueSession(user.id, user.phoneNumber);
+    await issueSession(user.id, user.phoneNumber, user.tokenVersion);
 
     return NextResponse.json({ success: true });
   } catch (error) {

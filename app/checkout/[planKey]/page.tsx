@@ -4,8 +4,10 @@ import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AlertTriangle, CheckCircle2, CreditCard, Lock, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cn, formatNumber } from '@/lib/utils';
+import { cn, formatNumber, toPersianDigits } from '@/lib/utils';
 import { adminRequest } from '@/lib/admin-client';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { useMounted } from '@/hooks/use-mounted';
 
 interface Plan {
   key: string;
@@ -29,6 +31,8 @@ export default function CheckoutPage() {
   const params = useParams<{ planKey: string }>();
   const router = useRouter();
   const planKey = params.planKey;
+  const { isAuthenticated, hasHydrated } = useAuthGuard();
+  const mounted = useMounted();
 
   const [plan, setPlan] = React.useState<Plan | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
@@ -132,6 +136,8 @@ export default function CheckoutPage() {
     toast.success('پرداخت با موفقیت انجام شد');
   };
 
+  if (!mounted || !hasHydrated || !isAuthenticated) return null;
+
   if (loadError) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-surface">
@@ -215,7 +221,7 @@ export default function CheckoutPage() {
             <span className="text-sm font-normal text-on-surface-variant mr-1">تومان</span>
           </div>
           <p className="text-xs text-on-surface-variant mb-6">
-            پرداخت یک‌باره برای {plan.durationDays} روز
+            پرداخت یک‌باره برای {toPersianDigits(plan.durationDays)} روز
           </p>
 
           {plan.features.length > 0 && (

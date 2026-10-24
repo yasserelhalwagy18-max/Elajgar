@@ -1,6 +1,7 @@
 'use client';
 
 import { BottomNav } from '@/components/bottom-nav';
+import { SaveIndicator } from '@/components/SaveIndicator';
 import { useProfileSync } from '@/hooks/use-profile-sync';
 
 export default function DashboardLayout({
@@ -14,6 +15,8 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen">
       {children}
+      {/* Floating, so every dashboard page gets it without a shared header. */}
+      <SaveIndicator />
       <BottomNav />
     </div>
   );

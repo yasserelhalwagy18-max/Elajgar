@@ -44,25 +44,25 @@ export async function POST(request: Request) {
     if (!title) return jsonError('عنوان پلن الزامی است', 400);
 
     const price = readNumber(body, 'price');
-    if (price !== undefined && price !== null && price < 0) {
-      return jsonError('قیمت نمی‌تواند منفی باشد', 400);
+    if (price === undefined || price === null || price <= 0) {
+      return jsonError('قیمت پلن باید بزرگ‌تر از صفر باشد', 400);
     }
 
     const durationDays = readNumber(body, 'durationDays');
-    if (durationDays !== undefined && durationDays !== null && durationDays <= 0) {
-      return jsonError('مدت اشتراک باید بزرگ‌تر از صفر باشد', 400);
+    if (durationDays === undefined || durationDays === null || durationDays < 1) {
+      return jsonError('مدت اشتراک باید حداقل ۱ روز باشد', 400);
     }
 
     const plan = await prisma.plan.create({
       data: {
         key,
         title,
-        price: price ?? 0,
+        price,
         description: readString(body, 'description'),
         features: toJson(readStringArray(body, 'features') ?? []),
         isActive: readBoolean(body, 'isActive') ?? false,
         isFeatured: readBoolean(body, 'isFeatured') ?? false,
-        durationDays: durationDays ?? 30,
+        durationDays,
         sortOrder: readNumber(body, 'sortOrder') ?? 0,
       },
     });
