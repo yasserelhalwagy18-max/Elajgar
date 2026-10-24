@@ -31,6 +31,84 @@
       "skillPath": "plugins/accesslint/skills/accessibility-scan/SKILL.md",
       "computedHash": "6054f1cdbaa768e901f64fc3c45415335254c36cf8f44c0fd55adc3f7eaf268a"
     },
+    "api-and-interface-design": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/api-and-interface-design/SKILL.md",
+      "computedHash": ""
+    },
+    "browser-testing-with-devtools": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/browser-testing-with-devtools/SKILL.md",
+      "computedHash": ""
+    },
+    "claude-automation-recommender": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".claude/skills/claude-automation-recommender/SKILL.md",
+      "computedHash": ""
+    },
+    "code-review-and-quality": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-review-and-quality/SKILL.md",
+      "computedHash": ""
+    },
+    "context-engineering": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/context-engineering/SKILL.md",
+      "computedHash": ""
+    },
+    "debugging-and-error-recovery": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/debugging-and-error-recovery/SKILL.md",
+      "computedHash": ""
+    },
+    "deprecation-and-migration": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/deprecation-and-migration/SKILL.md",
+      "computedHash": ""
+    },
+    "find-docs": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/find-docs/SKILL.md",
+      "computedHash": ""
+    },
+    "find-skills": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/find-skills/SKILL.md",
+      "computedHash": ""
+    },
+    "frontend-design-anthopic": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".claude/skills/frontend-design-anthopic/SKILL.md",
+      "computedHash": ""
+    },
+    "frontend-ui-engineering": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-ui-engineering/SKILL.md",
+      "computedHash": ""
+    },
+    "idea-refine": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".claude/skills/idea-refine/SKILL.md",
+      "computedHash": ""
+    },
+    "mempalace": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".claude/skills/mempalace/SKILL.md",
+      "computedHash": ""
+    },
     "nextjs-data-fetching": {
       "source": "lusentis/next-skills",
       "sourceType": "github",
@@ -54,6 +132,30 @@
       "sourceType": "github",
       "skillPath": "skills/no-await-import/SKILL.md",
       "computedHash": "ba1ec8636443d6691453f4d1739cbb30715c3ba5165f1dbc8a92200baf8b47c1"
+    },
+    "observability-and-instrumentation": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/observability-and-instrumentation/SKILL.md",
+      "computedHash": ""
+    },
+    "performance-optimization": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/performance-optimization/SKILL.md",
+      "computedHash": ""
+    },
+    "planning-and-task-breakdown": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/planning-and-task-breakdown/SKILL.md",
+      "computedHash": ""
+    },
+    "ponytail": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".claude/skills/ponytail/SKILL.md",
+      "computedHash": ""
     },
     "prisma-cli": {
       "source": "prisma/skills",
@@ -109,17 +211,59 @@
       "skillPath": "prisma-upgrade-v7/SKILL.md",
       "computedHash": "0e07dc2831f86cf27627df914db43d862b0fc75d72c1f9070434aab7940bad7c"
     },
+    "prompt-master": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".claude/skills/prompt-master/SKILL.md",
+      "computedHash": ""
+    },
     "screenshots": {
       "source": "lusentis/next-skills",
       "sourceType": "github",
       "skillPath": "skills/screenshots/SKILL.md",
       "computedHash": "774f6907233bf425915676f467d0fe4bec51e25244ff19798481cc34e247ab0e"
     },
+    "security-and-hardening": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/security-and-hardening/SKILL.md",
+      "computedHash": ""
+    },
+    "shared": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".claude/skills/shared/methodology.md",
+      "computedHash": ""
+    },
+    "source-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/source-driven-development/SKILL.md",
+      "computedHash": ""
+    },
+    "spec-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spec-driven-development/SKILL.md",
+      "computedHash": ""
+    },
+    "test-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/test-driven-development/SKILL.md",
+      "computedHash": ""
+    },
     "ui-ux-pro-max": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
       "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
       "computedHash": "27b1e8c953e26f962e3314281601959b04787edf3fd7fccadce176ff844c688d"
+    },
+    "using-agent-skills": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".claude/skills/using-agent-skills/SKILL.md",
+      "computedHash": ""
     },
     "web-design-guidelines": {
       "source": "vercel-labs/agent-skills",
