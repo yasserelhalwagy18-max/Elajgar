@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import Landing from './landing';
 import { getLandingStats } from '@/lib/stats';
+
+export const metadata: Metadata = {
+  title: 'پلتفرم هوشمند ارزیابی درد و تمرینات اصلاحی',
+  description: 'ارزیابی هوشمند دردهای اسکلتی و عضلانی، دریافت برنامه تمرینی اصلاحی و پیگیری تغذیه روزانه با علاجگر',
+};
 
 /**
  * The landing page.

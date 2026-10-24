@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { getSessionUserId } from '@/lib/session';
 import { destinationFor, safeNextPath } from '@/lib/destination';
 import LoginForm from './login-form';
+
+export const metadata: Metadata = {
+  title: 'ورود به حساب کاربری',
+  description: 'ورود به حساب کاربری علاجگر جهت دسترسی به داشبورد سلامت و برنامه‌های اصلاحی',
+};
 
 /**
  * The login screen.

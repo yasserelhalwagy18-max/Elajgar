@@ -1,9 +1,18 @@
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+
+export const metadata: Metadata = {
+  title: {
+    default: 'پنل مدیریت',
+    template: '%s | پنل مدیریت علاجگر',
+  },
+  description: 'پنل مدیریت، آمار و تنظیمات سامانه هوشمند علاجگر',
+};
 
 export default async function AdminLayout({
   children,

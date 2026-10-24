@@ -4,16 +4,23 @@ import { vazirmatnArabic, vazirmatnLatin } from '@/lib/fonts';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
 
-const APP_TITLE = 'علاج‌گر';
+const APP_TITLE = 'علاجگر';
 const APP_DESCRIPTION = 'برنامه هوشمند ارزیابی درد و سلامت مفاصل و عضلات';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://elajgar.ir'),
   manifest: '/manifest.json',
   applicationName: APP_TITLE,
+  title: {
+    default: APP_TITLE,
+    template: `%s | ${APP_TITLE}`,
+  },
+  description: APP_DESCRIPTION,
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
@@ -23,11 +30,22 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
   },
   openGraph: {
-    title: APP_TITLE,
+    title: {
+      default: APP_TITLE,
+      template: `%s | ${APP_TITLE}`,
+    },
     description: APP_DESCRIPTION,
     siteName: APP_TITLE,
     locale: 'fa_IR',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: {
+      default: APP_TITLE,
+      template: `%s | ${APP_TITLE}`,
+    },
+    description: APP_DESCRIPTION,
   },
 };
 
@@ -49,13 +67,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       dir="rtl"
       className={`${vazirmatnArabic.variable} ${vazirmatnLatin.variable}`}
     >
-      {/* An explicit <head> keeps the title and description where crawlers and
-          Lighthouse look for them. Without it Next.js streamed them into the
-          end of the <body>. */}
-      <head>
-        <title>{APP_TITLE}</title>
-        <meta name="description" content={APP_DESCRIPTION} />
-      </head>
       <body className="font-sans antialiased bg-surface text-on-surface" suppressHydrationWarning>
         {/* A single `main` landmark per page - screen reader users rely on
             it to jump past the navigation. */}

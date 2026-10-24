@@ -1,23 +1,15 @@
-'use client';
+import type { Metadata } from 'next';
+import { DashboardShell } from './dashboard-shell';
 
-import { BottomNav } from '@/components/bottom-nav';
-import { SaveIndicator } from '@/components/SaveIndicator';
-import { useProfileSync } from '@/hooks/use-profile-sync';
+export const metadata: Metadata = {
+  title: 'داشبورد سلامت',
+  description: 'مدیریت و ارزیابی روزانه وضعیت درد، تمرینات اصلاحی و تغذیه در علاجگر',
+};
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Keep the server copy of the profile in sync with the local store.
-  useProfileSync();
-
-  return (
-    <div className="min-h-screen">
-      {children}
-      {/* Floating, so every dashboard page gets it without a shared header. */}
-      <SaveIndicator />
-      <BottomNav />
-    </div>
-  );
+  return <DashboardShell>{children}</DashboardShell>;
 }
