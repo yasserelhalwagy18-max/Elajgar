@@ -155,7 +155,7 @@ export default function EducationPage() {
             <section className="relative mt-8">
                 <div className="flex items-center justify-between gap-4 mb-4">
                     <h2 className="text-xl font-bold flex items-center gap-2">
-                        <Verified className="w-6 h-6 text-tertiary" />
+                        <Verified className="w-6 h-6 text-primary" />
                         پکیج تخصصی توانبخشی
                     </h2>
                     {hasPremiumAccess && (
@@ -213,7 +213,7 @@ export default function EducationPage() {
                                 <p className="text-sm text-on-surface-variant mb-8 leading-relaxed">
                                     ویدیوهای تخصصی، برنامه تمرینی اختصاصی و گزارش پیشرفت.
                                 </p>
-                                <button type="button" onClick={() => setShowPremiumModal(true)} className="btn btn-primary w-full py-4 font-bold">
+                                <button type="button" onClick={() => setShowPremiumModal(true)} className="btn btn-cta w-full py-4 font-bold">
                                     ارتقا به ویژه و بازگشایی
                                 </button>
                             </div>
@@ -282,7 +282,7 @@ export default function EducationPage() {
                                         setShowPremiumModal(false);
                                         router.push(`/checkout/${plan.key}`);
                                     }}
-                                    className={cn('btn w-full', plan.isFeatured ? 'btn-primary' : 'btn-secondary')}
+                                    className={cn('btn w-full', plan.isFeatured ? 'btn-cta' : 'btn-secondary')}
                                 >
                                     <CreditCard className="w-4 h-4" />
                                     خرید

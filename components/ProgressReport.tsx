@@ -196,7 +196,7 @@ export default function ProgressReport() {
                         name === 'calories' ? 'کالری' : 'آب'
                       ]}
                     />
-                    <Line yAxisId="left" type="monotone" dataKey="calories" stroke="var(--color-tertiary)" strokeWidth={2} dot={false} connectNulls />
+                    <Line yAxisId="left" type="monotone" dataKey="calories" stroke="var(--color-primary)" strokeWidth={2} dot={false} connectNulls />
                     <Line yAxisId="right" type="monotone" dataKey="water" stroke="var(--color-water)" strokeWidth={2} dot={false} connectNulls />
                   </LineChart>
                 </ResponsiveContainer>

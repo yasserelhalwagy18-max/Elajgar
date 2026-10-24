@@ -14,7 +14,7 @@ export type MacroKey = 'protein' | 'carbs' | 'fat';
 export const MACRO_COLOR: Record<MacroKey, string> = {
   protein: 'var(--color-primary)',
   carbs: 'var(--color-secondary)',
-  fat: 'var(--color-tertiary)',
+  fat: 'var(--color-primary-dark)',
 };
 
 export const MACRO_LABEL: Record<MacroKey, string> = {

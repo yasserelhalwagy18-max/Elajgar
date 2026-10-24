@@ -64,7 +64,7 @@ export default function Landing({ stats }: { stats: LandingStats }) {
               <Link href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">چگونه کار می‌کند؟</Link>
               <Link href="#gyms" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">شبکه</Link>
               <Link href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface hover:text-primary transition-colors">تماس</Link>
-              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="btn btn-primary px-10 py-4 text-xl font-bold w-full text-center">ورود / ثبت‌نام</Link>
+              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="btn btn-cta px-10 py-4 text-xl font-bold w-full text-center">ورود / ثبت‌نام</Link>
             </div>
           </motion.div>
         )}
@@ -101,6 +101,10 @@ export default function Landing({ stats }: { stats: LandingStats }) {
 
       {/* Hero */}
       <section className="relative w-full flex flex-col md:flex-row items-center justify-between gap-12 mb-24 md:min-h-[70vh]">
+        <div
+          className="absolute -inset-x-6 md:-inset-x-12 -top-8 -bottom-10 -z-10 rounded-4xl bg-gradient-to-b from-primary-container to-surface border border-primary-fixed/40 pointer-events-none"
+          aria-hidden="true"
+        />
         <div className="flex-1 text-start z-10 flex flex-col gap-6 items-start">
           <div className="inline-block bg-primary/10 text-primary-dark px-4 py-2 rounded-full text-sm font-medium border border-primary/20">
             پیشگام در سلامت دیجیتال
@@ -114,7 +118,7 @@ export default function Landing({ stats }: { stats: LandingStats }) {
             با ترکیب دانش پزشکی و فناوری پیشرفته، مسیر بهبودی خود را هوشمندانه و دقیق طی کنید.
           </p>
           <div className="flex mt-8 w-full sm:w-auto">
-             <Link href="/login" className="btn btn-primary px-8 py-4 text-lg font-bold w-full sm:w-auto group">
+             <Link href="/login" className="btn btn-cta px-8 py-4 text-lg font-bold w-full sm:w-auto group">
                 <span>شروع ارزیابی هوشمند و سنجش درد</span>
                 <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
              </Link>
@@ -254,7 +258,7 @@ export default function Landing({ stats }: { stats: LandingStats }) {
            <div className="relative z-10 flex flex-col items-center justify-center bg-white/15 backdrop-blur-md p-8 rounded-3xl border border-white/30">
               <span className="text-sm text-white/90 mb-1 tracking-widest font-bold">تخفیف ویژه</span>
               <span className="text-6xl font-black drop-shadow-md">{toPersianDigits(stats.bestDiscount)}٪</span>
-              <Link href="/login" className="btn mt-6 bg-surface-container text-primary font-bold py-3 px-8 rounded-full hover:scale-105 transition-transform shadow-xl text-center">
+              <Link href="/login" className="btn btn-cta mt-6 py-3 px-8 rounded-full shadow-xl text-center">
                 دریافت پیشنهاد
               </Link>
            </div>

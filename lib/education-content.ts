@@ -254,7 +254,7 @@ export const seedExercises: SeedExercise[] = [
     sets: 4,
     reps: 20,
     emoji: '💪',
-    accent: 'from-tertiary/70 to-primary/70',
+    accent: 'from-secondary/70 to-primary/70',
     targetTags: ['back', 'کمر', 'pelvis', 'لگن'],
   },
   {
@@ -290,7 +290,7 @@ export const seedExercises: SeedExercise[] = [
     sets: 2,
     reps: 10,
     emoji: '🐈',
-    accent: 'from-secondary/70 to-tertiary/70',
+    accent: 'from-secondary/70 to-primary/70',
     targetTags: ['back', 'کمر'],
   },
   {

@@ -140,7 +140,7 @@ export default function AdminOverviewPage() {
           label="بانک غذا"
           value={toPersianDigits(counts?.foods ?? 0)}
           hint="ماده غذایی ثبت‌شده"
-          icon={<Utensils className="w-5 h-5 text-tertiary" />}
+          icon={<Utensils className="w-5 h-5 text-primary" />}
         />
       </section>
 
@@ -167,7 +167,7 @@ export default function AdminOverviewPage() {
           label="سوابق ثبت‌شده این هفته"
           value={toPersianDigits(counts?.dailyLogsThisWeek ?? 0)}
           hint="گزارش روزانه کاربران"
-          icon={<TrendingUp className="w-5 h-5 text-tertiary" />}
+          icon={<TrendingUp className="w-5 h-5 text-primary" />}
         />
       </section>
 

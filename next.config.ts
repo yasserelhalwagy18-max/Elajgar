@@ -1,7 +1,9 @@
+import path from 'path';
 import { withSentryConfig } from '@sentry/nextjs';
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: path.resolve(__dirname),
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: false,

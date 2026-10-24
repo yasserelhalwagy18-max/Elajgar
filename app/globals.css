@@ -19,8 +19,10 @@
   --color-on-secondary: #ffffff;
   --color-on-secondary-container: #0c4a6e;
 
-  --color-tertiary: #ea580c;
+  --color-tertiary: #c2410c;
+  --color-tertiary-hover: #9a3412;
   --color-tertiary-container: #ffedd5;
+  --color-on-tertiary: #ffffff;
   --color-on-tertiary-container: #7c2d12;
 
   /* Hydration - a dedicated accent so water reads as its own category
@@ -49,9 +51,11 @@
   --color-on-error: #ffffff;
   --color-error-container: #fee2e2;
 
-  --color-warning: #b45309;
+  /* Warning / Alert state - uses #c2410c for AA contrast (>= 4.5:1) where carrying text */
+  --color-warning: #c2410c;
   --color-on-warning: #ffffff;
-  --color-warning-container: #fef3c7;
+  --color-warning-container: #ffedd5;
+  --color-on-warning-container: #7c2d12;
 
   --color-success: #15803d;
   --color-on-success: #ffffff;
@@ -122,6 +126,11 @@ body {
       0 4px 12px -2px rgb(15 23 42 / 0.06);
   }
 
+  /* Soft gradient behind hero sections */
+  .hero-gradient {
+    background: linear-gradient(180deg, var(--color-primary-container) 0%, var(--color-surface) 100%);
+  }
+
   .card-hover {
     transition:
       box-shadow 0.2s ease,
@@ -176,6 +185,24 @@ body {
   .btn-primary:active:not(:disabled) {
     transform: scale(0.98);
     box-shadow: 0 2px 4px -1px rgb(37 99 235 / 0.2);
+  }
+
+  /* Primary Call-to-action button - uses orange (#c2410c) for prominent CTAs with AA contrast */
+  .btn-cta {
+    background: var(--color-tertiary);
+    color: var(--color-on-tertiary);
+    border: 1px solid transparent;
+    box-shadow: 0 4px 6px -1px rgb(194 65 12 / 0.25);
+  }
+
+  .btn-cta:hover:not(:disabled) {
+    background: var(--color-tertiary-hover);
+    box-shadow: 0 6px 10px -1px rgb(194 65 12 / 0.35);
+  }
+
+  .btn-cta:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: 0 2px 4px -1px rgb(194 65 12 / 0.2);
   }
 
   .btn-secondary {

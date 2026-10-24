@@ -322,7 +322,7 @@ export default function AdminSubscriptionsPage() {
           label="بازگشت وجه"
           value={toPersianDigits(totals?.refundedPayments ?? 0)}
           hint="تراکنش‌های بازگشت داده‌شده"
-          icon={<RotateCcw className="w-5 h-5 text-tertiary" />}
+          icon={<RotateCcw className="w-5 h-5 text-primary" />}
         />
       </div>
 

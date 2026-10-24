@@ -31,8 +31,8 @@ export const CONTENT_ICONS: Record<string, ContentIcon> = {
   droplet: { icon: Droplet, color: 'text-primary', bg: 'bg-primary/10' },
   apple: { icon: Apple, color: 'text-error', bg: 'bg-error/10' },
   activity: { icon: Activity, color: 'text-secondary', bg: 'bg-secondary/10' },
-  'heart-pulse': { icon: HeartPulse, color: 'text-tertiary', bg: 'bg-tertiary/10' },
-  dumbbell: { icon: Dumbbell, color: 'text-tertiary', bg: 'bg-tertiary/10' },
+  'heart-pulse': { icon: HeartPulse, color: 'text-primary', bg: 'bg-primary/10' },
+  dumbbell: { icon: Dumbbell, color: 'text-primary', bg: 'bg-primary/10' },
   sparkles: { icon: Sparkles, color: 'text-secondary', bg: 'bg-secondary/10' },
   leaf: { icon: Leaf, color: 'text-success', bg: 'bg-success/10' },
 };

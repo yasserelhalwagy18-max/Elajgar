@@ -337,7 +337,7 @@ export default function CheckoutPage() {
               </p>
             )}
 
-            <button type="submit" disabled={isPaying} className="btn btn-primary btn-lg w-full mt-2">
+            <button type="submit" disabled={isPaying} className="btn btn-cta btn-lg w-full mt-2">
               <Lock className="w-5 h-5" />
               {isPaying ? 'در حال پرداخت...' : `پرداخت ${formatNumber(plan.price)} تومان`}
             </button>
