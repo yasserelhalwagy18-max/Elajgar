@@ -61,14 +61,48 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
             it to jump past the navigation. */}
         <main id="main-content">{children}</main>
         <Toaster
-          position="top-center"
+          position="bottom-center"
+          containerStyle={{
+            bottom: 'calc(5.5rem + env(safe-area-inset-bottom, 0px))',
+          }}
           toastOptions={{
+            className: 'font-sans card',
             style: {
-              background: '#fff',
-              color: '#0f1722',
-              borderRadius: '16px',
-              border: '1px solid #e2e8f0'
-            }
+              fontFamily: 'var(--font-sans)',
+              direction: 'rtl',
+              background: 'var(--color-surface-container)',
+              color: 'var(--color-on-surface)',
+              borderRadius: 'var(--radius-3xl)',
+              border: '1px solid var(--color-outline-variant)',
+              boxShadow: 'var(--shadow-floating)',
+              padding: '12px 18px',
+              fontSize: 'var(--text-body)',
+              fontWeight: 500,
+            },
+            success: {
+              iconTheme: {
+                primary: 'var(--color-success, #15803d)',
+                secondary: 'var(--color-on-success, #ffffff)',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: 'var(--color-error, #dc2626)',
+                secondary: 'var(--color-on-error, #ffffff)',
+              },
+            },
+            loading: {
+              iconTheme: {
+                primary: 'var(--color-primary, #1d4ed8)',
+                secondary: 'var(--color-primary-container, #eff3ff)',
+              },
+            },
+            blank: {
+              iconTheme: {
+                primary: 'var(--color-warning, #c2410c)',
+                secondary: 'var(--color-on-warning, #ffffff)',
+              },
+            },
           }}
         />
         <ServiceWorkerRegistration />
