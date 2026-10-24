@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toDateKey, fromDateKey, normalizeText } from './utils';
+import { toDateKey, fromDateKey, normalizeText, formatPersianNumber } from './utils';
 
 describe('toDateKey', () => {
   it('uses the local calendar day, not the UTC day', () => {
@@ -36,5 +36,24 @@ describe('normalizeText', () => {
 
   it('is case insensitive for latin text', () => {
     expect(normalizeText('CrossFit')).toBe('crossfit');
+  });
+});
+
+describe('formatPersianNumber', () => {
+  it('formats integers with Persian digits and thousands grouping', () => {
+    expect(formatPersianNumber(1250)).toBe('۱٬۲۵۰');
+    expect(formatPersianNumber(0)).toBe('۰');
+    expect(formatPersianNumber(85)).toBe('۸۵');
+  });
+
+  it('formats decimals with specified fraction digits', () => {
+    expect(formatPersianNumber(12.5, 1)).toBe('۱۲.۵');
+  });
+
+  it('handles strings and non-finite inputs gracefully', () => {
+    expect(formatPersianNumber('500')).toBe('۵۰۰');
+    expect(formatPersianNumber('')).toBe('');
+    expect(formatPersianNumber(null)).toBe('');
+    expect(formatPersianNumber(undefined)).toBe('');
   });
 });

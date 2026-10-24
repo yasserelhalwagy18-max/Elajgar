@@ -342,7 +342,7 @@ export default function CheckoutPage() {
               {isPaying ? 'در حال پرداخت...' : `پرداخت ${formatNumber(plan.price)} تومان`}
             </button>
 
-            <p className="text-[11px] text-on-surface-variant text-center flex items-center justify-center gap-2">
+            <p className="text-caption text-on-surface-variant text-center flex items-center justify-center gap-2">
               <ShieldCheck className="w-4 h-4" />
               پرداخت از طریق درگاه آزمایشی سامانه انجام می‌شود
             </p>

@@ -208,7 +208,7 @@ export default function AdminOverviewPage() {
                     className="w-full rounded-t-xl bg-primary/80 min-h-[4px] transition-all"
                     style={{ height: `${Math.max(height, day.count > 0 ? 8 : 4)}%` }}
                   />
-                  <span className="text-[10px] text-on-surface-variant text-center leading-tight">
+                  <span className="text-caption text-on-surface-variant text-center leading-tight">
                     {new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'short' }).format(
                       new Date(day.date),
                     )}

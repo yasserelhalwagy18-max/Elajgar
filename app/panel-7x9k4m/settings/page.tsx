@@ -338,7 +338,7 @@ export default function AdminSettingsPage() {
                 >
                   {WEIGHT_LABELS[key] ?? key}
                 </label>
-                <p className="text-[11px] text-on-surface-variant mb-3">{WEIGHT_HINTS[key]}</p>
+                <p className="text-caption text-on-surface-variant mb-3">{WEIGHT_HINTS[key]}</p>
                 <input
                   id={`weight-${key}`}
                   type="number"
@@ -483,7 +483,7 @@ export default function AdminSettingsPage() {
                 </p>
                 {(['protein', 'carbs', 'fat'] as const).map((field) => (
                   <div key={field} className="mb-2">
-                    <label className="block text-[11px] text-on-surface-variant mb-1" htmlFor={`macro-${bucket}-${field}`}>
+                    <label className="block text-caption text-on-surface-variant mb-1" htmlFor={`macro-${bucket}-${field}`}>
                       {field === 'protein' ? 'پروتئین' : field === 'carbs' ? 'کربوهیدرات' : 'چربی'}
                     </label>
                     <input

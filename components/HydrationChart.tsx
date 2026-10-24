@@ -3,7 +3,7 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import { useStore } from '@/lib/store';
-import { toDateKey, toPersianDigits } from '@/lib/utils';
+import { toDateKey, toPersianDigits, formatPersianNumber } from '@/lib/utils';
 
 export default function HydrationChart() {
     const svgRef = useRef<SVGSVGElement>(null);
@@ -143,11 +143,11 @@ export default function HydrationChart() {
 
         // Customize X axis text
         g.selectAll('.tick text')
-            .attr('font-size', '11px')
+            .attr('font-size', '12px')
             .attr('fill', '#475569')
             .attr('font-weight', '600')
             .attr('font-family', 'inherit')
-            .text((d: unknown) => toPersianDigits(String(d)));
+            .text((d: unknown) => formatPersianNumber(String(d)));
 
         // Add subtle horizontal grid lines for Y values based on yMax
         const yTicks = d3.range(1, yMax + 1);

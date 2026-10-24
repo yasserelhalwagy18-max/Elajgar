@@ -186,7 +186,7 @@ export default function AdminUsersPage() {
       render: (user) => (
         <div className="flex flex-col gap-0.5">
           <StatusPill tone={RISK_TONES[user.risk]}>{RISK_LABELS[user.risk]}</StatusPill>
-          <span className="text-[11px] text-on-surface-variant">{user.riskReason}</span>
+          <span className="text-caption text-on-surface-variant">{user.riskReason}</span>
         </div>
       ),
     },

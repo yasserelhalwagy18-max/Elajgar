@@ -77,6 +77,16 @@
   --shadow-raised: 0 4px 12px -2px rgb(37 99 235 / 0.12), 0 2px 4px -2px rgb(37 99 235 / 0.06);
   --shadow-floating: 0 12px 32px -4px rgb(37 99 235 / 0.16), 0 0 16px 2px rgb(37 99 235 / 0.08);
 
+  /* Typography scale tokens - caption, body, title, display */
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-title: 1.25rem;
+  --text-title--line-height: 1.75rem;
+  --text-display: 2rem;
+  --text-display--line-height: 2.5rem;
+
   /* The self-hosted Vazirmatn, in its Arabic and Latin subsets. Each one
      carries its own unicode-range, so the browser fetches the Arabic file
      for the Persian text and the Latin file for the numbers - see
@@ -102,7 +112,17 @@ html {
 body {
   background-color: var(--color-surface);
   color: var(--color-on-surface);
+  font-weight: 400;
   -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {

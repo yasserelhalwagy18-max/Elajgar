@@ -58,7 +58,7 @@ export function MacroBar({ macro, current, target, compact = false, className }:
         <span className={cn('font-medium tabular-nums', isOver ? 'text-error' : 'text-on-surface-variant')}>
           {formatNumber(current)}
           {compact ? '' : ` / ${formatNumber(target)}`}
-          <span className="text-[10px]"> گرم</span>
+          <span className="text-caption"> گرم</span>
         </span>
       </div>
 

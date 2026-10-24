@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store';
 import { searchFoods, FoodItem, getAllFoods } from '@/lib/food-service';
 import { Search, Plus, Droplet, Target, Utensils, Check, Sparkles } from 'lucide-react';
 import { BottomNav } from '@/components/bottom-nav';
-import { toDateKey, toPersianDigits, formatNumber } from '@/lib/utils';
+import { toDateKey, toPersianDigits, formatNumber, formatPersianNumber } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { useProfileSync } from '@/hooks/use-profile-sync';
@@ -255,8 +255,8 @@ export default function NutritionPage() {
          <div className="flex justify-between items-center mb-6 gap-3">
              <div className="text-center">
                  <p className="text-sm text-on-surface-variant">مصرف شده</p>
-                 <p className={`text-2xl font-black ${isOverCalorieTarget ? 'text-error' : 'text-primary'}`}>
-                   {formatNumber(consumedCalories)}
+                 <p className={`text-2xl font-black tabular-nums ${isOverCalorieTarget ? 'text-error' : 'text-primary'}`}>
+                   {formatPersianNumber(consumedCalories)}
                  </p>
              </div>
 
@@ -276,10 +276,10 @@ export default function NutritionPage() {
                     />
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                     <span className={`text-base font-black ${isOverCalorieTarget ? 'text-error' : 'text-on-surface'}`}>
-                       {formatNumber(Math.abs(remainingCalories))}
+                     <span className={`text-base font-black tabular-nums ${isOverCalorieTarget ? 'text-error' : 'text-on-surface'}`}>
+                       {formatPersianNumber(Math.abs(remainingCalories))}
                      </span>
-                     <span className="text-[11px] text-on-surface-variant">
+                     <span className="text-caption text-on-surface-variant">
                        {isOverCalorieTarget ? 'کالری اضافه' : 'باقیمانده'}
                      </span>
                  </div>
@@ -287,7 +287,7 @@ export default function NutritionPage() {
 
              <div className="text-center">
                  <p className="text-sm text-on-surface-variant">هدف</p>
-                 <p className="text-2xl font-black text-on-surface">{formatNumber(targetCalories)}</p>
+                 <p className="text-2xl font-black text-on-surface tabular-nums">{formatPersianNumber(targetCalories)}</p>
              </div>
          </div>
 
@@ -356,8 +356,8 @@ export default function NutritionPage() {
                     <Droplet className="w-5 h-5 text-water" />
                     مصرف آب
                 </h2>
-                <p className="text-sm text-on-surface-variant mt-1">
-                  {formatNumber(todayLog.waterIntake || 0)} / {formatNumber(waterTarget)} میلی‌لیتر
+                <p className="text-sm text-on-surface-variant mt-1 tabular-nums">
+                  {formatPersianNumber(todayLog.waterIntake || 0)} / {formatPersianNumber(waterTarget)} میلی‌لیتر
                 </p>
             </div>
             <button

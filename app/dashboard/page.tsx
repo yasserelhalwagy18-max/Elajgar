@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'motion/react';
 import { Plus, Droplet, Activity, Scale, Activity as Pulse, Check, User } from 'lucide-react';
-import { cn, toDateKey, toPersianDigits, formatNumber } from '@/lib/utils';
+import { cn, toDateKey, toPersianDigits, formatNumber, formatPersianNumber } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import dynamic from 'next/dynamic';
@@ -387,7 +387,7 @@ export default function DashboardIndex() {
                                     : 'bg-surface-container border-outline-variant text-on-surface-variant hover:border-primary/40'
                             )}
                         >
-                            <span className={cn('text-[11px] font-medium', isSelected ? 'text-white' : 'text-on-surface-variant')}>
+                            <span className={cn('text-caption font-medium', isSelected ? 'text-white' : 'text-on-surface-variant')}>
                                 {option.weekday}
                             </span>
                             <span className={cn('text-base font-bold leading-none', isSelected && 'text-white')}>
@@ -462,11 +462,11 @@ export default function DashboardIndex() {
                 <div className="w-40 h-40 bg-surface-container rounded-full border-4 border-surface-container shadow-2xl flex flex-col items-center justify-center">
                     {hasDayData ? (
                         <>
-                            <motion.span className="text-6xl font-black text-primary" aria-live="polite">
+                            <motion.span className="text-6xl font-black text-primary tabular-nums" aria-live="polite">
                                 {roundedCount}
                             </motion.span>
-                            <span className="text-sm font-bold text-on-surface-variant">
-                                {toPersianDigits(100)}
+                            <span className="text-sm font-bold text-on-surface-variant tabular-nums">
+                                {formatPersianNumber(100)}
                             </span>
                         </>
                     ) : (
@@ -519,17 +519,17 @@ export default function DashboardIndex() {
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
               <Scale className="w-6 h-6 text-primary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وزن</p>
-              <p className="text-lg font-bold text-on-surface">{weight ? toPersianDigits(weight) : '-'} <span className="text-xs font-normal">کیلوگرم</span></p>
+              <p className="text-lg font-bold text-on-surface tabular-nums">{weight ? formatPersianNumber(weight) : '-'} <span className="text-xs font-normal">کیلوگرم</span></p>
             </div>
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center">
               <Activity className="w-6 h-6 text-secondary mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">شاخص توده بدنی</p>
-              <p className="text-lg font-bold text-on-surface">{bmi ? toPersianDigits(bmi) : '-'}</p>
+              <p className="text-lg font-bold text-on-surface tabular-nums">{bmi ? formatPersianNumber(bmi) : '-'}</p>
             </div>
             <div className="card p-6 rounded-3xl flex flex-col items-center justify-center text-center col-span-2 sm:col-span-1">
               <Pulse className="w-6 h-6 text-error mb-2" />
               <p className="text-xs text-on-surface-variant mb-1">وضعیت درد</p>
-              <p className="text-lg font-bold text-error">{hasPainData ? `${toPersianDigits(averagePain.toFixed(1))} / ۱۰` : <span className="text-xs font-normal text-on-surface-variant">ثبت نشده</span>}</p>
+              <p className="text-lg font-bold text-error tabular-nums">{hasPainData ? `${formatPersianNumber(averagePain.toFixed(1))} / ۱۰` : <span className="text-xs font-normal text-on-surface-variant">ثبت نشده</span>}</p>
             </div>
         </section>
 
@@ -542,7 +542,7 @@ export default function DashboardIndex() {
                     <div>
                         <h3 className="font-bold text-lg">کالری {dayWord}</h3>
                         <p className={`text-sm tabular-nums mt-0.5 ${caloriesOver ? 'text-error font-bold' : 'text-on-surface-variant'}`}>
-                            {formatNumber(consumedCalories)} / {formatNumber(targetCalories)} کالری
+                            {formatPersianNumber(consumedCalories)} / {formatPersianNumber(targetCalories)} کالری
                         </p>
                     </div>
                     {/* Quick Log Action */}
@@ -568,8 +568,8 @@ export default function DashboardIndex() {
                        />
                     </div>
                     {caloriesOver && (
-                      <p className="text-xs text-error font-bold mt-2">
-                        {formatNumber(consumedCalories - targetCalories)} کالری بیشتر از هدف ثبت شده است.
+                      <p className="text-xs text-error font-bold mt-2 tabular-nums">
+                        {formatPersianNumber(consumedCalories - targetCalories)} کالری بیشتر از هدف ثبت شده است.
                       </p>
                     )}
                  </div>
@@ -603,8 +603,8 @@ export default function DashboardIndex() {
                         <h3 className="font-bold text-on-surface mb-1">آب مصرفی</h3>
                         {waterAmountMl > 0 ? (
                             <>
-                                <p className="text-2xl font-black text-water">{toPersianDigits(waterAmountLiters)} لیتر</p>
-                                <p className="text-xs text-on-surface-variant tabular-nums">{formatNumber(waterAmountMl)} / {formatNumber(waterTarget)} میلی‌لیتر</p>
+                                <p className="text-2xl font-black text-water tabular-nums">{formatPersianNumber(waterAmountLiters)} لیتر</p>
+                                <p className="text-xs text-on-surface-variant tabular-nums">{formatPersianNumber(waterAmountMl)} / {formatPersianNumber(waterTarget)} میلی‌لیتر</p>
                             </>
                         ) : (
                             <p className="text-sm text-on-surface-variant">هنوز آبی ثبت نشده</p>
@@ -650,7 +650,7 @@ export default function DashboardIndex() {
                 <h3 className="font-bold text-on-surface mb-1">تمرینات</h3>
                 {dayLog.activityMinutes ? (
                     <>
-                        <p className="text-2xl font-black text-primary mb-2">{toPersianDigits(dayLog.activityMinutes)} دقیقه</p>
+                        <p className="text-2xl font-black text-primary mb-2 tabular-nums">{formatPersianNumber(dayLog.activityMinutes)} دقیقه</p>
                         <div className="mt-auto px-4 py-2 bg-surface-variant/50 rounded-xl text-sm font-bold flex items-center justify-center">
                             ثبت شده
                         </div>

@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, HeartPulse, Lock, Waves, Menu, X, UserPlus, Scan, ClipboardList, TrendingUp, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
-import { cn, toPersianDigits } from '@/lib/utils';
+import { cn, toPersianDigits, formatPersianNumber } from '@/lib/utils';
 import { useStore } from '@/lib/store';
 import PainHeatmap from '@/components/PainHeatmap';
 import type { LandingStats } from '@/lib/stats';
@@ -229,13 +229,13 @@ export default function Landing({ stats }: { stats: LandingStats }) {
       <section id="stats" className="mb-24 px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { value: toPersianDigits(stats.foods), label: 'نوع غذا' },
+            { value: formatPersianNumber(stats.foods), label: 'نوع غذا' },
             { value: '۰–۱۰۰', label: 'امتیاز سلامت' },
-            { value: toPersianDigits(stats.gyms), label: 'باشگاه شریک' },
-            { value: toPersianDigits(stats.articles), label: 'مطلب آموزشی' },
+            { value: formatPersianNumber(stats.gyms), label: 'باشگاه شریک' },
+            { value: formatPersianNumber(stats.articles), label: 'مطلب آموزشی' },
           ].map((stat) => (
             <div key={stat.label} className="flex flex-col items-center justify-center p-6 bg-surface-variant rounded-3xl border border-outline-variant/20">
-              <span className="text-4xl font-black text-primary mb-2" dir="ltr">{stat.value}</span>
+              <span className="text-4xl font-black text-primary mb-2 tabular-nums" dir="ltr">{stat.value}</span>
               <span className="text-sm font-medium text-on-surface-variant">{stat.label}</span>
             </div>
           ))}
@@ -257,7 +257,7 @@ export default function Landing({ stats }: { stats: LandingStats }) {
            </div>
            <div className="relative z-10 flex flex-col items-center justify-center bg-white/15 backdrop-blur-md p-8 rounded-3xl border border-white/30">
               <span className="text-sm text-white/90 mb-1 tracking-widest font-bold">تخفیف ویژه</span>
-              <span className="text-6xl font-black drop-shadow-md">{toPersianDigits(stats.bestDiscount)}٪</span>
+              <span className="text-6xl font-black drop-shadow-md tabular-nums">{formatPersianNumber(stats.bestDiscount)}٪</span>
               <Link href="/login" className="btn btn-cta mt-6 py-3 px-8 rounded-full shadow-xl text-center">
                 دریافت پیشنهاد
               </Link>

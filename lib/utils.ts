@@ -62,6 +62,22 @@ export function formatNumber(value: number, fractionDigits = 0): string {
 }
 
 /**
+ * Single unified helper that formats numbers or numeric strings with Persian digits
+ * and optional thousands grouping. Used across the UI, health cards, chart labels, and tooltips.
+ */
+export function formatPersianNumber(
+  value: number | string | null | undefined,
+  fractionDigits?: number
+): string {
+  if (value === null || value === undefined || value === '') return '';
+  const num = typeof value === 'string' ? Number(value) : value;
+  if (!Number.isFinite(num)) {
+    return toPersianDigits(String(value));
+  }
+  return formatNumber(num, fractionDigits ?? (Number.isInteger(num) ? 0 : 1));
+}
+
+/**
  * Format a number of seconds as `mm:ss`, with Persian digits.
  */
 export function formatDuration(totalSeconds: number): string {
