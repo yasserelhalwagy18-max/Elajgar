@@ -14,6 +14,7 @@ import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { ADMIN_PATH } from '@/lib/admin-path';
 import { WIZARD_LAST_STEP } from '@/lib/wizard';
 
+
 import PainHeatmap from '@/components/PainHeatmap';
 export default function WizardPage() {
   const { isAuthenticated, hasHydrated } = useAuthGuard();
