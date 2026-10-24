@@ -14,6 +14,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { AdminPageHeader, StatCard, StatusPill } from '@/components/admin/AdminUI';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { toPersianDigits } from '@/lib/utils';
 import { ADMIN_PATH } from '@/lib/admin-path';
 
@@ -218,7 +219,14 @@ export default function AdminOverviewPage() {
           </div>
 
           {isLoading && !stats && (
-            <p className="text-center text-sm text-on-surface-variant mt-4">در حال بارگذاری...</p>
+            <div
+              role="status"
+              aria-live="polite"
+              aria-label="در حال بارگذاری"
+              className="flex justify-center mt-4"
+            >
+              <Skeleton className="h-4 w-48" />
+            </div>
           )}
         </section>
 

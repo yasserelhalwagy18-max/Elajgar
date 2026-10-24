@@ -8,6 +8,7 @@ import { cn, formatNumber, toPersianDigits } from '@/lib/utils';
 import { adminRequest } from '@/lib/admin-client';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { useMounted } from '@/hooks/use-mounted';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface Plan {
   key: string;
@@ -159,7 +160,16 @@ export default function CheckoutPage() {
   if (!plan) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-surface">
-        <p className="font-bold text-on-surface-variant">در حال بارگذاری...</p>
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label="در حال بارگذاری"
+          className="card rounded-3xl p-8 w-full max-w-md flex flex-col gap-4"
+        >
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       </div>
     );
   }

@@ -16,6 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import { AdminPageHeader, StatusPill } from '@/components/admin/AdminUI';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { adminDelete, adminPatch, adminRequest } from '@/lib/admin-client';
 import { toPersianDigits } from '@/lib/utils';
 import { ADMIN_PATH } from '@/lib/admin-path';
@@ -193,8 +194,15 @@ export default function AdminUserDetailPage() {
     return (
       <>
         <AdminPageHeader title="پرونده کاربر" />
-        <div className="card p-12 rounded-3xl text-center text-on-surface-variant font-bold">
-          در حال بارگذاری...
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label="در حال بارگذاری"
+          className="card p-12 rounded-3xl flex flex-col items-center gap-4"
+        >
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-4 w-32" />
         </div>
       </>
     );

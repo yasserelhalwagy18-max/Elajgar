@@ -13,6 +13,7 @@ import { useMounted } from '@/hooks/use-mounted';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes';
 import toast from 'react-hot-toast';
 
 const NOTIFICATIONS_KEY = 'elajgar-notifications';
@@ -284,7 +285,7 @@ export default function ProfilePage() {
                         </span>
                         <Pencil className="w-4 h-4 text-on-surface-variant" />
                     </button>
-                    <a
+                    <Link
                         href="/privacy"
                         className="w-full bg-surface-container p-4 flex items-center justify-between hover:bg-surface-variant/60 transition-colors"
                     >
@@ -293,7 +294,7 @@ export default function ProfilePage() {
                             <span className="font-bold text-on-surface text-sm">حریم خصوصی</span>
                         </span>
                         <ChevronLeft className="w-4 h-4 text-on-surface-variant" />
-                    </a>
+                    </Link>
                     <a
                         href="#notifications"
                         className="w-full bg-surface-container p-4 flex items-center justify-between hover:bg-surface-variant/60 transition-colors"
@@ -562,10 +563,17 @@ export default function ProfilePage() {
             <EditProfileModal
                 open={showEditProfile}
                 onClose={() => setShowEditProfile(false)}
-                onSave={(updates) => {
+                onSave={async (updates) => {
                     updateUserProfile(updates);
                     setShowEditProfile(false);
-                    toast.success('اطلاعات شما به‌روزرسانی شد');
+                    // Toast on the server's answer, not before it: the save is
+                    // what the message claims happened.
+                    const saved = await useStore.getState().saveUserToServer();
+                    if (saved) {
+                        toast.success('اطلاعات شما به‌روزرسانی شد');
+                    } else {
+                        toast.error('ذخیره اطلاعات انجام نشد. دوباره تلاش کنید');
+                    }
                 }}
             />
 
@@ -585,10 +593,12 @@ export default function ProfilePage() {
 interface EditProfileModalProps {
     open: boolean;
     onClose: () => void;
-    onSave: (updates: Record<string, unknown>) => void;
+    onSave: (updates: Record<string, unknown>) => void | Promise<void>;
 }
 
 function EditProfileModal({ open, onClose, onSave }: EditProfileModalProps) {
+    // Closing with typed input is an accidental data loss - warn first.
+    useUnsavedChangesWarning(open);
     return (
         <Modal
             open={open}
@@ -604,7 +614,7 @@ function EditProfileModal({ open, onClose, onSave }: EditProfileModalProps) {
     );
 }
 
-function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string, unknown>) => void; onCancel: () => void }) {
+function EditProfileForm({ onSave, onCancel }: { onSave: (updates: Record<string, unknown>) => void | Promise<void>; onCancel: () => void }) {
     const userProfile = useStore((state) => state.userProfile);
 
     const [fullName, setFullName] = useState(userProfile?.fullName || '');
