@@ -1,0 +1,6 @@
+AGENTS.md
+CPANEL_DEPLOYMENT.md
+DEPLOY.md
+README.md
+howto.md
+public\offline.html

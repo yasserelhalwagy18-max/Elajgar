@@ -1,0 +1,6 @@
+C:\Users\ms.shahid\Documents\Elajgar\AGENTS.md
+C:\Users\ms.shahid\Documents\Elajgar\public\apple-touch-icon.png
+C:\Users\ms.shahid\Documents\Elajgar\public\body-back.png
+C:\Users\ms.shahid\Documents\Elajgar\public\body-front.png
+C:\Users\ms.shahid\Documents\Elajgar\public\icon-192.png
+C:\Users\ms.shahid\Documents\Elajgar\public\icon-maskable-512.png

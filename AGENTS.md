@@ -57,13 +57,7 @@ These are already installed and available in every project. Pick from this list 
 | `accessibility-scan` | Automated accessibility rule engine scan |
 | `prisma-cli` | Prisma ORM CLI commands reference |
 | `prisma-client-api` | Prisma Client API reference |
-| `prisma-compute` | Prisma Compute deployment guide |
 | `prisma-database-setup` | Prisma database provider setup |
-| `prisma-driver-adapter-implementation` | Prisma ORM 7 SQL driver adapter implementation |
-| `prisma-mongodb-upgrade` | Prisma MongoDB upgrade guide |
-| `prisma-postgres` | Prisma Postgres setup and operations |
-| `prisma-postgres-setup` | Set up Prisma Postgres and connect to project |
-| `prisma-upgrade-v7` | Prisma ORM v6 to v7 migration guide |
 
 ## 3. Intent → Skill Mapping
 
@@ -143,6 +137,7 @@ If a relevant skill isn't installed yet, use `find-skills` to locate it, then in
 
 ### Execution Model
 For every request:
+0. Load the `ponytail` and `graphify` skills at the start of every session.
 1. Check Sections 2–3 to see if an installed skill applies.
 2. If no installed skill matches, use `find-skills` (Section 4) to discover a new one.
 3. Load the skill via the `skill` tool.

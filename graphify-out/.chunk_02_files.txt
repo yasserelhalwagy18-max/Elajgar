@@ -1,0 +1,10 @@
+.claude\skills\browser-testing-with-devtools\SKILL.md
+.claude\skills\claude-automation-recommender\SKILL.md
+.claude\skills\code-review-and-quality\SKILL.md
+.claude\skills\frontend-design-anthopic\SKILL.md
+.claude\skills\frontend-ui-engineering\SKILL.md
+.claude\skills\idea-refine\SKILL.md
+.claude\skills\idea-refine\examples.md
+.claude\skills\idea-refine\frameworks.md
+.claude\skills\idea-refine\refinement-criteria.md
+.claude\skills\mempalace\SKILL.md
