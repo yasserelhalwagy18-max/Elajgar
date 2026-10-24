@@ -454,6 +454,11 @@ h6 {
     outline: none;
   }
 
+  .input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
   .input[aria-invalid="true"] {
     border-color: var(--color-error);
   }
@@ -478,6 +483,11 @@ h6 {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px var(--color-primary-container);
     outline: none;
+  }
+
+  .select:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   /* ========================================================================

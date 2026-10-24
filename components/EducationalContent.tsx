@@ -161,7 +161,7 @@ export function EducationalContent({ activeTag = 'همه' }: { activeTag?: strin
                 })}
               </div>
               <span className="text-xs font-bold text-on-surface-variant">{activeArticle.category}</span>
-              <span className="text-xs text-on-surface-variant mr-auto">{activeArticle.readTime} مطالعه</span>
+              <span className="text-xs text-on-surface-variant ms-auto">{activeArticle.readTime} مطالعه</span>
             </div>
 
             <div className="text-sm text-on-surface-variant leading-relaxed space-y-4">

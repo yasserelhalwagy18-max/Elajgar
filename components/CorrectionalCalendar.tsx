@@ -330,12 +330,12 @@ export function CorrectionalCalendar() {
                                 >
                                     {day.label}
                                     {sessionForDay?.status === 'completed' && (
-                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center border-2 border-surface-container">
+                                        <div className="absolute -bottom-1 -end-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center border-2 border-surface-container">
                                             <Check className="w-2.5 h-2.5" />
                                         </div>
                                     )}
                                     {sessionForDay?.status === 'skipped' && (
-                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-error text-white rounded-full flex items-center justify-center border-2 border-surface-container">
+                                        <div className="absolute -bottom-1 -end-1 w-4 h-4 bg-error text-white rounded-full flex items-center justify-center border-2 border-surface-container">
                                             <X className="w-2.5 h-2.5" />
                                         </div>
                                     )}

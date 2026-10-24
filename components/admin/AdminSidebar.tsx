@@ -158,7 +158,7 @@ export function AdminSidebar() {
               type="button"
               onClick={() => setIsOpen(false)}
               aria-label="بستن منو"
-              className="icon-btn absolute top-4 left-4"
+              className="icon-btn absolute top-4 end-4"
             >
               <X className="w-5 h-5" />
             </button>

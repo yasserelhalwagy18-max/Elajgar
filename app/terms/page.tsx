@@ -27,7 +27,7 @@ export default function TermsPage() {
           <button
             type="button"
             onClick={handleBack}
-            className="p-2 -ml-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors"
+            className="p-2 -ms-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors"
             aria-label="بازگشت"
           >
             <ArrowRight className="w-6 h-6" />

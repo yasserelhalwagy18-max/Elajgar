@@ -295,7 +295,7 @@ export default function CheckoutPage() {
 
           <div className="text-3xl font-black text-primary mb-1">
             {formatNumber(plan.price)}
-            <span className="text-sm font-normal text-on-surface-variant mr-1">تومان</span>
+            <span className="text-sm font-normal text-on-surface-variant ms-1">تومان</span>
           </div>
           <p className="text-xs text-on-surface-variant mb-6">
             پرداخت یک‌باره برای {toPersianDigits(plan.durationDays)} روز

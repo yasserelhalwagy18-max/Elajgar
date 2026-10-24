@@ -161,7 +161,7 @@ export function ExerciseGallery() {
                                      </div>
                                 </div>
 
-                                <div className="absolute bottom-3 left-3 right-3">
+                                <div className="absolute bottom-3 inset-x-3">
                                     <h3 className="text-white font-bold text-sm leading-tight mb-1">{exercise.title}</h3>
                                     <div className="flex justify-between items-center text-xs text-white/90 font-medium">
                                         <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full">{toPersianDigits(exercise.durationMinutes)} دقیقه</span>
@@ -221,7 +221,7 @@ export function ExerciseGallery() {
                              </div>
                         </div>
 
-                        <div className="absolute bottom-3 left-3 right-3">
+                        <div className="absolute bottom-3 inset-x-3">
                             <h3 className="text-white font-bold text-sm leading-tight mb-1">{exercise.title}</h3>
                             <div className="flex justify-between items-center text-xs text-white/90 font-medium">
                                 <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full">{toPersianDigits(exercise.durationMinutes)} دقیقه</span>

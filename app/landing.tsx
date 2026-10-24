@@ -330,12 +330,12 @@ function HubCard({
                    deliberately unavailable. The badge sits in the corner so it
                    never overlaps the card copy. */
                 <div className="absolute inset-0 bg-surface/35 backdrop-blur-[1px] z-20">
-                    <span className="absolute top-4 left-4 text-xs font-bold text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant shadow-sm">
+                    <span className="absolute top-4 end-4 text-xs font-bold text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant shadow-sm">
                         {available ? 'با اشتراک ویژه' : 'به زودی'}
                     </span>
                 </div>
             )}
-            {active && <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" aria-hidden="true"></div>}
+            {active && <div className="absolute top-0 end-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" aria-hidden="true"></div>}
 
             <div className="flex justify-between items-start mb-6">
                 <div className={cn("p-4 rounded-2xl", active ? "bg-primary/10" : "bg-surface-variant")}>

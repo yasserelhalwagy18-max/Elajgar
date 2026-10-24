@@ -210,7 +210,7 @@ export default function AdminPlansPage() {
           <span className="font-bold text-on-surface">
             {plan.title}
             {plan.isFeatured && (
-              <span className="text-xs text-primary font-black mr-2">پیشنهاد ویژه</span>
+              <span className="text-xs text-primary font-black ms-2">پیشنهاد ویژه</span>
             )}
           </span>
           <span className="text-xs text-on-surface-variant font-mono" dir="ltr">

@@ -631,7 +631,7 @@ function WizardForm() {
                 className="relative"
             >
                 <Step5BodyMap />
-                {errors.painZones && <div className="absolute bottom-4 right-0 left-0 text-center"><p className="text-error text-sm font-bold bg-surface-container inline-block px-4 py-1 rounded-full shadow-md error-message">{errors.painZones}</p></div>}
+                {errors.painZones && <div className="absolute bottom-4 inset-x-0 text-center"><p className="text-error text-sm font-bold bg-surface-container inline-block px-4 py-1 rounded-full shadow-md error-message">{errors.painZones}</p></div>}
             </motion.div>
         )}
 
@@ -701,7 +701,7 @@ function Step4Terms({ termsAccepted, setTermsAccepted }: { termsAccepted: boolea
     return (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col h-full items-center justify-center">
             <div className="card card-hover p-8 rounded-3xl w-full border border-error/20 relative overflow-hidden">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 blur-3xl rounded-full"></div>
+                 <div className="absolute top-0 end-0 w-32 h-32 bg-error/10 blur-3xl rounded-full"></div>
                  <div className="w-12 h-12 bg-error-container rounded-full flex items-center justify-center mb-6 mx-auto">
                     <ShieldAlert className="w-6 h-6 text-error" />
                  </div>
@@ -860,7 +860,7 @@ function Step6Questionnaire({ answers, setAnswers, errors, setErrors, touched, s
     return (
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col h-full">
             <h2 className="text-2xl font-bold mb-6 text-on-surface">پرسشنامه هوشمند درد</h2>
-            <div className="space-y-4 overflow-y-auto pb-4 pr-2 custom-scrollbar flex-1">
+            <div className="space-y-4 overflow-y-auto pb-4 pe-2 custom-scrollbar flex-1">
                 <div>
                     <label className="text-sm font-medium mb-1 block" htmlFor="q-duration">مدت زمان درد</label>
                     <input

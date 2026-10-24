@@ -247,7 +247,7 @@ function GymCard({ gym }: { gym: Gym }) {
     return (
         <article className="card rounded-3xl overflow-hidden relative group">
             <div className={cn(
-                "absolute top-4 right-4 z-10 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm",
+                "absolute top-4 start-4 z-10 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm",
                 gym.isPremium ? "bg-surface-container/90 backdrop-blur-md text-primary" : "bg-primary text-white"
             )}>
                 {gym.discountPercentage > 0 ? <Percent className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
@@ -257,7 +257,7 @@ function GymCard({ gym }: { gym: Gym }) {
             <div className="relative h-48 w-full">
               <GymImage gym={gym} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" aria-hidden="true" />
-                <div className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
+                <div className="absolute bottom-4 start-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
                     {gym.location}
                 </div>

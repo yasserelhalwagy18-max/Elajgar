@@ -22,7 +22,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="ناوبری اصلی"
-      className="fixed bottom-0 left-0 w-full z-50 rounded-t-3xl bg-surface-container/95 backdrop-blur-xl border-t border-outline-variant shadow-floating flex flex-row justify-around items-center px-2 pt-2 min-h-[72px] pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
+      className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl bg-surface-container/95 backdrop-blur-xl border-t border-outline-variant shadow-floating flex flex-row justify-around items-center px-2 pt-2 min-h-[72px] pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
       style={{
         paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))',
       }}
